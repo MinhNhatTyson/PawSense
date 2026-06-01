@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@pawsense/shared": ["packages/shared/src"]
+    }
+  }
+}
