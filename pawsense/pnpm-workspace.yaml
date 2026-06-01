@@ -9,3 +9,6 @@ onlyBuiltDependencies:
   - esbuild
   - prisma
   - '@prisma/engines'
+  - electron
+  - electron-winstaller
+  - msgpackr-extract
