@@ -2,9 +2,9 @@ packages:
   - 'apps/*'
   - 'packages/*'
 allowBuilds:
-  electron-winstaller: set this to true or false
-  msgpackr-extract: set this to true or false
-  prisma: set this to true or false
+  electron-winstaller: true
+  msgpackr-extract: true
+  prisma: true
 onlyBuiltDependencies:
   - esbuild
   - prisma
