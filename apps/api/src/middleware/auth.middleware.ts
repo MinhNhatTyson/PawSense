@@ -29,9 +29,19 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
   }
 }
 
+export const authMiddleware = authenticate
+
 export function requireVet(req: AuthRequest, res: Response, next: NextFunction) {
   if (req.userRole !== 'VET') {
     res.status(403).json({ error: 'Vet access only' })
+    return
+  }
+  next()
+}
+
+export function requireCustomer(req: AuthRequest, res: Response, next: NextFunction) {
+  if (req.userRole !== 'CUSTOMER') {
+    res.status(403).json({ error: 'Customer access only' })
     return
   }
   next()

@@ -1,0 +1,8 @@
+PawSense is a new mobile/app for Vetenarian and Pet lover users. This project would allow vetenarian to declare: 
+ 1. Common diseases, symptoms and cures. 
+ 2. All types of cats, their lookings, their unique characteristic, etc... 
+ 3. Cat foods, medicines, etc... 
+
+For other users, they can use the app to upload the image of their cat -> Reveal their type/species. If the cat has sickness, they can describe the sickness and the app will tell them what disease based on that information, alongside with the cures and medicines needed. 
+
+There are 2 main actors: Vetenarian and Customer. Vet will use window application, Customer will use mobile app.
