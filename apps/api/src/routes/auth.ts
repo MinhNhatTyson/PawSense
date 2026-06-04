@@ -8,7 +8,7 @@ import {
 } from '../controllers/auth.controller.js'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 
-export const authRouter = Router()
+export const authRouter: Router = Router()
 
 authRouter.post('/register', register)
 authRouter.post('/login', login)
