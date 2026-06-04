@@ -41,6 +41,7 @@ function AppContent() {
 
   return (
     <Routes>
+      <Route path="/diseases" element={<DiseaseManagement />} />
       <Route
         path="/login"
         element={token ? <Navigate to="/dashboard" /> : <LoginPage />}
@@ -90,12 +91,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/diseases" element={<DiseaseManagement />} />
-        <Route path="/" element={<div>Welcome to PawSense</div>} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   )
 }
 
