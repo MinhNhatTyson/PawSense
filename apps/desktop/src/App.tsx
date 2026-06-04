@@ -91,9 +91,10 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <Routes>
+        <Route path="/diseases" element={<DiseaseManagement />} />
+        <Route path="/" element={<div>Welcome to PawSense</div>} />
+      </Routes>
     </Router>
   )
 }
