@@ -24,13 +24,21 @@ model CatBreed {
 }
 
 model Disease {
-  id          String     @id @default(uuid())
-  name        String     @unique
-  symptoms    String[]
-  description String
-  cure        String
-  medicines   Medicine[]
-  createdAt   DateTime   @default(now())
+  id                  String           @id @default(uuid())
+  name                String           @unique
+  description         String
+  causes              String[]
+  symptoms            String[]
+  severity            DiseasesSeverity @default(MEDIUM)
+  preventionMethods   String[]
+  treatmentMethods    String[]
+  recoveryPeriod      String
+  imageUrl            String?
+  medicines           Medicine[]
+  relatedDiseasesFrom RelatedDisease[] @relation("diseaseFrom")
+  relatedDiseasesTo   RelatedDisease[] @relation("diseaseTo")
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 }
 
 model Medicine {
@@ -38,10 +46,28 @@ model Medicine {
   name      String
   dosage    String
   diseaseId String
-  disease   Disease   @relation(fields: [diseaseId], references: [id])
+  disease   Disease   @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+}
+
+model RelatedDisease {
+  id           String   @id @default(uuid())
+  diseaseFromId String
+  diseaseToId  String
+  diseaseFrom  Disease  @relation("diseaseFrom", fields: [diseaseFromId], references: [id], onDelete: Cascade)
+  diseaseTo    Disease  @relation("diseaseTo", fields: [diseaseToId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@unique([diseaseFromId, diseaseToId])
 }
 
 enum Role {
   VET
   CUSTOMER
+}
+
+enum DiseasesSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
