@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { diseaseAPI, Disease } from './diseaseAPI'
+import { diseaseAPI, type Disease } from './diseaseAPI'
 import DiseaseList from './DiseaseList'
 import DiseaseDetail from './DiseaseDetail'
 import DiseaseForm from './DiseaseForm'

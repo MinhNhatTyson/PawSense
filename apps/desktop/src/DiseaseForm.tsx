@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Disease } from './diseaseAPI'
+import type { Disease } from './diseaseAPI'
 
 interface DiseaseFormProps {
   disease?: Disease
