@@ -14,254 +14,264 @@ interface DiseaseFormProps {
   onCancel: () => void
 }
 
-export default function DiseaseForm({
-  disease,
-  allDiseases,
-  onSubmit,
-  loading,
-  onCancel,
-}: DiseaseFormProps) {
-  const [formData, setFormData] = useState({
-    name: disease?.name || '',
-    description: disease?.description || '',
-    causes: disease?.causes.join('\n') || '',
-    symptoms: disease?.symptoms.join('\n') || '',
-    severity: disease?.severity || 'MEDIUM',
-    preventionMethods: disease?.preventionMethods.join('\n') || '',
-    treatmentMethods: disease?.treatmentMethods.join('\n') || '',
-    recoveryPeriod: disease?.recoveryPeriod || '',
-    relatedDiseaseIds: disease?.relatedDiseasesFrom?.map(r => r.diseaseTo.id) || [],
-  })
+const SEV_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const
 
-  const [imageFile, setImageFile] = useState<File | undefined>()
-  const [imagePreview, setImagePreview] = useState<string | undefined>(
-    disease?.imageUrl
+export default function DiseaseForm({ disease, allDiseases, onSubmit, loading, onCancel }: DiseaseFormProps) {
+  const [name, setName] = useState(disease?.name || '')
+  const [description, setDescription] = useState(disease?.description || '')
+  const [severity, setSeverity] = useState(disease?.severity || 'MEDIUM')
+  const [causes, setCauses] = useState(disease?.causes.join('\n') || '')
+  const [symptoms, setSymptoms] = useState(disease?.symptoms.join('\n') || '')
+  const [prevention, setPrevention] = useState(disease?.preventionMethods.join('\n') || '')
+  const [treatment, setTreatment] = useState(disease?.treatmentMethods.join('\n') || '')
+  const [recoveryPeriod, setRecoveryPeriod] = useState(disease?.recoveryPeriod || '')
+  const [relatedIds, setRelatedIds] = useState<string[]>(
+    disease?.relatedDiseasesFrom?.map(r => r.diseaseTo.id) || []
   )
+  const [imageFile, setImageFile] = useState<File | undefined>()
+  const [imagePreview, setImagePreview] = useState<string | undefined>(disease?.imageUrl)
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      setImageFile(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
+    if (!file) return
+    setImageFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => setImagePreview(reader.result as string)
+    reader.readAsDataURL(file)
   }
 
-  const handleRelatedDiseaseToggle = (diseaseId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      relatedDiseaseIds: prev.relatedDiseaseIds.includes(diseaseId)
-        ? prev.relatedDiseaseIds.filter((id) => id !== diseaseId)
-        : [...prev.relatedDiseaseIds, diseaseId],
-    }))
+  const toggleRelated = (id: string) => {
+    setRelatedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const parseLines = (s: string) =>
+      s.split('\n').map(l => l.trim()).filter(Boolean)
 
-    const submitData = {
-      name: formData.name,
-      description: formData.description,
-      causes: formData.causes
-        .split('\n')
-        .map((c) => c.trim())
-        .filter((c) => c),
-      symptoms: formData.symptoms
-        .split('\n')
-        .map((s) => s.trim())
-        .filter((s) => s),
-      severity: formData.severity as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
-      preventionMethods: formData.preventionMethods
-        .split('\n')
-        .map((p) => p.trim())
-        .filter((p) => p),
-      treatmentMethods: formData.treatmentMethods
-        .split('\n')
-        .map((t) => t.trim())
-        .filter((t) => t),
-      recoveryPeriod: formData.recoveryPeriod,
-      relatedDiseaseIds: formData.relatedDiseaseIds,
-    }
-
-    onSubmit(submitData, imageFile)
+    onSubmit({
+      name,
+      description,
+      severity: severity as any,
+      causes: parseLines(causes),
+      symptoms: parseLines(symptoms),
+      preventionMethods: parseLines(prevention),
+      treatmentMethods: parseLines(treatment),
+      recoveryPeriod,
+      relatedDiseaseIds: relatedIds,
+    }, imageFile)
   }
 
+  const isEditing = !!disease
+  const otherDiseases = allDiseases.filter(d => d.id !== disease?.id)
+
   return (
-    <div className="disease-form-container">
-      <form className="disease-form" onSubmit={handleSubmit}>
-        <h2>{disease ? 'Edit Disease' : 'Create New Disease'}</h2>
+    <div className="dm-form-shell">
+      <div className="dm-form-header">
+        <h2 className="dm-form-title">
+          {isEditing ? `Edit: ${disease.name}` : 'New Disease Record'}
+        </h2>
+        <p className="dm-form-subtitle">
+          {isEditing
+            ? 'Update the clinical details for this disease record'
+            : 'Fill in the clinical details to create a new disease record'}
+        </p>
+      </div>
 
-        <div className="form-section">
-          <label>
-            Disease Name *
+      <form onSubmit={handleSubmit}>
+        {/* Card 1 — Core info */}
+        <div className="dm-form-card">
+          <div className="dm-form-section-title">Core information</div>
+
+          <div className="form-field">
+            <label className="form-label" htmlFor="dm-name">Disease name *</label>
             <input
+              id="dm-name"
               type="text"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, name: e.target.value }))
-              }
+              className="form-input"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. Feline Panleukopenia"
               required
-              placeholder="e.g., Canine Parvovirus"
+              disabled={loading}
             />
-          </label>
+          </div>
 
-          <label>
-            Description *
+          <div className="form-field">
+            <label className="form-label" htmlFor="dm-desc">Description *</label>
             <textarea
-              value={formData.description}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, description: e.target.value }))
-              }
-              required
-              placeholder="Detailed description of the disease"
+              id="dm-desc"
+              className="dm-textarea"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="Provide a clear clinical description of this disease…"
               rows={4}
+              required
+              disabled={loading}
             />
-          </label>
+          </div>
 
-          <label>
-            Severity Level *
-            <select
-              value={formData.severity}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, severity: e.target.value }))
-              }
-            >
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-              <option value="CRITICAL">Critical</option>
-            </select>
-          </label>
+          <div className="dm-form-row">
+            <div className="form-field" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="dm-sev">Severity level *</label>
+              <select
+                id="dm-sev"
+                className="dm-select"
+                value={severity}
+                onChange={e => setSeverity(e.target.value)}
+                disabled={loading}
+              >
+                {SEV_OPTIONS.map(s => (
+                  <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-field" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="dm-recovery">Recovery period *</label>
+              <input
+                id="dm-recovery"
+                type="text"
+                className="form-input"
+                value={recoveryPeriod}
+                onChange={e => setRecoveryPeriod(e.target.value)}
+                placeholder="e.g. 7–14 days"
+                required
+                disabled={loading}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="form-section">
-          <label>
-            Causes (one per line)
-            <textarea
-              value={formData.causes}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, causes: e.target.value }))
-              }
-              placeholder="Viral infection&#10;Bacterial contamination"
-              rows={3}
-            />
-          </label>
+        {/* Card 2 — Clinical details */}
+        <div className="dm-form-card">
+          <div className="dm-form-section-title">Clinical details</div>
 
-          <label>
-            Symptoms (one per line) *
-            <textarea
-              value={formData.symptoms}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, symptoms: e.target.value }))
-              }
-              placeholder="Fever&#10;Vomiting&#10;Diarrhea"
-              rows={3}
-              required
-            />
-          </label>
+          <div className="dm-form-row">
+            <div className="form-field" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="dm-causes">Causes</label>
+              <textarea
+                id="dm-causes"
+                className="dm-textarea"
+                value={causes}
+                onChange={e => setCauses(e.target.value)}
+                placeholder={"Viral infection\nBacterial contamination\nParasitic exposure"}
+                rows={4}
+                disabled={loading}
+              />
+              <span style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 4, display: 'block' }}>One entry per line</span>
+            </div>
 
-          <label>
-            Prevention Methods (one per line)
-            <textarea
-              value={formData.preventionMethods}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  preventionMethods: e.target.value,
-                }))
-              }
-              placeholder="Regular vaccination&#10;Proper hygiene"
-              rows={3}
-            />
-          </label>
+            <div className="form-field" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="dm-symptoms">Symptoms *</label>
+              <textarea
+                id="dm-symptoms"
+                className="dm-textarea"
+                value={symptoms}
+                onChange={e => setSymptoms(e.target.value)}
+                placeholder={"Fever\nVomiting\nLethargy\nLoss of appetite"}
+                rows={4}
+                required
+                disabled={loading}
+              />
+              <span style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 4, display: 'block' }}>One entry per line</span>
+            </div>
 
-          <label>
-            Treatment Methods (one per line) *
-            <textarea
-              value={formData.treatmentMethods}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  treatmentMethods: e.target.value,
-                }))
-              }
-              placeholder="Antibiotics&#10;Supportive care"
-              rows={3}
-              required
-            />
-          </label>
+            <div className="form-field" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="dm-prevention">Prevention methods</label>
+              <textarea
+                id="dm-prevention"
+                className="dm-textarea"
+                value={prevention}
+                onChange={e => setPrevention(e.target.value)}
+                placeholder={"Regular vaccination\nProper sanitation"}
+                rows={4}
+                disabled={loading}
+              />
+              <span style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 4, display: 'block' }}>One entry per line</span>
+            </div>
 
-          <label>
-            Recovery Period *
-            <input
-              type="text"
-              value={formData.recoveryPeriod}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  recoveryPeriod: e.target.value,
-                }))
-              }
-              placeholder="e.g., 7-14 days"
-              required
-            />
-          </label>
+            <div className="form-field" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="dm-treatment">Treatment methods *</label>
+              <textarea
+                id="dm-treatment"
+                className="dm-textarea"
+                value={treatment}
+                onChange={e => setTreatment(e.target.value)}
+                placeholder={"Supportive IV fluids\nAntibiotics\nAntivirals"}
+                rows={4}
+                required
+                disabled={loading}
+              />
+              <span style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 4, display: 'block' }}>One entry per line</span>
+            </div>
+          </div>
         </div>
 
-        <div className="form-section">
-          <label>
-            Disease Image
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-          </label>
+        {/* Card 3 — Image */}
+        <div className="dm-form-card">
+          <div className="dm-form-section-title">Disease image</div>
+          <div className="dm-upload-area">
+            <input type="file" accept="image/*" onChange={handleImageChange} disabled={loading} />
+            <div className="dm-upload-icon">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <rect x="2" y="4" width="24" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="9" cy="11" r="2.5" stroke="currentColor" strokeWidth="1.3"/>
+                <path d="M2 18l7-5 4 3 4-4 9 6" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <p className="dm-upload-label">Drop an image here or click to browse</p>
+            <p className="dm-upload-hint">PNG, JPG, WebP — max 5 MB</p>
+          </div>
           {imagePreview && (
-            <div className="image-preview">
-              <img src={imagePreview} alt="Disease preview" />
+            <div className="dm-image-preview">
+              <img src={imagePreview} alt="Preview" />
+              <button
+                type="button"
+                className="dm-image-preview-remove"
+                onClick={() => { setImagePreview(undefined); setImageFile(undefined) }}
+              >×</button>
             </div>
           )}
         </div>
 
-        {allDiseases.length > 0 && (
-          <div className="form-section">
-            <label>Related Diseases</label>
-            <div className="related-diseases-list">
-              {allDiseases
-                .filter((d) => d.id !== disease?.id)
-                .map((d) => (
-                  <label key={d.id} className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={formData.relatedDiseaseIds.includes(d.id)}
-                      onChange={() => handleRelatedDiseaseToggle(d.id)}
-                    />
+        {/* Card 4 — Related diseases */}
+        {otherDiseases.length > 0 && (
+          <div className="dm-form-card">
+            <div className="dm-form-section-title">Related diseases</div>
+            <div className="dm-related-grid">
+              {otherDiseases.map(d => {
+                const checked = relatedIds.includes(d.id)
+                return (
+                  <label
+                    key={d.id}
+                    className={`dm-related-option${checked ? ' checked' : ''}`}
+                    onClick={() => toggleRelated(d.id)}
+                  >
+                    <span className="dm-checkmark">
+                      {checked && (
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </span>
                     {d.name}
                   </label>
-                ))}
+                )
+              })}
             </div>
           </div>
         )}
 
-        <div className="form-actions">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onCancel}
-            disabled={loading}
-          >
-            Cancel
+        {/* Actions */}
+        <div className="dm-form-actions">
+          <button type="submit" className="btn btn-primary" style={{ width: 'auto', flex: 1 }} disabled={loading}>
+            {loading && <span className="spinner" />}
+            {loading ? 'Saving…' : isEditing ? 'Save changes' : 'Create disease record'}
           </button>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading}
-          >
-            {loading ? 'Saving...' : disease ? 'Update Disease' : 'Create Disease'}
+          <button type="button" className="btn btn-secondary" style={{ width: 'auto' }} onClick={onCancel} disabled={loading}>
+            Cancel
           </button>
         </div>
       </form>

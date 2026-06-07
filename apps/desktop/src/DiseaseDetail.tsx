@@ -1,134 +1,127 @@
 import type { Disease } from './diseaseAPI'
 
-interface DiseaseDetailProps {
+interface Props {
   disease: Disease
   onEdit: () => void
   onDelete: () => void
   onBack: () => void
 }
 
-export default function DiseaseDetail({
-  disease,
-  onEdit,
-  onDelete,
-  onBack,
-}: DiseaseDetailProps) {
+function SevBadge({ sev }: { sev: string }) {
+  return <span className={`sev-badge sev-${sev.toLowerCase()}`}>{sev} Severity</span>
+}
+
+function Section({ title, children, full }: { title: string; children: React.ReactNode; full?: boolean }) {
   return (
-    <div className="disease-detail-container">
-      <div className="detail-header">
-        <button className="btn btn-secondary" onClick={onBack}>
-          ← Back to List
-        </button>
-        <div className="detail-actions">
-          <button className="btn btn-info" onClick={onEdit}>
-            Edit
-          </button>
-          <button className="btn btn-danger" onClick={onDelete}>
-            Delete
-          </button>
+    <div className={`dm-section${full ? ' dm-section-full' : ''}`}>
+      <div className="dm-section-title">{title}</div>
+      <div className="dm-section-body">{children}</div>
+    </div>
+  )
+}
+
+function BulletList({ items, empty = 'Not documented' }: { items: string[]; empty?: string }) {
+  if (!items || items.length === 0)
+    return <p className="dm-empty-section">{empty}</p>
+  return (
+    <ul className="dm-list">
+      {items.map((item, i) => <li key={i}>{item}</li>)}
+    </ul>
+  )
+}
+
+export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Props) {
+  return (
+    <div className="dm-detail">
+      {/* Hero */}
+      <div className="dm-detail-hero">
+        {disease.imageUrl && (
+          <img src={disease.imageUrl} alt={disease.name} className="dm-detail-hero-img" />
+        )}
+        <div className="dm-detail-hero-content">
+          <h1 className="dm-detail-hero-name">{disease.name}</h1>
+          <div className="dm-detail-hero-meta">
+            <SevBadge sev={disease.severity} />
+            {disease.recoveryPeriod && (
+              <span className="dm-detail-hero-recovery">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.3"/>
+                  <path d="M7 4v3.5l2 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {disease.recoveryPeriod}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="disease-detail">
-        <div className="detail-main">
-          <div className="detail-header-section">
-            <h1>{disease.name}</h1>
-            <span className={`severity-badge severity-${disease.severity.toLowerCase()}`}>
-              {disease.severity} Severity
-            </span>
-          </div>
+      {/* Action bar */}
+      <div className="dm-detail-actions-bar">
+        <button className="btn btn-ghost" style={{ width: 'auto', padding: '9px 14px' }} onClick={onBack}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Back to list
+        </button>
+        <button className="btn btn-secondary" style={{ width: 'auto', padding: '9px 20px' }} onClick={onEdit}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9.5 1.5l3 3-8 8H1.5v-3l8-8z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+          </svg>
+          Edit record
+        </button>
+        <button
+          className="btn btn-danger"
+          style={{ width: 'auto', padding: '9px 20px' }}
+          onClick={onDelete}
+        >
+          Delete
+        </button>
+      </div>
 
-          {disease.imageUrl && (
-            <img src={disease.imageUrl} alt={disease.name} className="detail-image" />
-          )}
+      {/* Content grid */}
+      <div className="dm-detail-grid">
+        <Section title="Description" full>
+          <p>{disease.description}</p>
+        </Section>
 
-          <section className="detail-section">
-            <h2>Description</h2>
-            <p>{disease.description}</p>
-          </section>
+        <Section title="Causes">
+          <BulletList items={disease.causes} empty="No causes documented" />
+        </Section>
 
-          <section className="detail-section">
-            <h2>Causes</h2>
-            <ul>
-              {disease.causes.length > 0 ? (
-                disease.causes.map((cause, idx) => (
-                  <li key={idx}>{cause}</li>
-                ))
-              ) : (
-                <li>No causes documented</li>
-              )}
-            </ul>
-          </section>
+        <Section title="Symptoms">
+          <BulletList items={disease.symptoms} empty="No symptoms documented" />
+        </Section>
 
-          <section className="detail-section">
-            <h2>Symptoms</h2>
-            <ul>
-              {disease.symptoms.length > 0 ? (
-                disease.symptoms.map((symptom, idx) => (
-                  <li key={idx}>{symptom}</li>
-                ))
-              ) : (
-                <li>No symptoms documented</li>
-              )}
-            </ul>
-          </section>
+        <Section title="Prevention">
+          <BulletList items={disease.preventionMethods} empty="No prevention methods documented" />
+        </Section>
 
-          <section className="detail-section">
-            <h2>Prevention Methods</h2>
-            <ul>
-              {disease.preventionMethods.length > 0 ? (
-                disease.preventionMethods.map((method, idx) => (
-                  <li key={idx}>{method}</li>
-                ))
-              ) : (
-                <li>No prevention methods documented</li>
-              )}
-            </ul>
-          </section>
+        <Section title="Treatment">
+          <BulletList items={disease.treatmentMethods} empty="No treatment methods documented" />
+        </Section>
 
-          <section className="detail-section">
-            <h2>Treatment Methods</h2>
-            <ul>
-              {disease.treatmentMethods.length > 0 ? (
-                disease.treatmentMethods.map((method, idx) => (
-                  <li key={idx}>{method}</li>
-                ))
-              ) : (
-                <li>No treatment methods documented</li>
-              )}
-            </ul>
-          </section>
+        {disease.relatedDiseasesFrom && disease.relatedDiseasesFrom.length > 0 && (
+          <Section title="Related Diseases" full>
+            <div className="dm-related-chips">
+              {disease.relatedDiseasesFrom.map((r) => (
+                <span key={r.diseaseTo.id} className="dm-related-chip">{r.diseaseTo.name}</span>
+              ))}
+            </div>
+          </Section>
+        )}
 
-          <section className="detail-section">
-            <h2>Recovery Period</h2>
-            <p>{disease.recoveryPeriod}</p>
-          </section>
-
-          {disease.relatedDiseasesFrom && disease.relatedDiseasesFrom.length > 0 && (
-            <section className="detail-section">
-              <h2>Related Diseases</h2>
-              <ul>
-                {disease.relatedDiseasesFrom.map((relation) => (
-                  <li key={relation.diseaseTo.id}>{relation.diseaseTo.name}</li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {disease.medicines && disease.medicines.length > 0 && (
-            <section className="detail-section">
-              <h2>Associated Medicines</h2>
-              <div className="medicines-list">
-                {disease.medicines.map((medicine) => (
-                  <div key={medicine.id} className="medicine-item">
-                    <strong>{medicine.name}</strong>
-                    <span>{medicine.dosage}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
+        {disease.medicines && disease.medicines.length > 0 && (
+          <Section title="Associated Medicines" full>
+            <div className="dm-medicines-grid">
+              {disease.medicines.map((med) => (
+                <div key={med.id} className="dm-medicine-card">
+                  <div className="dm-medicine-name">{med.name}</div>
+                  <div className="dm-medicine-dosage">{med.dosage}</div>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
       </div>
     </div>
   )
