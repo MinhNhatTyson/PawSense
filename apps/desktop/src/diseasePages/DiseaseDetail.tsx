@@ -30,7 +30,21 @@ function BulletList({ items, empty = 'Not documented' }: { items: string[]; empt
   )
 }
 
+const COMMONALITY_CONFIG: Record<string, { label: string; class: string }> = {
+  RARE: { label: 'Rare', class: 'sym-rare' },
+  COMMON: { label: 'Common', class: 'sym-common' },
+  VERY_COMMON: { label: 'Very Common', class: 'sym-very-common' },
+}
+
+const ONSET_CONFIG: Record<string, string> = {
+  ACUTE: 'Acute',
+  SUBACUTE: 'Subacute',
+  CHRONIC: 'Chronic',
+}
+
 export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Props) {
+  const linkedSymptoms = disease.diseaseSymptoms || []
+
   return (
     <div className="dm-detail">
       {/* Hero */}
@@ -88,7 +102,7 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
           <BulletList items={disease.causes} empty="No causes documented" />
         </Section>
 
-        <Section title="Symptoms">
+        <Section title="Symptoms (free text)">
           <BulletList items={disease.symptoms} empty="No symptoms documented" />
         </Section>
 
@@ -98,6 +112,37 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
 
         <Section title="Treatment">
           <BulletList items={disease.treatmentMethods} empty="No treatment methods documented" />
+        </Section>
+
+        {/* Linked Symptoms from Symptom Library */}
+        <Section title={`Linked symptoms from library (${linkedSymptoms.length})`} full>
+          {linkedSymptoms.length === 0 ? (
+            <p className="dm-empty-section">No symptoms from the symptom library are linked to this disease yet.</p>
+          ) : (
+            <div className="dm-linked-symptoms-grid">
+              {linkedSymptoms.map((ds: any) => {
+                const symptom = ds.symptom
+                const commonality = COMMONALITY_CONFIG[symptom.commonality] || { label: symptom.commonality, class: 'sym-common' }
+                return (
+                  <div key={ds.id} className="dm-linked-symptom-card">
+                    <div className="dm-linked-symptom-top">
+                      <span className="dm-linked-symptom-name">{symptom.name}</span>
+                      <span className={`sym-badge ${commonality.class}`}>{commonality.label}</span>
+                    </div>
+                    <div className="dm-linked-symptom-meta">
+                      {symptom.affectedBodyArea && (
+                        <span className="dm-linked-symptom-area">{symptom.affectedBodyArea}</span>
+                      )}
+                      <span className="dm-linked-symptom-onset">{ONSET_CONFIG[symptom.onsetSpeed] || symptom.onsetSpeed}</span>
+                    </div>
+                    {symptom.description && (
+                      <p className="dm-linked-symptom-desc">{symptom.description}</p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </Section>
 
         {disease.relatedDiseasesFrom && disease.relatedDiseasesFrom.length > 0 && (

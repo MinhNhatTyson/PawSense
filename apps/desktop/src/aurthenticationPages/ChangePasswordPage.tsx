@@ -70,9 +70,17 @@ export function ChangePasswordPage() {
           </Link>
           <Link to="/diseases" className="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 1v14M1 8h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             Disease Library
+          </Link>
+          <Link to="/symptoms" className="nav-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M8 3v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+            Symptom Library
           </Link>
           <Link to="/profile" className="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

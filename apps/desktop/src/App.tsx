@@ -1,13 +1,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
-import { LoginPage } from './pages/LoginPage'
-import { RegisterPage } from './pages/RegisterPage'
-import { ChangePasswordPage } from './pages/ChangePasswordPage'
-import { ProfilePage } from './pages/ProfilePage'
-import { EditProfilePage } from './pages/EditProfilePage'
+import { LoginPage } from './aurthenticationPages/LoginPage'
+import { RegisterPage } from './aurthenticationPages/RegisterPage'
+import { ChangePasswordPage } from './aurthenticationPages/ChangePasswordPage'
+import { ProfilePage } from './aurthenticationPages/ProfilePage'
+import { EditProfilePage } from './aurthenticationPages/EditProfilePage'
 import { PawLogo } from './components/PawLogo'
-import DiseaseManagement from './DiseaseManagement'
+import DiseaseManagement from './diseasePages/DiseaseManagement'
+import SymptomManagement from './symptomPages/SymptomManagement'
 import './index.css'
 
 function DashboardPage() {
@@ -46,6 +47,13 @@ function DashboardPage() {
               <path d="M8 5v3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             Disease Library
+          </Link>
+          <Link to="/symptoms" className="nav-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M8 3v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+            Symptom Library
           </Link>
           <Link to="/profile" className="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -178,6 +186,17 @@ function DashboardPage() {
                 ),
               },
               {
+                to: '/symptoms',
+                label: 'Symptom Library',
+                description: 'Browse & manage symptom records',
+                icon: (
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M4 9h10M9 4v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                  </svg>
+                ),
+              },
+              {
                 to: '/profile',
                 label: 'My Profile',
                 description: 'View and update your details',
@@ -185,16 +204,6 @@ function DashboardPage() {
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                     <circle cx="9" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
                     <path d="M2 16c0-3.866 3.134-5 7-5s7 1.134 7 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                ),
-              },
-              {
-                to: '/profile/edit',
-                label: 'Edit Profile',
-                description: 'Update your clinic information',
-                icon: (
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M12 2.5l3.5 3.5-9 9H3v-3.5l9-9z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
                   </svg>
                 ),
               },
@@ -321,6 +330,7 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/diseases" element={<DiseaseManagement />} />
+      <Route path="/symptoms" element={<SymptomManagement />} />
       <Route
         path="/login"
         element={token ? <Navigate to="/dashboard" /> : <LoginPage />}

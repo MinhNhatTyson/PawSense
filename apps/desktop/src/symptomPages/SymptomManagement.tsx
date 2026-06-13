@@ -1,118 +1,155 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { diseaseAPI, type Disease } from './diseaseAPI'
-import { useAuth } from './contexts/AuthContext'
-import { PawLogo } from './components/PawLogo'
-import DiseaseList from './DiseaseList'
-import DiseaseDetail from './DiseaseDetail'
-import DiseaseForm from './DiseaseForm'
-import './DiseaseManagement.css'
+import { symptomAPI, type Symptom } from './symptomAPI'
+import { diseaseAPI, type Disease } from '../diseasePages/diseaseAPI'
+import { useAuth } from '../contexts/AuthContext'
+import { PawLogo } from '../components/PawLogo'
+import SymptomList from './SymptomList'
+import SymptomDetail from './SymptomDetail'
+import SymptomForm from './SymptomForm'
+import './SymptomManagement.css'
 
 type ViewMode = 'list' | 'detail' | 'create' | 'edit'
 
-const SEV_COLORS: Record<string, string> = {
-  LOW: '#2d7a4f',
-  MEDIUM: '#8b6340',
-  HIGH: '#c0392b',
-  CRITICAL: '#922b21',
+const COMMONALITY_COLORS: Record<string, string> = {
+  RARE: '#8b6340',
+  COMMON: '#2d5a3d',
+  VERY_COMMON: '#1a3a2a',
 }
 
-export default function DiseaseManagement() {
+export default function SymptomManagement() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const [viewMode, setViewMode] = useState<ViewMode>('list')
-  const [diseases, setDiseases] = useState<Disease[]>([])
-  const [selectedDisease, setSelectedDisease] = useState<Disease | null>(null)
-  const [editingDisease, setEditingDisease] = useState<Disease | null>(null)
+  const [symptoms, setSymptoms] = useState<Symptom[]>([])
+  const [allDiseases, setAllDiseases] = useState<Disease[]>([])
+  const [selectedSymptom, setSelectedSymptom] = useState<Symptom | null>(null)
+  const [editingSymptom, setEditingSymptom] = useState<Symptom | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [severity, setSeverity] = useState('')
+  const [commonalityFilter, setCommonalityFilter] = useState('')
+  const [onsetFilter, setOnsetFilter] = useState('')
   const [currentPage, setCurrentPage] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const itemsPerPage = 12
 
-  useEffect(() => { loadDiseases() }, [currentPage, search, severity])
+  useEffect(() => { loadSymptoms() }, [currentPage, search, commonalityFilter, onsetFilter])
+  useEffect(() => { loadAllDiseases() }, [])
 
-  const loadDiseases = async () => {
+  const loadSymptoms = async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await diseaseAPI.list(
-        currentPage * itemsPerPage, itemsPerPage,
-        search || undefined, severity || undefined
+      const res = await symptomAPI.list(
+        currentPage * itemsPerPage,
+        itemsPerPage,
+        search || undefined,
+        commonalityFilter || undefined,
+        onsetFilter || undefined
       )
-      setDiseases(res.data.data)
+      setSymptoms(res.data.data)
       setTotalItems(res.data.pagination.total)
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load diseases')
+      setError(err.response?.data?.error || 'Failed to load symptoms')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleCreate = async (
-    formData: Omit<Disease, 'id' | 'createdAt' | 'updatedAt'> & { relatedDiseaseIds?: string[] },
-    imageFile?: File
-  ) => {
-    setLoading(true); setError(null)
+  const loadAllDiseases = async () => {
     try {
-      await diseaseAPI.create(formData, imageFile)
-      setViewMode('list'); loadDiseases()
+      const res = await diseaseAPI.list(0, 200)
+      setAllDiseases(res.data.data)
+    } catch {
+      // non-critical
+    }
+  }
+
+  const handleCreate = async (
+    formData: Omit<Symptom, 'id' | 'createdAt' | 'updatedAt'> & { diseaseIds?: string[] }
+  ) => {
+    setLoading(true)
+    setError(null)
+    try {
+      await symptomAPI.create(formData)
+      setViewMode('list')
+      loadSymptoms()
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create disease')
-    } finally { setLoading(false) }
+      setError(err.response?.data?.error || 'Failed to create symptom')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleUpdate = async (
-    formData: Partial<Disease> & { relatedDiseaseIds?: string[] },
-    imageFile?: File
+    formData: Partial<Symptom> & { diseaseIds?: string[] }
   ) => {
-    if (!editingDisease) return
-    setLoading(true); setError(null)
+    if (!editingSymptom) return
+    setLoading(true)
+    setError(null)
     try {
-      await diseaseAPI.update(editingDisease.id, formData, imageFile)
-      setViewMode('list'); setEditingDisease(null); loadDiseases()
+      await symptomAPI.update(editingSymptom.id, formData)
+      setViewMode('list')
+      setEditingSymptom(null)
+      loadSymptoms()
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to update disease')
-    } finally { setLoading(false) }
+      setError(err.response?.data?.error || 'Failed to update symptom')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this disease record? This action cannot be undone.')) return
-    setLoading(true); setError(null)
+    if (!window.confirm('Delete this symptom record? This action cannot be undone.')) return
+    setLoading(true)
+    setError(null)
     try {
-      await diseaseAPI.delete(id)
-      loadDiseases(); setSelectedDisease(null); setViewMode('list')
+      await symptomAPI.delete(id)
+      loadSymptoms()
+      setSelectedSymptom(null)
+      setViewMode('list')
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to delete disease')
-    } finally { setLoading(false) }
+      setError(err.response?.data?.error || 'Failed to delete symptom')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleViewDetail = async (disease: Disease) => {
+  const handleViewDetail = async (symptom: Symptom) => {
     setLoading(true)
     try {
-      const res = await diseaseAPI.getById(disease.id)
-      setSelectedDisease(res.data); setViewMode('detail')
+      const res = await symptomAPI.getById(symptom.id)
+      setSelectedSymptom(res.data)
+      setViewMode('detail')
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load disease details')
-    } finally { setLoading(false) }
+      setError(err.response?.data?.error || 'Failed to load symptom details')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSearch = (q: string) => { setSearch(q); setCurrentPage(0) }
-  const handleSeverity = (s: string) => { setSeverity(s); setCurrentPage(0) }
+  const handleCommonality = (c: string) => { setCommonalityFilter(c); setCurrentPage(0) }
+  const handleOnset = (o: string) => { setOnsetFilter(o); setCurrentPage(0) }
+
   const totalPages = Math.ceil(totalItems / itemsPerPage)
 
-  // Severity counts for stat chips
-  const counts = diseases.reduce((acc, d) => {
-    acc[d.severity] = (acc[d.severity] || 0) + 1
+  const counts = symptoms.reduce((acc, s) => {
+    acc[s.commonality] = (acc[s.commonality] || 0) + 1
     return acc
   }, {} as Record<string, number>)
 
+  const COMMONALITY_LABELS: Record<string, string> = {
+    RARE: 'Rare',
+    COMMON: 'Common',
+    VERY_COMMON: 'Very Common',
+  }
+
   return (
-    <div className="dm-shell">
-      {/* ── Sidebar ── */}
+    <div className="sym-shell">
+      {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-brand">
           <PawLogo size={28} />
@@ -128,12 +165,19 @@ export default function DiseaseManagement() {
             </svg>
             Dashboard
           </Link>
-          <Link to="/diseases" className="nav-item active">
+          <Link to="/diseases" className="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             Disease Library
+          </Link>
+          <Link to="/symptoms" className="nav-item active">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M8 3v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+            Symptom Library
           </Link>
           <Link to="/profile" className="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -164,17 +208,17 @@ export default function DiseaseManagement() {
         </div>
       </aside>
 
-      {/* ── Main ── */}
-      <main className="dm-main">
-        {/* Header */}
+      {/* Main */}
+      <main className="sym-main">
+        {/* Page header */}
         {viewMode === 'list' && (
-          <div className="dm-page-header animate-in">
-            <div className="dm-title-block">
-              <h1 className="dm-title">Disease Library</h1>
-              <p className="dm-subtitle">
+          <div className="sym-page-header animate-in">
+            <div className="sym-title-block">
+              <h1 className="sym-title">Symptom Library</h1>
+              <p className="sym-subtitle">
                 {totalItems > 0
-                  ? `${totalItems} record${totalItems !== 1 ? 's' : ''} in the knowledge base`
-                  : 'Veterinary knowledge base'}
+                  ? `${totalItems} symptom${totalItems !== 1 ? 's' : ''} in the knowledge base`
+                  : 'Veterinary symptom knowledge base'}
               </p>
             </div>
             <button
@@ -185,14 +229,14 @@ export default function DiseaseManagement() {
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
               </svg>
-              New disease
+              New symptom
             </button>
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div className="dm-error animate-in">
+          <div className="sym-error animate-in">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -204,76 +248,83 @@ export default function DiseaseManagement() {
         {/* List view */}
         {viewMode === 'list' && (
           <>
-            {/* Severity stat chips */}
+            {/* Commonality stat chips */}
             {totalItems > 0 && (
-              <div className="dm-stats animate-in animate-in-delay-1">
-                {Object.entries(counts).map(([sev, count]) => (
+              <div className="sym-stats animate-in animate-in-delay-1">
+                {Object.entries(counts).map(([c, count]) => (
                   <div
-                    key={sev}
-                    className="dm-stat-chip"
+                    key={c}
+                    className="sym-stat-chip"
                     style={{ cursor: 'pointer' }}
-                    onClick={() => handleSeverity(severity === sev ? '' : sev)}
+                    onClick={() => handleCommonality(commonalityFilter === c ? '' : c)}
                   >
-                    <span
-                      className="dm-stat-dot"
-                      style={{ background: SEV_COLORS[sev] }}
-                    />
+                    <span className="sym-stat-dot" style={{ background: COMMONALITY_COLORS[c] }} />
                     <strong>{count}</strong>
-                    {sev.charAt(0) + sev.slice(1).toLowerCase()}
+                    {COMMONALITY_LABELS[c]}
                   </div>
                 ))}
               </div>
             )}
 
             {/* Toolbar */}
-            <div className="dm-toolbar animate-in animate-in-delay-1">
-              <div className="dm-search-wrap">
-                <svg className="dm-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <div className="sym-toolbar animate-in animate-in-delay-1">
+              <div className="sym-search-wrap">
+                <svg className="sym-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
                 <input
                   type="text"
-                  className="dm-search"
-                  placeholder="Search diseases, symptoms, causes…"
+                  className="sym-search"
+                  placeholder="Search symptoms, body areas, descriptions…"
                   value={search}
                   onChange={e => handleSearch(e.target.value)}
                 />
               </div>
 
               <select
-                className="dm-filter-select"
-                value={severity}
-                onChange={e => handleSeverity(e.target.value)}
+                className="sym-filter-select"
+                value={commonalityFilter}
+                onChange={e => handleCommonality(e.target.value)}
               >
-                <option value="">All severities</option>
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="CRITICAL">Critical</option>
+                <option value="">All commonalities</option>
+                <option value="RARE">Rare</option>
+                <option value="COMMON">Common</option>
+                <option value="VERY_COMMON">Very Common</option>
               </select>
 
-              {(search || severity) && (
+              <select
+                className="sym-filter-select"
+                value={onsetFilter}
+                onChange={e => handleOnset(e.target.value)}
+              >
+                <option value="">All onset speeds</option>
+                <option value="ACUTE">Acute</option>
+                <option value="SUBACUTE">Subacute</option>
+                <option value="CHRONIC">Chronic</option>
+              </select>
+
+              {(search || commonalityFilter || onsetFilter) && (
                 <button
                   className="btn btn-ghost"
                   style={{ width: 'auto', padding: '10px 14px', fontSize: 13 }}
-                  onClick={() => { handleSearch(''); handleSeverity('') }}
+                  onClick={() => { handleSearch(''); handleCommonality(''); handleOnset('') }}
                 >
                   Clear filters
                 </button>
               )}
             </div>
 
-            <DiseaseList
-              diseases={diseases}
+            <SymptomList
+              symptoms={symptoms}
               loading={loading}
               onViewDetail={handleViewDetail}
-              onEdit={d => { setEditingDisease(d); setViewMode('edit') }}
+              onEdit={s => { setEditingSymptom(s); setViewMode('edit') }}
               onDelete={handleDelete}
             />
 
             {totalItems > itemsPerPage && (
-              <div className="dm-pagination">
+              <div className="sym-pagination">
                 <button
                   className="btn btn-secondary"
                   style={{ width: 'auto', padding: '9px 18px', fontSize: 13 }}
@@ -282,7 +333,7 @@ export default function DiseaseManagement() {
                 >
                   ← Previous
                 </button>
-                <span className="dm-pagination-info">
+                <span className="sym-pagination-info">
                   Page {currentPage + 1} of {totalPages}
                 </span>
                 <button
@@ -299,19 +350,19 @@ export default function DiseaseManagement() {
         )}
 
         {/* Detail view */}
-        {viewMode === 'detail' && selectedDisease && (
-          <DiseaseDetail
-            disease={selectedDisease}
-            onEdit={() => { setEditingDisease(selectedDisease); setViewMode('edit') }}
-            onDelete={() => handleDelete(selectedDisease.id)}
-            onBack={() => { setViewMode('list'); setSelectedDisease(null) }}
+        {viewMode === 'detail' && selectedSymptom && (
+          <SymptomDetail
+            symptom={selectedSymptom}
+            onEdit={() => { setEditingSymptom(selectedSymptom); setViewMode('edit') }}
+            onDelete={() => handleDelete(selectedSymptom.id)}
+            onBack={() => { setViewMode('list'); setSelectedSymptom(null) }}
           />
         )}
 
         {/* Create form */}
         {viewMode === 'create' && (
-          <DiseaseForm
-            allDiseases={diseases}
+          <SymptomForm
+            allDiseases={allDiseases}
             onSubmit={handleCreate}
             loading={loading}
             onCancel={() => setViewMode('list')}
@@ -319,13 +370,13 @@ export default function DiseaseManagement() {
         )}
 
         {/* Edit form */}
-        {viewMode === 'edit' && editingDisease && (
-          <DiseaseForm
-            disease={editingDisease}
-            allDiseases={diseases}
+        {viewMode === 'edit' && editingSymptom && (
+          <SymptomForm
+            symptom={editingSymptom}
+            allDiseases={allDiseases}
             onSubmit={handleUpdate}
             loading={loading}
-            onCancel={() => { setViewMode('list'); setEditingDisease(null) }}
+            onCancel={() => { setViewMode('list'); setEditingSymptom(null) }}
           />
         )}
       </main>

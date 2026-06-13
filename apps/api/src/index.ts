@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import { authRouter } from './routes/auth.js'
 import { diseaseRouter } from './routes/disease.js'
+import { symptomRouter } from './routes/symptom.js'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -13,6 +14,7 @@ app.use(express.json())
 // Routes
 app.use('/api/auth', authRouter)
 app.use('/api/diseases', diseaseRouter)
+app.use('/api/symptoms', symptomRouter)
 
 // Health check
 app.get('/health', (_req, res) => {

@@ -8,7 +8,7 @@ const apiClient: AxiosInstance = axios.create({
 })
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken')
+  const token = localStorage.getItem('auth_token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -29,6 +29,20 @@ export interface Disease {
   relatedDiseasesFrom?: any[]
   relatedDiseasesTo?: any[]
   medicines?: any[]
+  diseaseSymptoms?: {
+    id: string
+    diseaseId: string
+    symptomId: string
+    symptom: {
+      id: string
+      name: string
+      description: string
+      affectedBodyArea?: string
+      commonality: string
+      onsetSpeed: string
+      notes?: string
+    }
+  }[]
   createdAt: string
   updatedAt: string
 }
@@ -47,6 +61,7 @@ export const diseaseAPI = {
   create: async (
     data: Omit<Disease, 'id' | 'createdAt' | 'updatedAt'> & {
       relatedDiseaseIds?: string[]
+      symptomIds?: string[]
     },
     imageFile?: File
   ) => {
@@ -55,7 +70,7 @@ export const diseaseAPI = {
     Object.entries(data).forEach(([key, value]) => {
       if (Array.isArray(value)) {
         formData.append(key, JSON.stringify(value))
-      } else {
+      } else if (value !== undefined && value !== null) {
         formData.append(key, String(value))
       }
     })
@@ -92,7 +107,10 @@ export const diseaseAPI = {
 
   update: async (
     id: string,
-    data: Partial<Disease> & { relatedDiseaseIds?: string[] },
+    data: Partial<Disease> & {
+      relatedDiseaseIds?: string[]
+      symptomIds?: string[]
+    },
     imageFile?: File
   ) => {
     const formData = new FormData()
