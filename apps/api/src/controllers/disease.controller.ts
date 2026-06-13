@@ -9,6 +9,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 })
 
+const diseaseInclude = {
+  relatedDiseasesFrom: { include: { diseaseTo: true } },
+  relatedDiseasesTo: { include: { diseaseFrom: true } },
+  medicines: true,
+  diseaseSymptoms: { include: { symptom: true } },
+}
+
 export async function createDisease(req: AuthRequest, res: Response) {
   const {
     name,
@@ -20,6 +27,7 @@ export async function createDisease(req: AuthRequest, res: Response) {
     treatmentMethods,
     recoveryPeriod,
     relatedDiseaseIds,
+    symptomIds,
   } = req.body as {
     name: string
     description: string
@@ -30,6 +38,7 @@ export async function createDisease(req: AuthRequest, res: Response) {
     treatmentMethods: string[]
     recoveryPeriod: string
     relatedDiseaseIds?: string[]
+    symptomIds?: string[]
   }
 
   if (!name || !description) {
@@ -48,7 +57,6 @@ export async function createDisease(req: AuthRequest, res: Response) {
   if (req.file) {
     const b64 = Buffer.from(req.file.buffer).toString('base64')
     const dataURI = `data:${req.file.mimetype};base64,${b64}`
-
     const cloudinaryRes = await cloudinary.uploader.upload(dataURI, {
       resource_type: 'auto',
       folder: 'PawSense/diseases',
@@ -56,28 +64,46 @@ export async function createDisease(req: AuthRequest, res: Response) {
     imageUrl = cloudinaryRes.secure_url
   }
 
+  const parsedCauses = Array.isArray(causes) ? causes : JSON.parse(causes || '[]')
+  const parsedSymptoms = Array.isArray(symptoms) ? symptoms : JSON.parse(symptoms || '[]')
+  const parsedPrevention = Array.isArray(preventionMethods) ? preventionMethods : JSON.parse(preventionMethods || '[]')
+  const parsedTreatment = Array.isArray(treatmentMethods) ? treatmentMethods : JSON.parse(treatmentMethods || '[]')
+  const parsedRelatedIds: string[] = Array.isArray(relatedDiseaseIds)
+    ? relatedDiseaseIds
+    : relatedDiseaseIds ? JSON.parse(relatedDiseaseIds) : []
+  const parsedSymptomIds: string[] = Array.isArray(symptomIds)
+    ? symptomIds
+    : symptomIds ? JSON.parse(symptomIds) : []
+
   const disease = await prisma.disease.create({
     data: {
       name,
       description,
-      causes: causes || [],
-      symptoms: symptoms || [],
+      causes: parsedCauses,
+      symptoms: parsedSymptoms,
       severity: severity || 'MEDIUM',
-      preventionMethods: preventionMethods || [],
-      treatmentMethods: treatmentMethods || [],
+      preventionMethods: parsedPrevention,
+      treatmentMethods: parsedTreatment,
       recoveryPeriod,
       imageUrl,
     },
   })
 
-  if (relatedDiseaseIds && relatedDiseaseIds.length > 0) {
+  if (parsedRelatedIds.length > 0) {
     await Promise.all(
-      relatedDiseaseIds.map((relatedId: string) =>
+      parsedRelatedIds.map((relatedId: string) =>
         prisma.relatedDisease.create({
-          data: {
-            diseaseFromId: disease.id,
-            diseaseToId: relatedId,
-          },
+          data: { diseaseFromId: disease.id, diseaseToId: relatedId },
+        })
+      )
+    )
+  }
+
+  if (parsedSymptomIds.length > 0) {
+    await Promise.all(
+      parsedSymptomIds.map((symptomId: string) =>
+        prisma.diseaseSymptom.create({
+          data: { diseaseId: disease.id, symptomId },
         })
       )
     )
@@ -85,11 +111,7 @@ export async function createDisease(req: AuthRequest, res: Response) {
 
   const fullDisease = await prisma.disease.findUnique({
     where: { id: disease.id },
-    include: {
-      relatedDiseasesFrom: { include: { diseaseTo: true } },
-      relatedDiseasesTo: { include: { diseaseFrom: true } },
-      medicines: true,
-    },
+    include: diseaseInclude,
   })
 
   res.status(201).json(fullDisease)
@@ -100,11 +122,7 @@ export async function getDisease(req: AuthRequest, res: Response) {
 
   const disease = await prisma.disease.findUnique({
     where: { id },
-    include: {
-      relatedDiseasesFrom: { include: { diseaseTo: true } },
-      relatedDiseasesTo: { include: { diseaseFrom: true } },
-      medicines: true,
-    },
+    include: diseaseInclude,
   })
 
   if (!disease) {
@@ -138,11 +156,7 @@ export async function listDiseases(req: AuthRequest, res: Response) {
   const [diseases, total] = await Promise.all([
     prisma.disease.findMany({
       where,
-      include: {
-        relatedDiseasesFrom: { include: { diseaseTo: true } },
-        relatedDiseasesTo: { include: { diseaseFrom: true } },
-        medicines: true,
-      },
+      include: diseaseInclude,
       skip: skipInt,
       take: takeInt,
     }),
@@ -177,11 +191,7 @@ export async function searchDiseases(req: AuthRequest, res: Response) {
         { causes: { hasSome: [q] } },
       ],
     },
-    include: {
-      relatedDiseasesFrom: { include: { diseaseTo: true } },
-      relatedDiseasesTo: { include: { diseaseFrom: true } },
-      medicines: true,
-    },
+    include: diseaseInclude,
     take: 20,
   })
 
@@ -200,6 +210,7 @@ export async function updateDisease(req: AuthRequest, res: Response) {
     treatmentMethods,
     recoveryPeriod,
     relatedDiseaseIds,
+    symptomIds,
   } = req.body as {
     name?: string
     description?: string
@@ -210,6 +221,7 @@ export async function updateDisease(req: AuthRequest, res: Response) {
     treatmentMethods?: string[]
     recoveryPeriod?: string
     relatedDiseaseIds?: string[]
+    symptomIds?: string[]
   }
 
   const disease = await prisma.disease.findUnique({ where: { id } })
@@ -233,10 +245,8 @@ export async function updateDisease(req: AuthRequest, res: Response) {
       const publicId = disease.imageUrl.split('/').slice(-1)[0].split('.')[0]
       await cloudinary.uploader.destroy(`PawSense/diseases/${publicId}`)
     }
-
     const b64 = Buffer.from(req.file.buffer).toString('base64')
     const dataURI = `data:${req.file.mimetype};base64,${b64}`
-
     const cloudinaryRes = await cloudinary.uploader.upload(dataURI, {
       resource_type: 'auto',
       folder: 'PawSense/diseases',
@@ -244,34 +254,61 @@ export async function updateDisease(req: AuthRequest, res: Response) {
     imageUrl = cloudinaryRes.secure_url
   }
 
-  const updated = await prisma.disease.update({
+  // Parse array fields that may come as JSON strings from FormData
+  const parsedCauses = causes
+    ? (Array.isArray(causes) ? causes : JSON.parse(causes))
+    : disease.causes
+  const parsedSymptoms = symptoms
+    ? (Array.isArray(symptoms) ? symptoms : JSON.parse(symptoms))
+    : disease.symptoms
+  const parsedPrevention = preventionMethods
+    ? (Array.isArray(preventionMethods) ? preventionMethods : JSON.parse(preventionMethods))
+    : disease.preventionMethods
+  const parsedTreatment = treatmentMethods
+    ? (Array.isArray(treatmentMethods) ? treatmentMethods : JSON.parse(treatmentMethods))
+    : disease.treatmentMethods
+
+  await prisma.disease.update({
     where: { id },
     data: {
       name: name ?? disease.name,
       description: description ?? disease.description,
-      causes: causes ?? disease.causes,
-      symptoms: symptoms ?? disease.symptoms,
+      causes: parsedCauses,
+      symptoms: parsedSymptoms,
       severity: severity ?? disease.severity,
-      preventionMethods: preventionMethods ?? disease.preventionMethods,
-      treatmentMethods: treatmentMethods ?? disease.treatmentMethods,
+      preventionMethods: parsedPrevention,
+      treatmentMethods: parsedTreatment,
       recoveryPeriod: recoveryPeriod ?? disease.recoveryPeriod,
       imageUrl,
     },
   })
 
   if (relatedDiseaseIds !== undefined) {
-    await prisma.relatedDisease.deleteMany({
-      where: { diseaseFromId: id },
-    })
-
-    if (relatedDiseaseIds.length > 0) {
+    const parsed: string[] = Array.isArray(relatedDiseaseIds)
+      ? relatedDiseaseIds
+      : JSON.parse(relatedDiseaseIds)
+    await prisma.relatedDisease.deleteMany({ where: { diseaseFromId: id } })
+    if (parsed.length > 0) {
       await Promise.all(
-        relatedDiseaseIds.map((relatedId: string) =>
+        parsed.map((relatedId: string) =>
           prisma.relatedDisease.create({
-            data: {
-              diseaseFromId: id,
-              diseaseToId: relatedId,
-            },
+            data: { diseaseFromId: id, diseaseToId: relatedId },
+          })
+        )
+      )
+    }
+  }
+
+  if (symptomIds !== undefined) {
+    const parsed: string[] = Array.isArray(symptomIds)
+      ? symptomIds
+      : JSON.parse(symptomIds)
+    await prisma.diseaseSymptom.deleteMany({ where: { diseaseId: id } })
+    if (parsed.length > 0) {
+      await Promise.all(
+        parsed.map((symptomId: string) =>
+          prisma.diseaseSymptom.create({
+            data: { diseaseId: id, symptomId },
           })
         )
       )
@@ -280,11 +317,7 @@ export async function updateDisease(req: AuthRequest, res: Response) {
 
   const fullDisease = await prisma.disease.findUnique({
     where: { id },
-    include: {
-      relatedDiseasesFrom: { include: { diseaseTo: true } },
-      relatedDiseasesTo: { include: { diseaseFrom: true } },
-      medicines: true,
-    },
+    include: diseaseInclude,
   })
 
   res.json(fullDisease)
@@ -305,6 +338,5 @@ export async function deleteDisease(req: AuthRequest, res: Response) {
   }
 
   await prisma.disease.delete({ where: { id } })
-
   res.status(204).send()
 }
