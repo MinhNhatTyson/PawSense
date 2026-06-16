@@ -38,7 +38,9 @@ const BODY_AREAS = [
 export default function SymptomForm({ symptom, allDiseases, onSubmit, loading, onCancel }: SymptomFormProps) {
   const [name, setName] = useState(symptom?.name || '')
   const [description, setDescription] = useState(symptom?.description || '')
-  const [affectedBodyArea, setAffectedBodyArea] = useState(symptom?.affectedBodyArea || '')
+  const [affectedBodyAreas, setAffectedBodyAreas] = useState<string[]>(
+    symptom?.affectedBodyAreas || []
+  )
   const [commonality, setCommonality] = useState<SymptomCommonality>(symptom?.commonality || 'COMMON')
   const [onsetSpeed, setOnsetSpeed] = useState<SymptomOnsetSpeed>(symptom?.onsetSpeed || 'ACUTE')
   const [notes, setNotes] = useState(symptom?.notes || '')
@@ -53,6 +55,12 @@ export default function SymptomForm({ symptom, allDiseases, onSubmit, loading, o
     d.name.toLowerCase().includes(diseaseSearch.toLowerCase())
   )
 
+  const toggleBodyArea = (area: string) => {
+    setAffectedBodyAreas(prev =>
+      prev.includes(area) ? prev.filter(x => x !== area) : [...prev, area]
+    )
+  }
+
   const toggleDisease = (id: string) => {
     setDiseaseIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -64,7 +72,7 @@ export default function SymptomForm({ symptom, allDiseases, onSubmit, loading, o
     onSubmit({
       name,
       description,
-      affectedBodyArea: affectedBodyArea || undefined,
+      affectedBodyAreas,
       commonality,
       onsetSpeed,
       notes: notes || undefined,
@@ -118,21 +126,36 @@ export default function SymptomForm({ symptom, allDiseases, onSubmit, loading, o
             />
           </div>
 
-          <div className="sym-form-row">
-            <div className="form-field" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="sym-area">Affected body area</label>
-              <select
-                id="sym-area"
-                className="sym-select"
-                value={affectedBodyArea}
-                onChange={e => setAffectedBodyArea(e.target.value)}
-                disabled={loading}
-              >
-                <option value="">— Select area —</option>
-                {BODY_AREAS.map(area => (
-                  <option key={area} value={area}>{area}</option>
-                ))}
-              </select>
+          {/* Body areas — multi-select checkbox grid */}
+          <div className="form-field" style={{ marginBottom: 0 }}>
+            <label className="form-label">
+              Affected body areas
+              {affectedBodyAreas.length > 0 && (
+                <span className="sym-link-count" style={{ marginLeft: 8 }}>
+                  {affectedBodyAreas.length} selected
+                </span>
+              )}
+            </label>
+            <div className="sym-body-areas-grid">
+              {BODY_AREAS.map(area => {
+                const checked = affectedBodyAreas.includes(area)
+                return (
+                  <label
+                    key={area}
+                    className={`sym-body-area-option${checked ? ' checked' : ''}`}
+                    onClick={() => !loading && toggleBodyArea(area)}
+                  >
+                    <span className="sym-checkmark">
+                      {checked && (
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </span>
+                    {area}
+                  </label>
+                )
+              })}
             </div>
           </div>
         </div>

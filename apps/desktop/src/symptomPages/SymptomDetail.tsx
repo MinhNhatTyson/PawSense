@@ -32,6 +32,7 @@ export default function SymptomDetail({ symptom, onEdit, onDelete, onBack }: Pro
   const linkedDiseases = symptom.diseaseSymptoms || []
   const commonality = COMMONALITY_CONFIG[symptom.commonality]
   const onset = ONSET_CONFIG[symptom.onsetSpeed]
+  const areas = symptom.affectedBodyAreas || []
 
   return (
     <div className="sym-detail">
@@ -43,15 +44,15 @@ export default function SymptomDetail({ symptom, onEdit, onDelete, onBack }: Pro
             <span className={`sym-badge sym-badge-lg ${commonality.class}`}>
               {commonality.label}
             </span>
-            {symptom.affectedBodyArea && (
-              <span className="sym-detail-hero-area">
+            {areas.length > 0 && areas.map(area => (
+              <span key={area} className="sym-detail-hero-area">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <circle cx="7" cy="5" r="3" stroke="currentColor" strokeWidth="1.3"/>
                   <path d="M1 13c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
                 </svg>
-                {symptom.affectedBodyArea}
+                {area}
               </span>
-            )}
+            ))}
             <span className="sym-detail-hero-onset">
               {onset.label}
             </span>
@@ -95,10 +96,16 @@ export default function SymptomDetail({ symptom, onEdit, onDelete, onBack }: Pro
               <span className="sym-detail-profile-value">{onset.label}</span>
               <span className="sym-detail-profile-desc">{onset.desc}</span>
             </div>
-            {symptom.affectedBodyArea && (
+            {areas.length > 0 && (
               <div className="sym-detail-profile-item">
-                <span className="sym-detail-profile-label">Affected area</span>
-                <span className="sym-detail-profile-value">{symptom.affectedBodyArea}</span>
+                <span className="sym-detail-profile-label">
+                  Affected body {areas.length === 1 ? 'area' : 'areas'}
+                </span>
+                <div className="sym-detail-areas-chips">
+                  {areas.map(area => (
+                    <span key={area} className="sym-area-chip">{area}</span>
+                  ))}
+                </div>
               </div>
             )}
           </div>
