@@ -11,6 +11,7 @@ import DiseaseManagement from './diseasePages/DiseaseManagement'
 import SymptomManagement from './symptomPages/SymptomManagement'
 import './index.css'
 
+// ── Dashboard Page (unchanged, keep the full existing component) ──
 function DashboardPage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -24,13 +25,11 @@ function DashboardPage() {
 
   return (
     <div className="app-shell">
-      {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-brand">
           <PawLogo size={28} />
           <span className="sidebar-brand-name">Paw<span>Sense</span></span>
         </div>
-
         <nav className="sidebar-nav">
           <Link to="/dashboard" className="nav-item active">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -69,9 +68,7 @@ function DashboardPage() {
             </svg>
             Change Password
           </Link>
-
           <div style={{ flex: 1 }} />
-
           <button onClick={handleLogout} className="nav-item nav-danger">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M11 11l3-3-3-3M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -79,7 +76,6 @@ function DashboardPage() {
             Sign out
           </button>
         </nav>
-
         <div className="sidebar-user">
           <div className="sidebar-user-name">{user?.profile?.fullName || 'User'}</div>
           <div className="sidebar-user-role">{user?.role === 'VET' ? 'Veterinarian' : 'Pet Owner'}</div>
@@ -87,7 +83,6 @@ function DashboardPage() {
         </div>
       </aside>
 
-      {/* Main content */}
       <main className="main-content">
         <div className="page-header animate-in">
           <h1 className="page-title">
@@ -99,7 +94,6 @@ function DashboardPage() {
           <p className="page-subtitle">Here's an overview of your PawSense workspace</p>
         </div>
 
-        {/* Stats row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
           {[
             { label: 'Disease Records', value: '—', icon: (
@@ -156,7 +150,6 @@ function DashboardPage() {
           ))}
         </div>
 
-        {/* Quick actions */}
         <div className="animate-in animate-in-delay-2" style={{
           background: '#fff',
           border: '1px solid var(--warm-white)',
@@ -171,53 +164,32 @@ function DashboardPage() {
             </h2>
             <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Navigate to the most common tasks</p>
           </div>
-
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
             {[
-              {
-                to: '/diseases',
-                label: 'Disease Library',
-                description: 'Browse & manage disease records',
-                icon: (
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M9 5v4l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                ),
-              },
-              {
-                to: '/symptoms',
-                label: 'Symptom Library',
-                description: 'Browse & manage symptom records',
-                icon: (
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M4 9h10M9 4v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                  </svg>
-                ),
-              },
-              {
-                to: '/profile',
-                label: 'My Profile',
-                description: 'View and update your details',
-                icon: (
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <circle cx="9" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M2 16c0-3.866 3.134-5 7-5s7 1.134 7 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                ),
-              },
-              {
-                to: '/change-password',
-                label: 'Change Password',
-                description: 'Update your login credentials',
-                icon: (
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <rect x="3" y="8" width="12" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M6 8V6a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                ),
-              },
+              { to: '/diseases', label: 'Disease Library', description: 'Browse & manage disease records', icon: (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M9 5v4l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              )},
+              { to: '/symptoms', label: 'Symptom Library', description: 'Browse & manage symptom records', icon: (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M4 9h10M9 4v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                </svg>
+              )},
+              { to: '/profile', label: 'My Profile', description: 'View and update your details', icon: (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <circle cx="9" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M2 16c0-3.866 3.134-5 7-5s7 1.134 7 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              )},
+              { to: '/change-password', label: 'Change Password', description: 'Update your login credentials', icon: (
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <rect x="3" y="8" width="12" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M6 8V6a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              )},
             ].map((action) => (
               <Link
                 key={action.to}
@@ -271,25 +243,13 @@ function DashboardPage() {
           </div>
         </div>
 
-        {/* Avatar bottom-right decoration */}
         <div className="animate-in animate-in-delay-3" style={{
-          position: 'fixed',
-          bottom: 32,
-          right: 32,
-          width: 48,
-          height: 48,
-          borderRadius: '50%',
-          background: 'var(--green-pale)',
-          border: '2px solid var(--green-sage)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: 'var(--font-display)',
-          fontSize: 20,
-          fontWeight: 500,
-          color: 'var(--green-forest)',
-          cursor: 'pointer',
-          boxShadow: 'var(--shadow-md)',
+          position: 'fixed', bottom: 32, right: 32,
+          width: 48, height: 48, borderRadius: '50%',
+          background: 'var(--green-pale)', border: '2px solid var(--green-sage)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500,
+          color: 'var(--green-forest)', cursor: 'pointer', boxShadow: 'var(--shadow-md)',
         }}
           onClick={() => navigate('/profile')}
           title="Go to profile"
@@ -304,14 +264,9 @@ function DashboardPage() {
 function UnauthorizedPage() {
   return (
     <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'var(--cream)',
-      gap: 'var(--space-md)',
-      fontFamily: 'var(--font-body)',
+      minHeight: '100vh', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      background: 'var(--cream)', gap: 'var(--space-md)', fontFamily: 'var(--font-body)',
     }}>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, color: 'var(--text-primary)', fontWeight: 400 }}>
         Access Denied
@@ -325,12 +280,32 @@ function UnauthorizedPage() {
 }
 
 function AppContent() {
-  const { token } = useAuth()
+  const { token, isInitializing } = useAuth()
+
+  // Block rendering until auth state is resolved
+  if (isInitializing) {
+    return <div className="loading-screen">Loading…</div>
+  }
 
   return (
     <Routes>
-      <Route path="/diseases" element={<DiseaseManagement />} />
-      <Route path="/symptoms" element={<SymptomManagement />} />
+      {/* Protected library routes */}
+      <Route
+        path="/diseases"
+        element={
+          <ProtectedRoute>
+            <DiseaseManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/symptoms"
+        element={
+          <ProtectedRoute>
+            <SymptomManagement />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/login"
         element={token ? <Navigate to="/dashboard" /> : <LoginPage />}
