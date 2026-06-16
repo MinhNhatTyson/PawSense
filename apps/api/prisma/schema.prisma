@@ -81,7 +81,7 @@ model Symptom {
   id               String            @id @default(uuid())
   name             String            @unique
   description      String
-  affectedBodyArea String?
+  affectedBodyAreas String[]
   commonality      SymptomCommonality @default(COMMON)
   onsetSpeed       SymptomOnsetSpeed  @default(ACUTE)
   notes            String?

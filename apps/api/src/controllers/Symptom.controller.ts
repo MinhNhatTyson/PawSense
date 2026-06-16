@@ -6,7 +6,7 @@ export async function createSymptom(req: AuthRequest, res: Response) {
   const {
     name,
     description,
-    affectedBodyArea,
+    affectedBodyAreas,
     commonality,
     onsetSpeed,
     notes,
@@ -14,7 +14,7 @@ export async function createSymptom(req: AuthRequest, res: Response) {
   } = req.body as {
     name: string
     description: string
-    affectedBodyArea?: string
+    affectedBodyAreas?: string[]
     commonality?: 'RARE' | 'COMMON' | 'VERY_COMMON'
     onsetSpeed?: 'ACUTE' | 'SUBACUTE' | 'CHRONIC'
     notes?: string
@@ -32,11 +32,17 @@ export async function createSymptom(req: AuthRequest, res: Response) {
     return
   }
 
+  const parsedAreas: string[] = Array.isArray(affectedBodyAreas)
+    ? affectedBodyAreas
+    : affectedBodyAreas
+    ? JSON.parse(affectedBodyAreas)
+    : []
+
   const symptom = await prisma.symptom.create({
     data: {
       name,
       description,
-      affectedBodyArea: affectedBodyArea || null,
+      affectedBodyAreas: parsedAreas,
       commonality: commonality || 'COMMON',
       onsetSpeed: onsetSpeed || 'ACUTE',
       notes: notes || null,
@@ -100,14 +106,13 @@ export async function listSymptoms(req: AuthRequest, res: Response) {
     where.OR = [
       { name: { contains: search as string, mode: 'insensitive' } },
       { description: { contains: search as string, mode: 'insensitive' } },
-      { affectedBodyArea: { contains: search as string, mode: 'insensitive' } },
     ]
   }
 
   if (commonality) where.commonality = commonality
   if (onsetSpeed) where.onsetSpeed = onsetSpeed
   if (affectedBodyArea) {
-    where.affectedBodyArea = { contains: affectedBodyArea as string, mode: 'insensitive' }
+    where.affectedBodyAreas = { has: affectedBodyArea as string }
   }
 
   const [symptoms, total] = await Promise.all([
@@ -147,7 +152,6 @@ export async function searchSymptoms(req: AuthRequest, res: Response) {
       OR: [
         { name: { contains: q, mode: 'insensitive' } },
         { description: { contains: q, mode: 'insensitive' } },
-        { affectedBodyArea: { contains: q, mode: 'insensitive' } },
       ],
     },
     include: {
@@ -165,7 +169,7 @@ export async function updateSymptom(req: AuthRequest, res: Response) {
   const {
     name,
     description,
-    affectedBodyArea,
+    affectedBodyAreas,
     commonality,
     onsetSpeed,
     notes,
@@ -173,7 +177,7 @@ export async function updateSymptom(req: AuthRequest, res: Response) {
   } = req.body as {
     name?: string
     description?: string
-    affectedBodyArea?: string
+    affectedBodyAreas?: string[]
     commonality?: 'RARE' | 'COMMON' | 'VERY_COMMON'
     onsetSpeed?: 'ACUTE' | 'SUBACUTE' | 'CHRONIC'
     notes?: string
@@ -194,12 +198,19 @@ export async function updateSymptom(req: AuthRequest, res: Response) {
     }
   }
 
+  const parsedAreas: string[] | undefined =
+    affectedBodyAreas !== undefined
+      ? Array.isArray(affectedBodyAreas)
+        ? affectedBodyAreas
+        : JSON.parse(affectedBodyAreas)
+      : undefined
+
   await prisma.symptom.update({
     where: { id },
     data: {
       name: name ?? symptom.name,
       description: description ?? symptom.description,
-      affectedBodyArea: affectedBodyArea !== undefined ? affectedBodyArea || null : symptom.affectedBodyArea,
+      affectedBodyAreas: parsedAreas !== undefined ? parsedAreas : symptom.affectedBodyAreas,
       commonality: commonality ?? symptom.commonality,
       onsetSpeed: onsetSpeed ?? symptom.onsetSpeed,
       notes: notes !== undefined ? notes || null : symptom.notes,

@@ -858,3 +858,84 @@
   .sym-shell { grid-template-columns: 1fr; }
   .sym-page-header { flex-direction: column; align-items: flex-start; }
 }
+
+/* ── Body area multi-select grid (form) ──────────── */
+.sym-body-areas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sym-body-area-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: var(--ivory);
+  border: 1.5px solid var(--warm-white);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-body);
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.sym-body-area-option:hover {
+  border-color: var(--green-pale);
+  background: var(--green-pale);
+}
+
+.sym-body-area-option.checked {
+  background: var(--green-pale);
+  border-color: var(--green-sage);
+  color: var(--green-forest);
+  font-weight: 500;
+}
+
+/* ── Body area chips (card list view) ────────────── */
+.sym-card-areas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.sym-card-area {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--ivory);
+  border: 1px solid var(--warm-white);
+  border-radius: 100px;
+  padding: 2px 7px;
+}
+
+.sym-card-area-more {
+  font-size: 11px;
+  color: var(--text-light);
+  padding: 2px 4px;
+}
+
+/* ── Body area chips (detail view) ──────────────── */
+.sym-detail-areas-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.sym-area-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--green-pale);
+  border: 1px solid rgba(74,124,95,0.15);
+  border-radius: 100px;
+  font-size: 12px;
+  color: var(--green-forest);
+  font-weight: 500;
+} 

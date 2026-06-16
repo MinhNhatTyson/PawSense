@@ -8,7 +8,7 @@ const apiClient: AxiosInstance = axios.create({
 })
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken') || localStorage.getItem('auth_token')
+  const token = localStorage.getItem('auth_token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -33,7 +33,7 @@ export interface Symptom {
   id: string
   name: string
   description: string
-  affectedBodyArea?: string
+  affectedBodyAreas: string[]
   commonality: SymptomCommonality
   onsetSpeed: SymptomOnsetSpeed
   notes?: string

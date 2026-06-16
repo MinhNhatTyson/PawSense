@@ -58,6 +58,9 @@ export default function SymptomList({
         const visibleDiseases = linkedDiseases.slice(0, 3)
         const extra = linkedDiseases.length - 3
         const onset = ONSET_CONFIG[symptom.onsetSpeed]
+        const areas = symptom.affectedBodyAreas || []
+        const visibleAreas = areas.slice(0, 2)
+        const extraAreas = areas.length - 2
 
         return (
           <div
@@ -71,14 +74,21 @@ export default function SymptomList({
                 <CommonalityBadge c={symptom.commonality} />
               </div>
               <div className="sym-card-meta-row">
-                {symptom.affectedBodyArea && (
-                  <span className="sym-card-area">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <circle cx="6" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.2"/>
-                      <path d="M1 11c0-2.761 2.239-4 5-4s5 1.239 5 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                    </svg>
-                    {symptom.affectedBodyArea}
-                  </span>
+                {areas.length > 0 && (
+                  <div className="sym-card-areas">
+                    {visibleAreas.map(area => (
+                      <span key={area} className="sym-card-area">
+                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                          <circle cx="6" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.2"/>
+                          <path d="M1 11c0-2.761 2.239-4 5-4s5 1.239 5 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                        </svg>
+                        {area}
+                      </span>
+                    ))}
+                    {extraAreas > 0 && (
+                      <span className="sym-card-area-more">+{extraAreas}</span>
+                    )}
+                  </div>
                 )}
                 <span className="sym-card-onset">
                   <span className="sym-onset-icon">{onset.icon}</span>
@@ -115,25 +125,13 @@ export default function SymptomList({
             </div>
 
             <div className="sym-card-footer">
-              <button
-                className="btn btn-ghost"
-                style={{ fontSize: 13 }}
-                onClick={() => onViewDetail(symptom)}
-              >
+              <button className="btn btn-ghost" style={{ fontSize: 13 }} onClick={() => onViewDetail(symptom)}>
                 View details
               </button>
-              <button
-                className="btn btn-secondary"
-                style={{ fontSize: 13, flex: 'none', padding: '8px 12px' }}
-                onClick={() => onEdit(symptom)}
-              >
+              <button className="btn btn-secondary" style={{ fontSize: 13, flex: 'none', padding: '8px 12px' }} onClick={() => onEdit(symptom)}>
                 Edit
               </button>
-              <button
-                className="btn btn-danger"
-                style={{ fontSize: 13, flex: 'none', padding: '8px 12px' }}
-                onClick={() => onDelete(symptom.id)}
-              >
+              <button className="btn btn-danger" style={{ fontSize: 13, flex: 'none', padding: '8px 12px' }} onClick={() => onDelete(symptom.id)}>
                 Delete
               </button>
             </div>
