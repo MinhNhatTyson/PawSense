@@ -9,6 +9,7 @@ import { EditProfilePage } from './aurthenticationPages/EditProfilePage'
 import { PawLogo } from './components/PawLogo'
 import DiseaseManagement from './diseasePages/DiseaseManagement'
 import SymptomManagement from './symptomPages/SymptomManagement'
+import TreatmentManagement from './treatmentPages/TreatmentManagement'
 import './index.css'
 
 // ── Dashboard Page (unchanged, keep the full existing component) ──
@@ -53,6 +54,13 @@ function DashboardPage() {
               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
             </svg>
             Symptom Library
+          </Link>
+          <Link to="/treatments" className="nav-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M5 8h6M8 5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+            Treatment Library
           </Link>
           <Link to="/profile" className="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -303,6 +311,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <SymptomManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/treatments"
+        element={
+          <ProtectedRoute>
+            <TreatmentManagement />
           </ProtectedRoute>
         }
       />
