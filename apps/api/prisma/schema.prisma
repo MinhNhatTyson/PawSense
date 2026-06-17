@@ -54,6 +54,7 @@ model Disease {
   relatedDiseasesFrom RelatedDisease[]  @relation("diseaseFrom")
   relatedDiseasesTo   RelatedDisease[]  @relation("diseaseTo")
   diseaseSymptoms     DiseaseSymptom[]
+  diseaseTreatments   DiseaseTreatment[]
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 }
@@ -123,4 +124,42 @@ enum SymptomOnsetSpeed {
   ACUTE
   SUBACUTE
   CHRONIC
+}
+
+model Treatment {
+  id                 String               @id @default(uuid())
+  name               String               @unique
+  description        String
+  contraindications  String[]
+  vetNotes           String?
+  estimatedDuration  String?
+  estimatedCost      String?
+  successRate        Float?
+  imageUrl           String?
+  steps              TreatmentStep[]
+  diseaseTreatments  DiseaseTreatment[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+}
+
+model TreatmentStep {
+  id              String    @id @default(uuid())
+  treatmentId     String
+  treatment       Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+  stepOrder       Int
+  title           String
+  description     String
+  durationMinutes Int?
+  createdAt       DateTime  @default(now())
+}
+
+model DiseaseTreatment {
+  id          String    @id @default(uuid())
+  diseaseId   String
+  treatmentId String
+  disease     Disease   @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+  treatment   Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([diseaseId, treatmentId])
 }

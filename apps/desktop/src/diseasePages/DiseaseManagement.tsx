@@ -159,6 +159,13 @@ export default function DiseaseManagement() {
             </svg>
             Symptom Library
           </Link>
+          <Link to="/treatments" className="nav-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M5 8h6M8 5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+            Treatment Library
+          </Link>
           <Link to="/profile" className="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.5"/>
