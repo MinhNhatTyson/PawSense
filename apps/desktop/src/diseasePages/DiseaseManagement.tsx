@@ -7,6 +7,7 @@ import { PawLogo } from '../components/PawLogo'
 import DiseaseList from './DiseaseList'
 import DiseaseDetail from './DiseaseDetail'
 import DiseaseForm from './DiseaseForm'
+import { treatmentAPI, type Treatment } from '../treatmentPages/treatmentAPI'
 import './DiseaseManagement.css'
 
 type ViewMode = 'list' | 'detail' | 'create' | 'edit'
@@ -25,6 +26,7 @@ export default function DiseaseManagement() {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [diseases, setDiseases] = useState<Disease[]>([])
   const [allSymptoms, setAllSymptoms] = useState<Symptom[]>([])
+  const [allTreatments, setAllTreatments] = useState<Treatment[]>([])
   const [selectedDisease, setSelectedDisease] = useState<Disease | null>(null)
   const [editingDisease, setEditingDisease] = useState<Disease | null>(null)
   const [loading, setLoading] = useState(false)
@@ -37,6 +39,7 @@ export default function DiseaseManagement() {
 
   useEffect(() => { loadDiseases() }, [currentPage, search, severity])
   useEffect(() => { loadAllSymptoms() }, [])
+  useEffect(() => { loadAllTreatments() }, [])
 
   const loadDiseases = async () => {
     setLoading(true)
@@ -63,6 +66,15 @@ export default function DiseaseManagement() {
       // non-critical
     }
   }
+
+  const loadAllTreatments = async () => {
+  try {
+    const res = await treatmentAPI.list(0, 200)
+    setAllTreatments(res.data.data)
+  } catch {
+    // non-critical
+  }
+}
 
   const handleCreate = async (
     formData: Omit<Disease, 'id' | 'createdAt' | 'updatedAt'> & {
@@ -334,6 +346,7 @@ export default function DiseaseManagement() {
           <DiseaseForm
             allDiseases={diseases}
             allSymptoms={allSymptoms}
+            allTreatments={allTreatments}
             onSubmit={handleCreate}
             loading={loading}
             onCancel={() => setViewMode('list')}
@@ -345,6 +358,7 @@ export default function DiseaseManagement() {
             disease={editingDisease}
             allDiseases={diseases}
             allSymptoms={allSymptoms}
+            allTreatments={allTreatments}
             onSubmit={handleUpdate}
             loading={loading}
             onCancel={() => { setViewMode('list'); setEditingDisease(null) }}

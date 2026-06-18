@@ -4,7 +4,7 @@ import cors from 'cors'
 import { authRouter } from './routes/auth.js'
 import { diseaseRouter } from './routes/disease.js'
 import { symptomRouter } from './routes/symptom.js'
-import { treatmentRouter } from './routes/treatment.js'
+import { treatmentRouter } from './routes/treatment.route.js'
 const app = express()
 const PORT = process.env.PORT ?? 3000
 

@@ -43,6 +43,18 @@ export interface Disease {
       notes?: string
     }
   }[]
+  diseaseTreatments?: {
+    id: string
+    diseaseId: string
+    treatmentId: string
+    treatment: {
+      id: string
+      name: string
+      estimatedDuration?: string
+      successRate?: number
+      steps: { id: string; stepOrder: number; title: string }[]
+    }
+  }[]
   createdAt: string
   updatedAt: string
 }
@@ -62,6 +74,7 @@ export const diseaseAPI = {
     data: Omit<Disease, 'id' | 'createdAt' | 'updatedAt'> & {
       relatedDiseaseIds?: string[]
       symptomIds?: string[]
+      treatmentIds?: string[]
     },
     imageFile?: File
   ) => {
@@ -110,6 +123,7 @@ export const diseaseAPI = {
     data: Partial<Disease> & {
       relatedDiseaseIds?: string[]
       symptomIds?: string[]
+      treatmentIds?: string[]
     },
     imageFile?: File
   ) => {
