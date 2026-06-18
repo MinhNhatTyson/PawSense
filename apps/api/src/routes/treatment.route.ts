@@ -7,7 +7,7 @@ import {
   searchTreatments,
   updateTreatment,
   deleteTreatment,
-} from '../controllers/treatment.controller.js'
+} from '../controllers/Treatment.controller.js'
 import { authenticate, requireVet } from '../middleware/auth.middleware.js'
 
 const upload = multer({ storage: multer.memoryStorage() })

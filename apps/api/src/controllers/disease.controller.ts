@@ -14,6 +14,7 @@ const diseaseInclude = {
   relatedDiseasesTo: { include: { diseaseFrom: true } },
   medicines: true,
   diseaseSymptoms: { include: { symptom: true } },
+  diseaseTreatments: { include: { treatment: { include: { steps: { orderBy: { stepOrder: 'asc' as const } } } } } },
 }
 
 export async function createDisease(req: AuthRequest, res: Response) {
@@ -28,6 +29,7 @@ export async function createDisease(req: AuthRequest, res: Response) {
     recoveryPeriod,
     relatedDiseaseIds,
     symptomIds,
+    treatmentIds,
   } = req.body as {
     name: string
     description: string
@@ -39,6 +41,7 @@ export async function createDisease(req: AuthRequest, res: Response) {
     recoveryPeriod: string
     relatedDiseaseIds?: string[]
     symptomIds?: string[]
+    treatmentIds?: string[]
   }
 
   if (!name || !description) {
@@ -75,6 +78,10 @@ export async function createDisease(req: AuthRequest, res: Response) {
     ? symptomIds
     : symptomIds ? JSON.parse(symptomIds) : []
 
+  const parsedTreatmentIds: string[] = Array.isArray(treatmentIds)
+    ? treatmentIds
+    : treatmentIds ? JSON.parse(treatmentIds) : []
+
   const disease = await prisma.disease.create({
     data: {
       name,
@@ -104,6 +111,16 @@ export async function createDisease(req: AuthRequest, res: Response) {
       parsedSymptomIds.map((symptomId: string) =>
         prisma.diseaseSymptom.create({
           data: { diseaseId: disease.id, symptomId },
+        })
+      )
+    )
+  }
+
+  if (parsedTreatmentIds.length > 0) {
+    await Promise.all(
+      parsedTreatmentIds.map((treatmentId: string) =>
+        prisma.diseaseTreatment.create({
+          data: { diseaseId: disease.id, treatmentId },
         })
       )
     )
@@ -211,6 +228,7 @@ export async function updateDisease(req: AuthRequest, res: Response) {
     recoveryPeriod,
     relatedDiseaseIds,
     symptomIds,
+    treatmentIds,
   } = req.body as {
     name?: string
     description?: string
@@ -222,6 +240,7 @@ export async function updateDisease(req: AuthRequest, res: Response) {
     recoveryPeriod?: string
     relatedDiseaseIds?: string[]
     symptomIds?: string[]
+    treatmentIds?: string[]
   }
 
   const disease = await prisma.disease.findUnique({ where: { id } })
@@ -309,6 +328,22 @@ export async function updateDisease(req: AuthRequest, res: Response) {
         parsed.map((symptomId: string) =>
           prisma.diseaseSymptom.create({
             data: { diseaseId: id, symptomId },
+          })
+        )
+      )
+    }
+  }
+
+  if (treatmentIds !== undefined) {
+    const parsed: string[] = Array.isArray(treatmentIds)
+      ? treatmentIds
+      : JSON.parse(treatmentIds)
+    await prisma.diseaseTreatment.deleteMany({ where: { diseaseId: id } })
+    if (parsed.length > 0) {
+      await Promise.all(
+        parsed.map((treatmentId: string) =>
+          prisma.diseaseTreatment.create({
+            data: { diseaseId: id, treatmentId },
           })
         )
       )

@@ -42,6 +42,9 @@ const ONSET_CONFIG: Record<string, string> = {
   CHRONIC: 'Chronic',
 }
 
+const STEP_COUNT_CONFIG = (count: number) =>
+  `${count} step${count !== 1 ? 's' : ''}`
+
 export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Props) {
   const linkedSymptoms = disease.diseaseSymptoms || []
 
@@ -144,6 +147,48 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
             </div>
           )}
         </Section>
+
+        {/* Linked Treatments */}
+        {(() => {
+          const linkedTreatments = (disease as any).diseaseTreatments || []
+          return (
+            <Section title={`Linked treatment protocols (${linkedTreatments.length})`} full>
+              {linkedTreatments.length === 0 ? (
+                <p className="dm-empty-section">No treatment protocols from the library are linked to this disease yet.</p>
+              ) : (
+                <div className="dm-linked-symptoms-grid">
+                  {linkedTreatments.map((dt: any) => {
+                    const t = dt.treatment
+                    return (
+                      <div key={dt.id} className="dm-linked-symptom-card">
+                        <div className="dm-linked-symptom-top">
+                          <span className="dm-linked-symptom-name">{t.name}</span>
+                          {t.steps?.length > 0 && (
+                            <span style={{
+                              fontSize: 10, padding: '2px 8px',
+                              background: 'var(--green-pale)', color: 'var(--green-forest)',
+                              borderRadius: 100, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
+                            }}>
+                              {STEP_COUNT_CONFIG(t.steps.length)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="dm-linked-symptom-meta">
+                          {t.estimatedDuration && (
+                            <span className="dm-linked-symptom-onset">{t.estimatedDuration}</span>
+                          )}
+                          {t.successRate !== undefined && t.successRate !== null && (
+                            <span className="dm-linked-symptom-onset">{t.successRate}% success</span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </Section>
+          )
+        })()}
 
         {disease.relatedDiseasesFrom && disease.relatedDiseasesFrom.length > 0 && (
           <Section title="Related Diseases" full>

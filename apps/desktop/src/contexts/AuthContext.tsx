@@ -19,6 +19,7 @@ export interface AuthContextType {
   token: string | null
   user: UserProfile | null
   isLoading: boolean
+  isInitializing: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, role: 'VET' | 'CUSTOMER', profileData?: Partial<UserProfile['profile']>) => Promise<void>
   logout: () => void
@@ -33,14 +34,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('auth_token'))
   const [user, setUser] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)  // NEW
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
   useEffect(() => {
     if (token) {
-      getProfile()
+      getProfile().finally(() => setIsInitializing(false))  // wait for profile
+    } else {
+      setIsInitializing(false)  // no token, nothing to wait for
     }
-  }, [token])
+  }, [])  // only on mount — remove token dependency to avoid re-running
 
   const login = async (email: string, password: string) => {
     setIsLoading(true)
@@ -50,12 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
-
       if (!res.ok) {
         const error = await res.json()
         throw new Error(error.error || 'Login failed')
       }
-
       const data = await res.json()
       setToken(data.token)
       setUser(data.user)
@@ -87,12 +89,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           specialization: profileData?.specialization,
         }),
       })
-
       if (!res.ok) {
         const error = await res.json()
         throw new Error(error.error || 'Registration failed')
       }
-
       const data = await res.json()
       setToken(data.token)
       setUser(data.user)
@@ -119,7 +119,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify({ currentPassword, newPassword }),
       })
-
       if (!res.ok) {
         const error = await res.json()
         throw new Error(error.error || 'Password change failed')
@@ -140,12 +139,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify(profileData),
       })
-
       if (!res.ok) {
         const error = await res.json()
         throw new Error(error.error || 'Profile update failed')
       }
-
       await getProfile()
     } finally {
       setIsLoading(false)
@@ -158,9 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch(`${API_URL}/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-
       if (!res.ok) throw new Error('Failed to fetch profile')
-
       const data = await res.json()
       setUser(data.user)
     } catch (error) {
@@ -175,6 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         user,
         isLoading,
+        isInitializing,
         login,
         register,
         logout,
