@@ -58,7 +58,7 @@ function SymptomPanel({
 }: {
   symptom: NonNullable<Disease['diseaseSymptoms']>[number]['symptom']
   onClose: () => void
-  scrollRef: React.RefObject<HTMLDivElement>
+  scrollRef: React.RefObject<HTMLDivElement | null>
 }) {
   const commonality = COMMONALITY_CONFIG[symptom.commonality] ?? { label: symptom.commonality, class: 'sym-common' }
   const onsetLabel  = ONSET_LABELS[symptom.onsetSpeed] ?? symptom.onsetSpeed
@@ -171,7 +171,7 @@ function TreatmentPanel({
 }: {
   treatment: NonNullable<Disease['diseaseTreatments']>[number]['treatment']
   onClose: () => void
-  scrollRef: React.RefObject<HTMLDivElement>
+  scrollRef: React.RefObject<HTMLDivElement | null>
 }) {
   return (
     <>
