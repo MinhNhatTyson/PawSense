@@ -157,13 +157,16 @@ export default function DiseaseManagement() {
             </svg>
             Dashboard
           </Link>
-          <Link to="/diseases" className="nav-item active">
+          <button
+            className={`nav-item${viewMode !== 'list' ? '' : ' active'}`}
+            onClick={() => { setViewMode('list'); setSelectedDisease(null); setEditingDisease(null) }}
+          >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             Disease Library
-          </Link>
+          </button>
           <Link to="/symptoms" className="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M3 8h10M8 3v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>

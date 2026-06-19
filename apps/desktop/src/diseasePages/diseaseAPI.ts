@@ -37,7 +37,7 @@ export interface Disease {
       id: string
       name: string
       description: string
-      affectedBodyArea?: string
+      affectedBodyAreas?: string[]
       commonality: string
       onsetSpeed: string
       notes?: string
@@ -52,7 +52,7 @@ export interface Disease {
       name: string
       estimatedDuration?: string
       successRate?: number
-      steps: { id: string; stepOrder: number; title: string }[]
+      steps: { id: string; stepOrder: number; title: string; durationMinutes?: number }[]
     }
   }[]
   createdAt: string
