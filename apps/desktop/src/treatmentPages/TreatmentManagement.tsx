@@ -187,14 +187,26 @@ export default function TreatmentManagement() {
         </div>
         <nav className="sidebar-nav">
           {SIDEBAR_NAV.map(item => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`nav-item${item.active ? ' active' : ''}`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
+            item.active
+              ? (
+                <button
+                  key={item.to}
+                  className={`nav-item${viewMode !== 'list' ? '' : ' active'}`}
+                  onClick={() => { setViewMode('list'); setSelectedTreatment(null); setEditingTreatment(null) }}
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ) : (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="nav-item"
+                >
+                  {item.icon}
+                  {item.label}
+                </Link>
+              )
           ))}
           <div style={{ flex: 1 }} />
           <button
