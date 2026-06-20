@@ -50,6 +50,33 @@ const ONSET_LABELS: Record<string, string> = {
   CHRONIC:  'Chronic onset',
 }
 
+// ── Shared panel header close button ─────────────────────────────────────────
+function PanelCloseButton({ onClose }: { onClose: () => void }) {
+  return (
+    <button
+      onClick={onClose}
+      aria-label="Close panel"
+      style={{
+        position: 'absolute', top: 16, right: 16,
+        width: 32, height: 32,
+        background: 'rgba(255,255,255,0.12)',
+        border: '1px solid rgba(255,255,255,0.2)',
+        borderRadius: '50%',
+        color: 'var(--cream)',
+        cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'background 0.15s',
+      }}
+      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.22)')}
+      onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
+    >
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    </button>
+  )
+}
+
 // ── Symptom quick-view ────────────────────────────────────────────────────────
 function SymptomPanel({
   symptom,
@@ -65,36 +92,15 @@ function SymptomPanel({
   const areas: string[] = symptom.affectedBodyAreas ?? []
 
   return (
-    <>
-      {/* Panel header */}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+      {/* Header */}
       <div style={{
         background: 'linear-gradient(135deg, var(--green-deep) 0%, var(--green-forest) 100%)',
         padding: '32px 28px 28px',
         position: 'relative',
         flexShrink: 0,
       }}>
-        <button
-          onClick={onClose}
-          aria-label="Close panel"
-          style={{
-            position: 'absolute', top: 16, right: 16,
-            width: 32, height: 32,
-            background: 'rgba(255,255,255,0.12)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            borderRadius: '50%',
-            color: 'var(--cream)',
-            cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.22)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        </button>
-
+        <PanelCloseButton onClose={onClose} />
         <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 8 }}>
           Symptom record
         </div>
@@ -112,8 +118,7 @@ function SymptomPanel({
       </div>
 
       {/* Scrollable body */}
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-
+      <div ref={scrollRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ background: '#fff', border: '1px solid var(--warm-white)', borderRadius: 'var(--radius-lg)', padding: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: 10 }}>Description</div>
           <p style={{ fontSize: 14, color: 'var(--text-body)', lineHeight: 1.7 }}>{symptom.description}</p>
@@ -148,7 +153,7 @@ function SymptomPanel({
             borderRadius: 'var(--radius-md)', textDecoration: 'none',
             fontSize: 14, fontWeight: 500,
             transition: 'background 0.15s',
-            marginTop: 4,
+            flexShrink: 0,
           }}
           onMouseEnter={e => (e.currentTarget.style.background = 'var(--green-forest)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'var(--green-deep)')}
@@ -159,7 +164,7 @@ function SymptomPanel({
           </svg>
         </a>
       </div>
-    </>
+    </div>
   )
 }
 
@@ -174,36 +179,15 @@ function TreatmentPanel({
   scrollRef: React.RefObject<HTMLDivElement | null>
 }) {
   return (
-    <>
-      {/* Panel header */}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+      {/* Header */}
       <div style={{
         background: 'linear-gradient(135deg, var(--green-deep) 0%, var(--green-forest) 100%)',
         padding: '32px 28px 28px',
         position: 'relative',
         flexShrink: 0,
       }}>
-        <button
-          onClick={onClose}
-          aria-label="Close panel"
-          style={{
-            position: 'absolute', top: 16, right: 16,
-            width: 32, height: 32,
-            background: 'rgba(255,255,255,0.12)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            borderRadius: '50%',
-            color: 'var(--cream)',
-            cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.22)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        </button>
-
+        <PanelCloseButton onClose={onClose} />
         <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 8 }}>
           Treatment protocol
         </div>
@@ -239,8 +223,7 @@ function TreatmentPanel({
       </div>
 
       {/* Scrollable body */}
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-
+      <div ref={scrollRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {treatment.steps && treatment.steps.length > 0 && (
           <div style={{ background: '#fff', border: '1px solid var(--warm-white)', borderRadius: 'var(--radius-lg)', padding: 20 }}>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: 14 }}>
@@ -282,7 +265,7 @@ function TreatmentPanel({
             borderRadius: 'var(--radius-md)', textDecoration: 'none',
             fontSize: 14, fontWeight: 500,
             transition: 'background 0.15s',
-            marginTop: 4,
+            flexShrink: 0,
           }}
           onMouseEnter={e => (e.currentTarget.style.background = 'var(--green-forest)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'var(--green-deep)')}
@@ -293,7 +276,7 @@ function TreatmentPanel({
           </svg>
         </a>
       </div>
-    </>
+    </div>
   )
 }
 
@@ -302,38 +285,43 @@ function QuickViewPanel({ panel, onClose }: { panel: NonNullable<PanelContent>; 
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Scroll panel body to top whenever a new panel opens
-    scrollRef.current?.scrollTo({ top: 0 })
-    // Lock page scroll while panel is open
+    const frame = requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: 0 })
+    })
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      cancelAnimationFrame(frame)
+      document.body.style.overflow = ''
+    }
   }, [panel])
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — covers entire viewport including sidebar */}
       <div
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0,
           background: 'rgba(26,58,42,0.18)',
           backdropFilter: 'blur(2px)',
-          zIndex: 100,
+          zIndex: 200,
           animation: 'fadeIn 0.18s ease both',
+          willChange: 'transform',
         }}
       />
 
-      {/* Panel */}
+      {/* Slide-in panel */}
       <div style={{
         position: 'fixed', top: 0, right: 0, bottom: 0,
         width: 'min(520px, 100vw)',
         background: 'var(--cream)',
         borderLeft: '1px solid var(--warm-white)',
         boxShadow: '-12px 0 48px rgba(26,58,42,0.12)',
-        zIndex: 101,
+        zIndex: 201,
         display: 'flex', flexDirection: 'column',
         animation: 'slideInRight 0.22s var(--ease-out) both',
         overflow: 'hidden',
+        willChange: 'transform',
       }}>
         {panel.kind === 'symptom'
           ? <SymptomPanel symptom={panel.data} onClose={onClose} scrollRef={scrollRef} />
@@ -359,7 +347,6 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
 
   return (
     <div className="dm-detail">
-      {/* Quick-view panel */}
       {panel && <QuickViewPanel panel={panel} onClose={() => setPanel(null)} />}
 
       {/* Hero */}
@@ -425,7 +412,7 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
           <BulletList items={disease.treatmentMethods} empty="No treatment methods documented" />
         </Section>
 
-        {/* Linked Symptoms from Symptom Library */}
+        {/* Linked Symptoms */}
         <Section title={`Linked symptoms from library (${linkedSymptoms.length})`} full>
           {linkedSymptoms.length === 0 ? (
             <p className="dm-empty-section">No symptoms from the symptom library are linked to this disease yet.</p>
