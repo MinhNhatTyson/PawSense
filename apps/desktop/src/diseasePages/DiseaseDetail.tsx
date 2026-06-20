@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import type { Disease } from './diseaseAPI'
 
 interface Props {
@@ -50,7 +51,7 @@ const ONSET_LABELS: Record<string, string> = {
   CHRONIC:  'Chronic onset',
 }
 
-// ── Shared panel header close button ─────────────────────────────────────────
+// ── Shared close button ───────────────────────────────────────────────────────
 function PanelCloseButton({ onClose }: { onClose: () => void }) {
   return (
     <button
@@ -77,7 +78,7 @@ function PanelCloseButton({ onClose }: { onClose: () => void }) {
   )
 }
 
-// ── Symptom quick-view ────────────────────────────────────────────────────────
+// ── Symptom panel content ─────────────────────────────────────────────────────
 function SymptomPanel({
   symptom,
   onClose,
@@ -92,8 +93,7 @@ function SymptomPanel({
   const areas: string[] = symptom.affectedBodyAreas ?? []
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
-      {/* Header */}
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div style={{
         background: 'linear-gradient(135deg, var(--green-deep) 0%, var(--green-forest) 100%)',
         padding: '32px 28px 28px',
@@ -117,7 +117,6 @@ function SymptomPanel({
         </div>
       </div>
 
-      {/* Scrollable body */}
       <div ref={scrollRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ background: '#fff', border: '1px solid var(--warm-white)', borderRadius: 'var(--radius-lg)', padding: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: 10 }}>Description</div>
@@ -168,7 +167,7 @@ function SymptomPanel({
   )
 }
 
-// ── Treatment quick-view ──────────────────────────────────────────────────────
+// ── Treatment panel content ───────────────────────────────────────────────────
 function TreatmentPanel({
   treatment,
   onClose,
@@ -179,8 +178,7 @@ function TreatmentPanel({
   scrollRef: React.RefObject<HTMLDivElement | null>
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
-      {/* Header */}
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div style={{
         background: 'linear-gradient(135deg, var(--green-deep) 0%, var(--green-forest) 100%)',
         padding: '32px 28px 28px',
@@ -222,7 +220,6 @@ function TreatmentPanel({
         </div>
       </div>
 
-      {/* Scrollable body */}
       <div ref={scrollRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {treatment.steps && treatment.steps.length > 0 && (
           <div style={{ background: '#fff', border: '1px solid var(--warm-white)', borderRadius: 'var(--radius-lg)', padding: 20 }}>
@@ -280,7 +277,7 @@ function TreatmentPanel({
   )
 }
 
-// ── Quick-view panel (owns the ref + scroll/body-lock effects) ────────────────
+// ── Quick-view panel — rendered via portal directly into document.body ────────
 function QuickViewPanel({ panel, onClose }: { panel: NonNullable<PanelContent>; onClose: () => void }) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -288,40 +285,40 @@ function QuickViewPanel({ panel, onClose }: { panel: NonNullable<PanelContent>; 
     const frame = requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: 0 })
     })
-    document.body.style.overflow = 'hidden'
+    // Lock the dm-main scroll container, not body
+    const mainEl = document.querySelector('.dm-main') as HTMLElement | null
+    if (mainEl) mainEl.style.overflow = 'hidden'
     return () => {
       cancelAnimationFrame(frame)
-      document.body.style.overflow = ''
+      if (mainEl) mainEl.style.overflow = ''
     }
   }, [panel])
 
-  return (
+  const portalContent = (
     <>
-      {/* Backdrop — covers entire viewport including sidebar */}
+      {/* Backdrop */}
       <div
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0,
           background: 'rgba(26,58,42,0.18)',
           backdropFilter: 'blur(2px)',
-          zIndex: 200,
+          zIndex: 9998,
           animation: 'fadeIn 0.18s ease both',
-          willChange: 'transform',
         }}
       />
-
-      {/* Slide-in panel */}
+      {/* Panel */}
       <div style={{
         position: 'fixed', top: 0, right: 0, bottom: 0,
         width: 'min(520px, 100vw)',
         background: 'var(--cream)',
         borderLeft: '1px solid var(--warm-white)',
         boxShadow: '-12px 0 48px rgba(26,58,42,0.12)',
-        zIndex: 201,
-        display: 'flex', flexDirection: 'column',
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
         animation: 'slideInRight 0.22s var(--ease-out) both',
         overflow: 'hidden',
-        willChange: 'transform',
       }}>
         {panel.kind === 'symptom'
           ? <SymptomPanel symptom={panel.data} onClose={onClose} scrollRef={scrollRef} />
@@ -330,6 +327,8 @@ function QuickViewPanel({ panel, onClose }: { panel: NonNullable<PanelContent>; 
       </div>
     </>
   )
+
+  return createPortal(portalContent, document.body)
 }
 
 // ── Main DiseaseDetail component ──────────────────────────────────────────────
