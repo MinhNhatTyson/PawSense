@@ -28,7 +28,17 @@ export interface Disease {
   imageUrl?: string
   relatedDiseasesFrom?: any[]
   relatedDiseasesTo?: any[]
-  medicines?: any[]
+  diseaseMedicines?: {
+  id: string
+  diseaseId: string
+  medicineId: string
+  medicine: {
+    id: string
+    name: string
+    dosage: string
+    manufacturer?: string
+  }
+}[]
   diseaseSymptoms?: {
     id: string
     diseaseId: string

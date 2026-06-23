@@ -2,17 +2,20 @@ import { useState } from 'react'
 import type { Disease } from './diseaseAPI'
 import type { Symptom } from '../symptomPages/symptomAPI'
 import type { Treatment } from '../treatmentPages/treatmentAPI'
+import type { Medicine } from '../medicinePages/medicineAPI'
 
 interface DiseaseFormProps {
   disease?: Disease
   allDiseases: Disease[]
   allSymptoms?: Symptom[]
   allTreatments?: Treatment[]
+  allMedicines?: Medicine[]
   onSubmit: (
     formData: Omit<Disease, 'id' | 'createdAt' | 'updatedAt'> & {
       relatedDiseaseIds?: string[]
       symptomIds?: string[]
       treatmentIds?: string[]
+      medicineIds?: string[]   
     },
     imageFile?: File
   ) => void
@@ -28,7 +31,7 @@ const COMMONALITY_CONFIG: Record<string, { label: string; class: string }> = {
   VERY_COMMON: { label: 'Very Common', class: 'sym-very-common' },
 }
 
-export default function DiseaseForm({ disease, allDiseases, allSymptoms = [], allTreatments = [], onSubmit, loading, onCancel }: DiseaseFormProps) {
+export default function DiseaseForm({ disease, allDiseases, allSymptoms = [], allTreatments = [], allMedicines = [], onSubmit, loading, onCancel }: DiseaseFormProps) {
   const [name, setName] = useState(disease?.name || '')
   const [description, setDescription] = useState(disease?.description || '')
   const [severity, setSeverity] = useState(disease?.severity || 'MEDIUM')
@@ -51,6 +54,22 @@ export default function DiseaseForm({ disease, allDiseases, allSymptoms = [], al
     disease?.diseaseTreatments?.map((dt: any) => dt.treatmentId) || []
   )
   const [treatmentSearch, setTreatmentSearch] = useState('')
+  const [medicineIds, setMedicineIds] = useState<string[]>(
+  disease?.diseaseMedicines?.map((dm: any) => dm.medicineId) || []
+  )
+  const [medicineSearch, setMedicineSearch] = useState('')
+
+  const filteredMedicines = (allMedicines || []).filter((m) =>
+    m.name.toLowerCase().includes(medicineSearch.toLowerCase()) ||
+    (m.manufacturer || '').toLowerCase().includes(medicineSearch.toLowerCase())
+  )
+
+  const toggleMedicine = (id: string) => {
+    setMedicineIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -95,6 +114,7 @@ export default function DiseaseForm({ disease, allDiseases, allSymptoms = [], al
       relatedDiseaseIds: relatedIds,
       symptomIds,
       treatmentIds,
+      medicineIds,
     }, imageFile)
   }
 
@@ -397,6 +417,77 @@ export default function DiseaseForm({ disease, allDiseases, allSymptoms = [], al
               {filteredTreatments.length === 0 && (
                 <p style={{ fontSize: 13, color: 'var(--text-light)', fontStyle: 'italic', gridColumn: '1/-1', padding: '8px 0' }}>
                   No treatments match your search.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Card 6 — Link medicines from library */}
+        {(allMedicines || []).length > 0 && (
+          <div className="dm-form-card">
+            <div className="dm-form-section-title">
+              Link medicines from library
+              {medicineIds.length > 0 && (
+                <span className="sym-link-count">{medicineIds.length} selected</span>
+              )}
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14 }}>
+              Associate medicines used to treat this disease.
+            </p>
+
+            <div className="sym-disease-search-wrap">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3" />
+                <path d="M10 10l2.5 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
+              <input
+                type="text"
+                className="sym-disease-search"
+                placeholder="Filter medicines…"
+                value={medicineSearch}
+                onChange={(e) => setMedicineSearch(e.target.value)}
+              />
+            </div>
+
+            <div className="sym-disease-grid">
+              {filteredMedicines.map((m) => {
+                const checked = medicineIds.includes(m.id)
+                return (
+                  <label
+                    key={m.id}
+                    className={`sym-disease-option${checked ? ' checked' : ''}`}
+                    onClick={() => toggleMedicine(m.id)}
+                  >
+                    <span className="sym-checkmark">
+                      {checked && (
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path
+                            d="M1 4l3 3 5-6"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </span>
+                    <span className="sym-disease-option-name">{m.name}</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: 'var(--text-light)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {m.dosage}
+                    </span>
+                  </label>
+                )
+              })}
+              {filteredMedicines.length === 0 && (
+                <p style={{ fontSize: 13, color: 'var(--text-light)', fontStyle: 'italic', gridColumn: '1/-1', padding: '8px 0' }}>
+                  No medicines match your search.
                 </p>
               )}
             </div>

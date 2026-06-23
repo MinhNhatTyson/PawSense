@@ -50,7 +50,7 @@ model Disease {
   treatmentMethods    String[]
   recoveryPeriod      String
   imageUrl            String?
-  medicines           Medicine[]
+  diseaseMedicines    DiseaseMedicine[]
   relatedDiseasesFrom RelatedDisease[]  @relation("diseaseFrom")
   relatedDiseasesTo   RelatedDisease[]  @relation("diseaseTo")
   diseaseSymptoms     DiseaseSymptom[]
@@ -60,11 +60,29 @@ model Disease {
 }
 
 model Medicine {
-  id        String  @id @default(uuid())
-  name      String
-  dosage    String
-  diseaseId String
-  disease   Disease @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+  id                String            @id @default(uuid())
+  name              String            @unique
+  description       String
+  dosage            String
+  sideEffects       String[]
+  usageInstructions String
+  warnings          String[]
+  manufacturer      String?
+  imageUrl          String?
+  diseaseMedicines  DiseaseMedicine[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model DiseaseMedicine {
+  id          String    @id @default(uuid())
+  diseaseId   String
+  medicineId  String
+  disease     Disease   @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+  medicine    Medicine  @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([diseaseId, medicineId])
 }
 
 model RelatedDisease {

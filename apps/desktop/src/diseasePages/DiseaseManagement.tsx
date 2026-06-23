@@ -8,6 +8,7 @@ import DiseaseList from './DiseaseList'
 import DiseaseDetail from './DiseaseDetail'
 import DiseaseForm from './DiseaseForm'
 import { treatmentAPI, type Treatment } from '../treatmentPages/treatmentAPI'
+import { medicineAPI, type Medicine } from '../medicinePages/medicineAPI'
 import './DiseaseManagement.css'
 
 type ViewMode = 'list' | 'detail' | 'create' | 'edit'
@@ -27,6 +28,7 @@ export default function DiseaseManagement() {
   const [diseases, setDiseases] = useState<Disease[]>([])
   const [allSymptoms, setAllSymptoms] = useState<Symptom[]>([])
   const [allTreatments, setAllTreatments] = useState<Treatment[]>([])
+  const [allMedicines, setAllMedicines] = useState<Medicine[]>([])
   const [selectedDisease, setSelectedDisease] = useState<Disease | null>(null)
   const [editingDisease, setEditingDisease] = useState<Disease | null>(null)
   const [loading, setLoading] = useState(false)
@@ -40,6 +42,16 @@ export default function DiseaseManagement() {
   useEffect(() => { loadDiseases() }, [currentPage, search, severity])
   useEffect(() => { loadAllSymptoms() }, [])
   useEffect(() => { loadAllTreatments() }, [])
+  useEffect(() => { loadAllMedicines() }, [])
+
+  const loadAllMedicines = async () => {
+    try {
+      const res = await medicineAPI.list(0, 200)
+      setAllMedicines(res.data.data)
+    } catch {
+      // non-critical
+    }
+  }
 
   const loadDiseases = async () => {
     setLoading(true)
@@ -350,6 +362,7 @@ export default function DiseaseManagement() {
             allDiseases={diseases}
             allSymptoms={allSymptoms}
             allTreatments={allTreatments}
+            allMedicines={allMedicines}
             onSubmit={handleCreate}
             loading={loading}
             onCancel={() => setViewMode('list')}
@@ -362,6 +375,7 @@ export default function DiseaseManagement() {
             allDiseases={diseases}
             allSymptoms={allSymptoms}
             allTreatments={allTreatments}
+            allMedicines={allMedicines}
             onSubmit={handleUpdate}
             loading={loading}
             onCancel={() => { setViewMode('list'); setEditingDisease(null) }}
