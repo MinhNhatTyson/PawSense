@@ -525,18 +525,42 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
           </Section>
         )}
 
-        {disease.medicines && disease.medicines.length > 0 && (
-          <Section title="Associated Medicines" full>
-            <div className="dm-medicines-grid">
-              {disease.medicines.map((med: any) => (
-                <div key={med.id} className="dm-medicine-card">
-                  <div className="dm-medicine-name">{med.name}</div>
-                  <div className="dm-medicine-dosage">{med.dosage}</div>
+        {/* Linked Medicines */}
+        {(() => {
+          const linkedMedicines = (disease as any).diseaseMedicines || []
+          return (
+            <Section title={`Linked medicines (${linkedMedicines.length})`} full>
+              {linkedMedicines.length === 0 ? (
+                <p className="dm-empty-section">
+                  No medicines from the library are linked to this disease yet.
+                </p>
+              ) : (
+                <div className="dm-medicines-grid">
+                  {linkedMedicines.map((dm: any) => {
+                    const med = dm.medicine
+                    return (
+                      <div key={dm.id} className="dm-medicine-card">
+                        <div className="dm-medicine-name">{med.name}</div>
+                        <div className="dm-medicine-dosage">{med.dosage}</div>
+                        {med.manufacturer && (
+                          <div
+                            style={{
+                              fontSize: 11,
+                              color: 'var(--text-light)',
+                              marginTop: 2,
+                            }}
+                          >
+                            {med.manufacturer}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
-              ))}
-            </div>
-          </Section>
-        )}
+              )}
+            </Section>
+          )
+        })()}
       </div>
     </div>
   )

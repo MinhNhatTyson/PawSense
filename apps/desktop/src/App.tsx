@@ -10,6 +10,7 @@ import { PawLogo } from './components/PawLogo'
 import DiseaseManagement from './diseasePages/DiseaseManagement'
 import SymptomManagement from './symptomPages/SymptomManagement'
 import TreatmentManagement from './treatmentPages/TreatmentManagement'
+import MedicineManagement from './medicinePages/MedicineManagement'
 import './index.css'
 
 // ── Dashboard Page (unchanged, keep the full existing component) ──
@@ -61,6 +62,14 @@ function DashboardPage() {
               <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
             </svg>
             Treatment Library
+          </Link>
+          <Link to="/medicines" className="nav-item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M6 2h4a1 1 0 011 1v1H5V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3"/>
+              <rect x="3" y="4" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M8 7v4M6 9h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+            Medicine Library
           </Link>
           <Link to="/profile" className="nav-item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -186,6 +195,18 @@ function DashboardPage() {
                   <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5"/>
                 </svg>
               )},
+              {
+                to: '/medicines',
+                label: 'Medicine Library',
+                description: 'Browse & manage medicine records',
+                icon: (
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M7 3h4a1 1 0 011 1v1H6V4a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3"/>
+                    <rect x="3" y="5" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M9 8v5M7 10.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                  </svg>
+                ),
+              },
               { to: '/profile', label: 'My Profile', description: 'View and update your details', icon: (
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                   <circle cx="9" cy="6" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -319,6 +340,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <TreatmentManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/medicines"
+        element={
+          <ProtectedRoute>
+            <MedicineManagement />
           </ProtectedRoute>
         }
       />
