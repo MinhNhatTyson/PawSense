@@ -57,6 +57,18 @@ const NAV_ITEMS = [
     ),
   },
   {
+    to: '/cat-breeds',
+    label: 'Cat Breeds',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="7" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
+        <polygon points="4.5,4 3,1 6,3.5" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinejoin="round"/>
+        <polygon points="11.5,4 13,1 10,3.5" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinejoin="round"/>
+        <path d="M2 14c0-3.314 2.686-4.5 6-4.5s6 1.186 6 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
     to: '/profile',
     label: 'My Profile',
     icon: (
