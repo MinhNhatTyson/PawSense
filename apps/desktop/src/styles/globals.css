@@ -54,6 +54,7 @@
   /* Transitions */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in:  cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ─── Reset ─────────────────────────────────────── */
@@ -575,7 +576,7 @@ body {
   font-size: 14px;
   font-weight: 400;
   text-decoration: none;
-  transition: all 0.15s;
+  transition: background 0.18s, color 0.18s, transform 0.18s;
   cursor: pointer;
   border: none;
   background: none;
@@ -586,6 +587,7 @@ body {
 .nav-item:hover {
   background: rgba(255,255,255,0.07);
   color: var(--cream);
+  transform: translateX(2px);
 }
 
 .nav-item.active {
@@ -596,6 +598,7 @@ body {
 .nav-item.nav-danger:hover {
   background: rgba(192,57,43,0.15);
   color: #ef9a9a;
+  transform: translateX(2px);
 }
 
 .sidebar-user {
@@ -780,8 +783,9 @@ body {
 .strength-bar.filled-strong { background: var(--success); }
 
 /* ─── Animations ─────────────────────────────────── */
+
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -790,20 +794,70 @@ body {
   to   { opacity: 1; }
 }
 
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes slideInRight {
   from { transform: translateX(100%); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }
 }
 
-.animate-in {
-  animation: fadeUp 0.5s var(--ease-out) both;
+@keyframes slideInLeft {
+  from { transform: translateX(-20px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
 
-.animate-in-delay-1 { animation-delay: 0.08s; }
-.animate-in-delay-2 { animation-delay: 0.16s; }
-.animate-in-delay-3 { animation-delay: 0.24s; }
-.animate-in-delay-4 { animation-delay: 0.32s; }
-.animate-in-delay-5 { animation-delay: 0.40s; }
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Base animate-in — smoother spring easing */
+.animate-in {
+  animation: fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Staggered delays */
+.animate-in-delay-1  { animation-delay: 0.07s; }
+.animate-in-delay-2  { animation-delay: 0.14s; }
+.animate-in-delay-3  { animation-delay: 0.21s; }
+.animate-in-delay-4  { animation-delay: 0.28s; }
+.animate-in-delay-5  { animation-delay: 0.35s; }
+.animate-in-delay-6  { animation-delay: 0.42s; }
+
+/* Slide from left — sidebar items */
+.animate-slide-left {
+  animation: slideInLeft 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Gentle scale pop — cards, modals */
+.animate-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Stat number reveal */
+.animate-count {
+  animation: countUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-in,
+  .animate-slide-left,
+  .animate-scale-in,
+  .animate-count {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
 
 /* ─── Responsive ─────────────────────────────────── */
 @media (max-width: 960px) {

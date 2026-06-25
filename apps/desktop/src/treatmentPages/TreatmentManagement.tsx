@@ -7,6 +7,7 @@ import { PawLogo } from '../components/PawLogo'
 import TreatmentList from './TreatmentList'
 import TreatmentDetail from './TreatmentDetail'
 import TreatmentForm from './TreatmentForm'
+import { Sidebar } from '../components/Sidebar'
 import './TreatmentManagement.css'
 
 type ViewMode = 'list' | 'detail' | 'create' | 'edit'
@@ -168,7 +169,7 @@ export default function TreatmentManagement() {
       icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M5 8h6M8 5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/></svg>
     },
     {
-      to: '/medicines', label: 'Medicine Library', active: true,
+      to: '/medicines', label: 'Medicine Library', active: false,
       icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 2h4a1 1 0 011 1v1H5V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3"/><rect x="3" y="4" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M8 7v4M6 9h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
     },
     {
@@ -184,51 +185,7 @@ export default function TreatmentManagement() {
   return (
     <div className="tr-shell">
       {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <PawLogo size={28} />
-          <span className="sidebar-brand-name">Paw<span>Sense</span></span>
-        </div>
-        <nav className="sidebar-nav">
-          {SIDEBAR_NAV.map(item => (
-            item.active
-              ? (
-                <button
-                  key={item.to}
-                  className={`nav-item${viewMode !== 'list' ? '' : ' active'}`}
-                  onClick={() => { setViewMode('list'); setSelectedTreatment(null); setEditingTreatment(null) }}
-                >
-                  {item.icon}
-                  {item.label}
-                </button>
-              ) : (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className="nav-item"
-                >
-                  {item.icon}
-                  {item.label}
-                </Link>
-              )
-          ))}
-          <div style={{ flex: 1 }} />
-          <button
-            onClick={() => { logout(); navigate('/login') }}
-            className="nav-item nav-danger"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M11 11l3-3-3-3M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Sign out
-          </button>
-        </nav>
-        <div className="sidebar-user">
-          <div className="sidebar-user-name">{user?.profile?.fullName || 'User'}</div>
-          <div className="sidebar-user-role">{user?.role === 'VET' ? 'Veterinarian' : 'Pet Owner'}</div>
-          <div className="sidebar-user-email">{user?.email}</div>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* Main */}
       <main className="tr-main">

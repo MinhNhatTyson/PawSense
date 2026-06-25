@@ -12,7 +12,7 @@ cloudinary.config({
 const diseaseInclude = {
   relatedDiseasesFrom: { include: { diseaseTo: true } },
   relatedDiseasesTo: { include: { diseaseFrom: true } },
-  medicines: true,
+  diseaseMedicines: { include: { medicine: true } },
   diseaseSymptoms: { include: { symptom: true } },
   diseaseTreatments: { include: { treatment: { include: { steps: { orderBy: { stepOrder: 'asc' as const } } } } } },
 }
