@@ -1,6 +1,7 @@
 import { useAuth } from '../contexts/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
 import { PawLogo } from '../components/PawLogo'
+import { Sidebar } from '../components/Sidebar'
 
 export function ProfilePage() {
   const { user, logout } = useAuth()
@@ -18,82 +19,7 @@ export function ProfilePage() {
   return (
     <div className="app-shell">
       {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <PawLogo size={28} />
-          <span className="sidebar-brand-name">Paw<span>Sense</span></span>
-        </div>
-
-        <nav className="sidebar-nav">
-          <Link to="/dashboard" className="nav-item">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-              <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-              <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-              <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-            </svg>
-            Dashboard
-          </Link>
-          <Link to="/diseases" className="nav-item">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            Disease Library
-          </Link>
-          <Link to="/symptoms" className="nav-item">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 8h10M8 3v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-            </svg>
-            Symptom Library
-          </Link>
-          <Link to="/treatments" className="nav-item">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M5 8h6M8 5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-            </svg>
-            Treatment Library
-          </Link>
-          <Link to="/medicines" className="nav-item">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M6 2h4a1 1 0 011 1v1H5V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3"/>
-              <rect x="3" y="4" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M8 7v4M6 9h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            </svg>
-            Medicine Library
-          </Link>
-          <Link to="/profile" className="nav-item active">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            My Profile
-          </Link>
-          <Link to="/change-password" className="nav-item">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            Change Password
-          </Link>
-
-          <div style={{ flex: 1 }} />
-
-          <button onClick={handleLogout} className="nav-item nav-danger">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M11 11l3-3-3-3M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Sign out
-          </button>
-        </nav>
-
-        <div className="sidebar-user">
-          <div className="sidebar-user-name">{user.profile?.fullName || 'User'}</div>
-          <div className="sidebar-user-role">{user.role === 'VET' ? 'Veterinarian' : 'Pet Owner'}</div>
-          <div className="sidebar-user-email">{user.email}</div>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* Main content */}
       <main className="main-content">

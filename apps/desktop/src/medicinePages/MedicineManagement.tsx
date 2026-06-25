@@ -7,6 +7,7 @@ import { PawLogo } from '../components/PawLogo'
 import MedicineList from './MedicineList'
 import MedicineDetail from './MedicineDetail'
 import MedicineForm from './MedicineForm'
+import { Sidebar } from '../components/Sidebar'
 import './MedicineManagement.css'
 
 type ViewMode = 'list' | 'detail' | 'create' | 'edit'
@@ -237,52 +238,7 @@ export default function MedicineManagement() {
   return (
     <div className="med-shell">
       {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <PawLogo size={28} />
-          <span className="sidebar-brand-name">
-            Paw<span>Sense</span>
-          </span>
-        </div>
-        <nav className="sidebar-nav">
-          {SIDEBAR_NAV.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`nav-item${item.active ? ' active' : ''}`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
-          <div style={{ flex: 1 }} />
-          <button
-            onClick={() => {
-              logout()
-              navigate('/login')
-            }}
-            className="nav-item nav-danger"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M11 11l3-3-3-3M14 8H6"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Sign out
-          </button>
-        </nav>
-        <div className="sidebar-user">
-          <div className="sidebar-user-name">{user?.profile?.fullName || 'User'}</div>
-          <div className="sidebar-user-role">
-            {user?.role === 'VET' ? 'Veterinarian' : 'Pet Owner'}
-          </div>
-          <div className="sidebar-user-email">{user?.email}</div>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* Main */}
       <main className="med-main">
