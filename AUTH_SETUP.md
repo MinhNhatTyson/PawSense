@@ -18,6 +18,8 @@ The feature is implemented across three main components:
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: JWT-based with 7-day expiration
 - **Password Hashing**: bcryptjs
+- ClientId: 468057681035-hi1k5vjjvou9tpn6sdjpi4mpgn3cc0bm.apps.googleusercontent.com
+- ClientSecret: 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
 
 ### 2. Desktop App (`apps/desktop/`)
 - **Framework**: React + Vite + Electron

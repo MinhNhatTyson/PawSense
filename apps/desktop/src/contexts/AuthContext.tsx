@@ -26,6 +26,7 @@ export interface AuthContextType {
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>
   updateProfile: (profileData: Partial<UserProfile['profile']>) => Promise<void>
   getProfile: () => Promise<void>
+  handleGoogleCallback: (token: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -164,6 +165,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const handleGoogleCallback = async (token: string) => {
+  setToken(token)
+  localStorage.setItem('auth_token', token)
+  // Fetch profile with the new token
+  try {
+    const res = await fetch(`${API_URL}/auth/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) throw new Error('Failed to fetch profile')
+    const data = await res.json()
+    setUser(data.user)
+  } catch (error) {
+    console.error('Failed to fetch profile after Google login:', error)
+    logout()
+  }
+}
+
   return (
     <AuthContext.Provider
       value={{
@@ -177,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         changePassword,
         updateProfile,
         getProfile,
+        handleGoogleCallback,
       }}
     >
       {children}
