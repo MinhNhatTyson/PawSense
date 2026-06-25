@@ -8,6 +8,7 @@ import { symptomRouter } from './routes/symptom.js'
 import { treatmentRouter } from './routes/treatment.route.js'
 import { medicineRouter } from './routes/medicine.route.js'
 import { googleAuthRouter } from './routes/google-auth.route.js'  
+import { catBreedRouter } from './routes/catBreed.route.js'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -23,7 +24,9 @@ app.use('/api/diseases', diseaseRouter)
 app.use('/api/symptoms', symptomRouter)
 app.use('/api/treatments', treatmentRouter)
 app.use('/api/medicines', medicineRouter)
+app.use('/api/cat-breeds', catBreedRouter)
 
+// Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' })
 })

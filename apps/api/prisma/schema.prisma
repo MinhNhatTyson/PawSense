@@ -32,12 +32,18 @@ model Profile {
 }
 
 model CatBreed {
-  id              String   @id @default(uuid())
-  name            String   @unique
-  description     String
-  characteristics String
-  imageUrl        String?
-  createdAt       DateTime @default(now())
+  id                 String   @id @default(uuid())
+  name               String   @unique
+  origin             String
+  description        String
+  physicalAppearance String
+  weightRange        String
+  lifespan           String
+  temperament        String[]
+  personality        String
+  imageUrls          String[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model Disease {
