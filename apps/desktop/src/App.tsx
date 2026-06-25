@@ -12,6 +12,7 @@ import DiseaseManagement from './diseasePages/DiseaseManagement'
 import SymptomManagement from './symptomPages/SymptomManagement'
 import TreatmentManagement from './treatmentPages/TreatmentManagement'
 import MedicineManagement from './medicinePages/MedicineManagement'
+import { GoogleCallbackPage } from './aurthenticationPages/GoogleCallbackPage'
 import './index.css'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -553,6 +554,7 @@ function AppContent() {
       <Route path="/profile/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
       <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
+      <Route path="/auth/callback" element={<GoogleCallbackPage />} />
       <Route path="/" element={<Navigate to={token ? '/dashboard' : '/login'} />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

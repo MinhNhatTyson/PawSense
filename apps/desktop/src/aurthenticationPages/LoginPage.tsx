@@ -105,7 +105,32 @@ export function LoginPage() {
               </button>
             </div>
           </form>
+          
+<div className="form-divider">
+  <span>or</span>
+</div>
 
+
+ <a href="http://localhost:3000/api/auth/google"
+  className="btn btn-secondary"
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    textDecoration: 'none',
+    marginTop: 0,
+  }}
+>
+  <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
+    <path d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.9 3 4 11.9 4 23s8.9 20 20 20c11 0 20-8 20-20 0-1.3-.2-2.7-.5-3z" fill="#FFC107"/>
+    <path d="M6.3 14.7l7 5.1C15.2 16.5 19.3 14 24 14c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3c-7.6 0-14.2 4.2-17.7 10.7z" fill="#FF3D00"/>
+    <path d="M24 44c5.5 0 10.5-2 14.3-5.2l-6.6-5.6C29.7 35 27 36 24 36c-6 0-11.1-4-12.9-9.5l-7 5.4C7.9 39.9 15.4 44 24 44z" fill="#4CAF50"/>
+    <path d="M44.5 20H24v8.5h11.8c-.9 2.6-2.6 4.8-5 6.3l6.6 5.6C41.4 37.1 44 31 44 24c0-1.3-.2-2.7-.5-4z" fill="#1976D2"/>
+  </svg>
+  Continue with Google
+</a>
+          
           <div className="auth-footer-link animate-in animate-in-delay-4">
             New to PawSense?{' '}
             <Link to="/register">Create an account</Link>
