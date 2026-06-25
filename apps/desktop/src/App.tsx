@@ -12,8 +12,10 @@ import DiseaseManagement from './diseasePages/DiseaseManagement'
 import SymptomManagement from './symptomPages/SymptomManagement'
 import TreatmentManagement from './treatmentPages/TreatmentManagement'
 import MedicineManagement from './medicinePages/MedicineManagement'
+import CatBreedManagement from './catBreedPages/CatBreedManagement'
 import { GoogleCallbackPage } from './aurthenticationPages/GoogleCallbackPage'
 import './index.css'
+
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface DashboardStats {
@@ -547,7 +549,9 @@ function AppContent() {
       <Route path="/symptoms" element={<ProtectedRoute><SymptomManagement /></ProtectedRoute>} />
       <Route path="/treatments" element={<ProtectedRoute><TreatmentManagement /></ProtectedRoute>} />
       <Route path="/medicines" element={<ProtectedRoute><MedicineManagement /></ProtectedRoute>} />
+      <Route path="/cat-breeds" element={<ProtectedRoute><CatBreedManagement /></ProtectedRoute>} />
       <Route path="/login" element={token ? <Navigate to="/dashboard" /> : <LoginPage />} />
+
       <Route path="/register" element={token ? <Navigate to="/dashboard" /> : <RegisterPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
