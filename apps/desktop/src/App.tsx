@@ -15,6 +15,7 @@ import MedicineManagement from './medicinePages/MedicineManagement'
 import CatBreedManagement from './catBreedPages/CatBreedManagement'
 import { GoogleCallbackPage } from './aurthenticationPages/GoogleCallbackPage'
 import { Sidebar } from './components/Sidebar'
+import { GoogleSelectRolePage } from './aurthenticationPages/GoogleSelectRolePage'
 import './index.css'
 
 
@@ -497,6 +498,7 @@ function AppContent() {
       <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
       <Route path="/auth/callback" element={<GoogleCallbackPage />} />
+      <Route path="/auth/select-role" element={<GoogleSelectRolePage />} /> 
       <Route path="/" element={<Navigate to={token ? '/dashboard' : '/login'} />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
