@@ -14,6 +14,7 @@ import TreatmentManagement from './treatmentPages/TreatmentManagement'
 import MedicineManagement from './medicinePages/MedicineManagement'
 import CatBreedManagement from './catBreedPages/CatBreedManagement'
 import { GoogleCallbackPage } from './aurthenticationPages/GoogleCallbackPage'
+import { Sidebar } from './components/Sidebar'
 import './index.css'
 
 
@@ -163,70 +164,7 @@ function DashboardPage() {
   return (
     <div className="app-shell">
       {/* ── Sidebar ── */}
-      <aside className="sidebar">
-        <div className="sidebar-brand animate-slide-left" style={{ animationDelay: '0s' }}>
-          <PawLogo size={28} />
-          <span className="sidebar-brand-name">Paw<span>Sense</span></span>
-        </div>
-        <nav className="sidebar-nav">
-          {[
-            {
-              to: '/dashboard', label: 'Dashboard', active: true,
-              icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>
-            },
-            {
-              to: '/diseases', label: 'Disease Library', active: false,
-              icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/><path d="M8 5v3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            },
-            {
-              to: '/symptoms', label: 'Symptom Library', active: false,
-              icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/></svg>
-            },
-            {
-              to: '/treatments', label: 'Treatment Library', active: false,
-              icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M5 8h6M8 5v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/></svg>
-            },
-            {
-              to: '/medicines', label: 'Medicine Library', active: false,
-              icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 2h4a1 1 0 011 1v1H5V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3"/><rect x="3" y="4" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M8 7v4M6 9h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
-            },
-            {
-              to: '/profile', label: 'My Profile', active: false,
-              icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            },
-            {
-              to: '/change-password', label: 'Change Password', active: false,
-              icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            },
-          ].map((item, i) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`nav-item animate-slide-left${item.active ? ' active' : ''}`}
-              style={{ animationDelay: `${0.04 + i * 0.04}s` }}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
-          <div style={{ flex: 1 }} />
-          <button
-            onClick={handleLogout}
-            className="nav-item nav-danger animate-slide-left"
-            style={{ animationDelay: '0.36s' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M11 11l3-3-3-3M14 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Sign out
-          </button>
-        </nav>
-        <div className="sidebar-user animate-slide-left" style={{ animationDelay: '0.40s' }}>
-          <div className="sidebar-user-name">{user?.profile?.fullName || 'User'}</div>
-          <div className="sidebar-user-role">{user?.role === 'VET' ? 'Veterinarian' : 'Pet Owner'}</div>
-          <div className="sidebar-user-email">{user?.email}</div>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* ── Main ── */}
       <main className="main-content">

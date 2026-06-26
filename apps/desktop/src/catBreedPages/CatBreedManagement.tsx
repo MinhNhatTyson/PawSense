@@ -6,6 +6,7 @@ import { PawLogo } from '../components/PawLogo'
 import CatBreedList from './CatBreedList'
 import CatBreedDetail from './CatBreedDetail'
 import CatBreedForm from './CatBreedForm'
+import { Sidebar } from '../components/Sidebar'
 import './CatBreedManagement.css'
 
 type ViewMode = 'list' | 'detail' | 'create' | 'edit'
@@ -230,51 +231,7 @@ export default function CatBreedManagement() {
   return (
     <div className="cb-shell">
       {/* ── Sidebar ── */}
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <PawLogo size={28} />
-          <span className="sidebar-brand-name">Paw<span>Sense</span></span>
-        </div>
-        <nav className="sidebar-nav">
-          {SIDEBAR_NAV.map(item =>
-            item.active ? (
-              <button
-                key={item.to}
-                className="nav-item active"
-                onClick={() => {
-                  setViewMode('list')
-                  setSelectedBreed(null)
-                  setEditingBreed(null)
-                }}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            ) : (
-              <Link key={item.to} to={item.to} className="nav-item">
-                {item.icon}
-                {item.label}
-              </Link>
-            )
-          )}
-          <div style={{ flex: 1 }} />
-          <button
-            onClick={() => { logout(); navigate('/login') }}
-            className="nav-item nav-danger"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M11 11l3-3-3-3M14 8H6"
-                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Sign out
-          </button>
-        </nav>
-        <div className="sidebar-user">
-          <div className="sidebar-user-name">{user?.profile?.fullName || 'User'}</div>
-          <div className="sidebar-user-role">{user?.role === 'VET' ? 'Veterinarian' : 'Pet Owner'}</div>
-          <div className="sidebar-user-email">{user?.email}</div>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* ── Main ── */}
       <main className="cb-main">
