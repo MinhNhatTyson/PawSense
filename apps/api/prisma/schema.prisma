@@ -15,6 +15,7 @@ model User {
   profile   Profile?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  catProfiles    CatProfile[]
 }
 
 model Profile {
@@ -239,4 +240,40 @@ enum FoodType {
   SEMI_MOIST
   RAW
   SUPPLEMENT
+}
+model CatProfile {
+  id                 String              @id @default(uuid())
+  ownerId            String
+  owner              User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name               String
+  gender             CatGender
+  birthDate          DateTime?
+  ageYears           Int?
+  ageMonths          Int?
+  weightKg           Float?
+  breed              String?
+  color              String?
+  notes              String?
+  imageUrls          String[]
+  vaccinations       Vaccination[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model Vaccination {
+  id           String      @id @default(uuid())
+  catProfileId String
+  catProfile   CatProfile  @relation(fields: [catProfileId], references: [id], onDelete: Cascade)
+  vaccineName  String
+  dateGiven    DateTime
+  nextDueDate  DateTime?
+  veterinarian String?
+  notes        String?
+  createdAt    DateTime    @default(now())
+}
+
+enum CatGender {
+  MALE
+  FEMALE
+  UNKNOWN
 }
