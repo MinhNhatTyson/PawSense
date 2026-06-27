@@ -119,6 +119,30 @@ function StatCard({
   )
 }
 
+// ── Analytics helpers ─────────────────────────────────────────────────────────
+interface AnalyticsData {
+  topDiseases: { name: string; severity: string; count: number }[]
+  severityCounts: Record<string, number>
+  topBreeds: { name: string; origin: string; count: number }[]
+  activityTotals: {
+    diseases: number; symptoms: number; treatments: number
+    medicines: number; breeds: number; foods: number
+  }
+  loading: boolean
+}
+
+const SEV_PILL_STYLES: Record<string, { bg: string; color: string }> = {
+  LOW:      { bg: '#edf7f1', color: '#2d7a4f' },
+  MEDIUM:   { bg: '#fdf7ed', color: '#8b6340' },
+  HIGH:     { bg: '#fdf0ee', color: '#c0392b' },
+  CRITICAL: { bg: '#fce8e6', color: '#922b21' },
+}
+
+const BAR_COLORS = [
+  'var(--green-forest)', 'var(--green-sage)', 'var(--green-mist)',
+  'var(--gold)', 'var(--gold-deep)', '#7a9882',
+]
+
 // ── Dashboard Page ────────────────────────────────────────────────────────────
 function DashboardPage() {
   const { user, logout } = useAuth()
