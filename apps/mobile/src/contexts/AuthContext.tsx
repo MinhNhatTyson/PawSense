@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { storage } from '../utils/storage'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function bootstrap() {
       try {
-        const stored = await AsyncStorage.getItem(TOKEN_KEY)
+        const stored = await storage.getItem(TOKEN_KEY)
         if (stored) {
           setToken(stored)
           await fetchProfile(stored)
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function persistToken(newToken: string) {
     setToken(newToken)
-    await AsyncStorage.setItem(TOKEN_KEY, newToken)
+    await storage.setItem(TOKEN_KEY, newToken)
   }
 
   // ── Auth actions ─────────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function logout() {
     setToken(null)
     setUser(null)
-    await AsyncStorage.removeItem(TOKEN_KEY)
+    await storage.removeItem(TOKEN_KEY)
   }
 
   async function changePassword(currentPassword: string, newPassword: string) {
