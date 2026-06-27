@@ -16,6 +16,7 @@ import CatBreedManagement from './catBreedPages/CatBreedManagement'
 import { GoogleCallbackPage } from './aurthenticationPages/GoogleCallbackPage'
 import { Sidebar } from './components/Sidebar'
 import { GoogleSelectRolePage } from './aurthenticationPages/GoogleSelectRolePage'
+import CatFoodManagement from './catFoodPages/CatFoodManagement'
 import './index.css'
 
 
@@ -490,7 +491,7 @@ function AppContent() {
       <Route path="/medicines" element={<ProtectedRoute><MedicineManagement /></ProtectedRoute>} />
       <Route path="/cat-breeds" element={<ProtectedRoute><CatBreedManagement /></ProtectedRoute>} />
       <Route path="/login" element={token ? <Navigate to="/dashboard" /> : <LoginPage />} />
-
+      <Route path="/cat-foods" element={<ProtectedRoute><CatFoodManagement /></ProtectedRoute>} />
       <Route path="/register" element={token ? <Navigate to="/dashboard" /> : <RegisterPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

@@ -163,6 +163,7 @@ model Treatment {
   imageUrl           String?
   steps              TreatmentStep[]
   diseaseTreatments  DiseaseTreatment[]
+  foodTreatments     FoodTreatment[]      // ← ADD THIS LINE
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 }
@@ -187,4 +188,55 @@ model DiseaseTreatment {
   createdAt   DateTime  @default(now())
 
   @@unique([diseaseId, treatmentId])
+}
+
+model CatFood {
+  id                   String          @id @default(uuid())
+  name                 String          @unique
+  brand                String
+  category             FoodCategory
+  foodType             FoodType
+  description          String
+  ingredients          String[]
+  protein              Float?
+  fat                  Float?
+  fiber                Float?
+  moisture             Float?
+  calories             Float?
+  ageMinMonths         Int?
+  ageMaxMonths         Int?
+  weightRange          String?
+  allergens            String[]
+  prescriptionRequired Boolean         @default(false)
+  vetNotes             String?
+  imageUrl             String?
+  foodTreatments       FoodTreatment[]
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+}
+
+model FoodTreatment {
+  id          String    @id @default(uuid())
+  foodId      String
+  treatmentId String
+  food        CatFood   @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  treatment   Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([foodId, treatmentId])
+}
+
+enum FoodCategory {
+  KITTEN
+  ADULT
+  SENIOR
+  PRESCRIPTION
+}
+
+enum FoodType {
+  DRY
+  WET
+  SEMI_MOIST
+  RAW
+  SUPPLEMENT
 }

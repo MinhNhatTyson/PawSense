@@ -69,6 +69,17 @@ const NAV_ITEMS = [
     ),
   },
   {
+  to: '/cat-foods',
+  label: 'Cat Food Library',
+  icon: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="5" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M5 5V4a3 3 0 016 0v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M6 9h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+    ),
+  },
+  {
     to: '/profile',
     label: 'My Profile',
     icon: (
