@@ -100,7 +100,20 @@ export function ProfileScreen({ navigation }: any) {
           </View>
           <Text style={styles.actionChevron}>›</Text>
         </TouchableOpacity>
-
+          <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => navigation.navigate('CatList')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.actionIcon}>
+                <Text style={styles.actionIconText}>🐱</Text>
+              </View>
+              <View style={styles.actionContent}>
+                <Text style={styles.actionTitle}>My cats</Text>
+                <Text style={styles.actionDesc}>Manage cat profiles and health records</Text>
+              </View>
+              <Text style={styles.actionChevron}>›</Text>
+            </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionRow}
           onPress={() => navigation.navigate('ChangePassword')}

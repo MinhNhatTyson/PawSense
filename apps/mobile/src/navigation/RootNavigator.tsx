@@ -9,6 +9,10 @@ import { RegisterScreen } from '../screens/RegisterScreen'
 import { ProfileScreen } from '../screens/ProfileScreen'
 import { EditProfileScreen } from '../screens/EditProfileScreen'
 import { ChangePasswordScreen } from '../screens/ChangePasswordScreen'
+// Add to imports:
+import { CatListScreen } from '../screens/cats/CatListScreen'
+import { CatFormScreen } from '../screens/cats/CatFormScreen'
+import { CatDetailScreen } from '../screens/cats/CatDetailScreen'
 
 import { Colors, Typography } from '../theme'
 
@@ -80,6 +84,21 @@ function AppStack() {
           headerShown: false,    // ChangePassword has its own dark header
           title: 'Change Password',
         }}
+      />     
+      <Stack.Screen
+        name="CatList"
+        component={CatListScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CatForm"
+        component={CatFormScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CatDetail"
+        component={CatDetailScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   )
