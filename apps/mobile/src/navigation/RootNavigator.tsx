@@ -1,47 +1,67 @@
 import React from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { ActivityIndicator, View } from 'react-native'
+import { View, ActivityIndicator, StyleSheet } from 'react-native'
 import { useAuth } from '../contexts/AuthContext'
+
 import { LoginScreen } from '../screens/LoginScreen'
 import { RegisterScreen } from '../screens/RegisterScreen'
 import { ProfileScreen } from '../screens/ProfileScreen'
 import { EditProfileScreen } from '../screens/EditProfileScreen'
 import { ChangePasswordScreen } from '../screens/ChangePasswordScreen'
 
+import { Colors, Typography } from '../theme'
+
 const Stack = createNativeStackNavigator()
+
+// ── Shared header options ─────────────────────────────────────────────────────
+
+const sharedHeaderOptions = {
+  headerStyle: {
+    backgroundColor: Colors.greenDeep,
+  },
+  headerTintColor: Colors.cream,
+  headerTitleStyle: {
+    fontFamily: 'System',
+    fontSize: Typography.lg,
+    fontWeight: '500' as const,
+    color: Colors.cream,
+    letterSpacing: -0.2,
+  },
+  headerBackTitleVisible: false,
+  headerShadowVisible: false,
+}
+
+// ── Auth stack (unauthenticated) ──────────────────────────────────────────────
 
 function AuthStack() {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-        animationEnabled: true,
-      }}
-    >
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen
+        name="Register"
+        component={RegisterScreen}
+        options={{
+          ...sharedHeaderOptions,
+          headerShown: true,
+          title: '',
+          // transparent back button over the dark hero
+        }}
+      />
     </Stack.Navigator>
   )
 }
 
+// ── App stack (authenticated) ─────────────────────────────────────────────────
+
 function AppStack() {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: '#667eea',
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: '600',
-        },
-      }}
-    >
+    <Stack.Navigator screenOptions={sharedHeaderOptions}>
       <Stack.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
+          headerShown: false,    // Profile has its own hero header
           title: 'My Profile',
         }}
       />
@@ -49,6 +69,7 @@ function AppStack() {
         name="EditProfile"
         component={EditProfileScreen}
         options={{
+          headerShown: false,    // EditProfile has its own dark header
           title: 'Edit Profile',
         }}
       />
@@ -56,6 +77,7 @@ function AppStack() {
         name="ChangePassword"
         component={ChangePasswordScreen}
         options={{
+          headerShown: false,    // ChangePassword has its own dark header
           title: 'Change Password',
         }}
       />
@@ -63,16 +85,35 @@ function AppStack() {
   )
 }
 
-export function RootNavigator() {
-  const { token, isLoading } = useAuth()
+// ── Loading screen ────────────────────────────────────────────────────────────
 
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#667eea" />
-      </View>
-    )
-  }
-
-  return <NavigationContainer>{token ? <AppStack /> : <AuthStack />}</NavigationContainer>
+function LoadingScreen() {
+  return (
+    <View style={styles.loading}>
+      <ActivityIndicator size="large" color={Colors.greenSage} />
+    </View>
+  )
 }
+
+// ── Root ──────────────────────────────────────────────────────────────────────
+
+export function RootNavigator() {
+  const { token, isInitializing } = useAuth()
+
+  if (isInitializing) return <LoadingScreen />
+
+  return (
+    <NavigationContainer>
+      {token ? <AppStack /> : <AuthStack />}
+    </NavigationContainer>
+  )
+}
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    backgroundColor: Colors.cream,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+})

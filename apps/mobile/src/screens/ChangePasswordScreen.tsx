@@ -2,118 +2,173 @@ import React, { useState } from 'react'
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
 } from 'react-native'
 import { useAuth } from '../contexts/AuthContext'
+import { Button, AlertBanner, Card, SectionTitle } from '../components/UI'
+import { Field } from '../components/UI'
+import { TextInput } from '../components/TextInput'
+import { Colors, Typography, Spacing } from '../theme'
 
 export function ChangePasswordScreen({ navigation }: any) {
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const { changePassword, isLoading } = useAuth()
 
-  const handleChangePassword = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields')
-      return
-    }
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-    if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match')
-      return
-    }
+  // Password strength
+  const strength =
+    next.length === 0 ? 0
+    : next.length < 6 ? 1
+    : next.length < 10 ? 2
+    : 3
 
-    if (newPassword.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters')
-      return
-    }
+  const strengthColor = [
+    Colors.warmWhite,
+    Colors.error,
+    Colors.gold,
+    Colors.success,
+  ][strength] ?? Colors.warmWhite
 
-    if (currentPassword === newPassword) {
-      Alert.alert('Error', 'New password must be different from current password')
-      return
-    }
+  const strengthLabel = ['', 'Weak', 'Fair', 'Strong'][strength] ?? ''
+
+  async function handleChange() {
+    setError('')
+    setSuccess('')
+
+    if (!current) { setError('Please enter your current password.'); return }
+    if (!next) { setError('Please enter a new password.'); return }
+    if (next.length < 6) { setError('New password must be at least 6 characters.'); return }
+    if (next === current) { setError('New password must be different from your current password.'); return }
+    if (next !== confirm) { setError('New passwords do not match.'); return }
 
     try {
-      await changePassword(currentPassword, newPassword)
-      Alert.alert('Success', 'Password changed successfully')
-      navigation.goBack()
-    } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to change password')
+      await changePassword(current, next)
+      setSuccess('Password changed successfully!')
+      setTimeout(() => navigation.goBack(), 1600)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Password change failed. Please try again.')
     }
   }
 
   return (
     <KeyboardAvoidingView
+      style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Change Your Password</Text>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
 
-          <Text style={styles.label}>Current Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••"
-            placeholderTextColor="#999"
-            value={currentPassword}
-            onChangeText={setCurrentPassword}
-            editable={!isLoading}
-            secureTextEntry
-          />
-
-          <Text style={styles.label}>New Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••"
-            placeholderTextColor="#999"
-            value={newPassword}
-            onChangeText={setNewPassword}
-            editable={!isLoading}
-            secureTextEntry
-          />
-
-          <Text style={styles.label}>Confirm New Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••"
-            placeholderTextColor="#999"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            editable={!isLoading}
-            secureTextEntry
-          />
-
-          <Text style={styles.hint}>Password must be at least 6 characters</Text>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Page header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Change password</Text>
+          <Text style={styles.headerSubtitle}>Keep your account secure with a strong password</Text>
         </View>
 
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleChangePassword}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Change Password</Text>
-            )}
-          </TouchableOpacity>
+        <View style={styles.content}>
+          {error ? <AlertBanner type="error" message={error} /> : null}
+          {success ? <AlertBanner type="success" message={success} /> : null}
 
-          <TouchableOpacity
-            style={styles.buttonSecondary}
+          {/* Current password */}
+          <Card>
+            <SectionTitle title="Current password" />
+
+            <Field label="Current password">
+              <TextInput
+                value={current}
+                onChangeText={setCurrent}
+                placeholder="••••••••"
+                secureTextEntry
+                secureToggle
+                autoComplete="current-password"
+                editable={!isLoading}
+              />
+            </Field>
+          </Card>
+
+          {/* New password */}
+          <Card>
+            <SectionTitle title="New password" />
+
+            <Field label="New password">
+              <TextInput
+                value={next}
+                onChangeText={setNext}
+                placeholder="••••••••"
+                secureTextEntry
+                secureToggle
+                autoComplete="new-password"
+                editable={!isLoading}
+              />
+              {/* Strength meter */}
+              {next.length > 0 && (
+                <View style={styles.strengthWrap}>
+                  <View style={styles.strengthBars}>
+                    {[1, 2, 3].map(i => (
+                      <View
+                        key={i}
+                        style={[
+                          styles.strengthBar,
+                          { backgroundColor: i <= strength ? strengthColor : Colors.warmWhite },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                  <Text style={[styles.strengthLabel, { color: strengthColor }]}>
+                    {strengthLabel}
+                  </Text>
+                </View>
+              )}
+            </Field>
+
+            <Field label="Confirm new password">
+              <TextInput
+                value={confirm}
+                onChangeText={setConfirm}
+                placeholder="••••••••"
+                secureTextEntry
+                secureToggle
+                autoComplete="new-password"
+                editable={!isLoading}
+                onSubmitEditing={handleChange}
+                returnKeyType="done"
+              />
+              {/* Match indicator */}
+              {confirm.length > 0 && (
+                <Text style={[
+                  styles.matchText,
+                  { color: confirm === next ? Colors.success : Colors.error },
+                ]}>
+                  {confirm === next ? '✓ Passwords match' : '✗ Passwords do not match'}
+                </Text>
+              )}
+            </Field>
+          </Card>
+
+          <Button
+            label="Update password"
+            onPress={handleChange}
+            loading={isLoading}
+          />
+
+          <Button
+            label="Cancel"
             onPress={() => navigation.goBack()}
+            variant="secondary"
             disabled={isLoading}
-          >
-            <Text style={styles.buttonSecondaryText}>Cancel</Text>
-          </TouchableOpacity>
+            style={styles.cancelBtn}
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -121,78 +176,66 @@ export function ChangePasswordScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.cream,
   },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
+  scroll: {
+    flexGrow: 1,
+    paddingBottom: Spacing['4xl'],
   },
-  section: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+
+  // ── Header ────────────────────────────────────────
+  header: {
+    backgroundColor: Colors.greenDeep,
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing['3xl'],
+    paddingBottom: Spacing['2xl'],
   },
-  sectionTitle: {
-    fontSize: 16,
+  headerTitle: {
+    fontSize: Typography['2xl'],
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
+    color: Colors.cream,
+    letterSpacing: -0.4,
+    marginBottom: Spacing.xs,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-    marginTop: 12,
+  headerSubtitle: {
+    fontSize: Typography.base,
+    color: 'rgba(245,240,232,0.65)',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#333',
+
+  // ── Content ───────────────────────────────────────
+  content: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing['2xl'],
   },
-  hint: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 8,
+  cancelBtn: {
+    marginTop: Spacing.md,
   },
-  actions: {
-    gap: 12,
-  },
-  button: {
-    backgroundColor: '#667eea',
-    borderRadius: 8,
-    paddingVertical: 12,
+
+  // ── Password helpers ──────────────────────────────
+  strengthWrap: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.md,
+    marginTop: Spacing.sm,
   },
-  buttonDisabled: {
-    opacity: 0.6,
+  strengthBars: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
+  strengthBar: {
+    width: 32,
+    height: 4,
+    borderRadius: 2,
   },
-  buttonSecondary: {
-    backgroundColor: '#e2e8f0',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
+  strengthLabel: {
+    fontSize: Typography.sm,
+    fontWeight: '500',
   },
-  buttonSecondaryText: {
-    color: '#2d3748',
-    fontSize: 14,
-    fontWeight: '600',
+  matchText: {
+    fontSize: Typography.sm,
+    marginTop: Spacing.xs,
+    fontWeight: '500',
   },
 })

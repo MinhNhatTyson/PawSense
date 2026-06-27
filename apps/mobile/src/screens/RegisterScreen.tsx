@@ -2,309 +2,326 @@ import React, { useState } from 'react'
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
-  Alert,
-  ActivityIndicator,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
+  StatusBar,
 } from 'react-native'
 import { useAuth } from '../contexts/AuthContext'
+import { Button, AlertBanner, PawLogo, SectionTitle } from '../components/UI'
+import { Field } from '../components/UI'
+import { TextInput } from '../components/TextInput'
+import { Colors, Typography, Spacing, Radius, Shadow } from '../theme'
 
 export function RegisterScreen({ navigation }: any) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [role, setRole] = useState<'CUSTOMER' | 'VET'>('CUSTOMER')
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
-  const [clinicName, setClinicName] = useState('')
   const [address, setAddress] = useState('')
-  const [specialization, setSpecialization] = useState('')
+  const [error, setError] = useState('')
   const { register, isLoading } = useAuth()
 
-  const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all required fields')
-      return
-    }
+  // Password strength: 0 = empty, 1 = weak, 2 = fair, 3 = strong
+  const strength =
+    password.length === 0 ? 0
+    : password.length < 6 ? 1
+    : password.length < 10 ? 2
+    : 3
 
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match')
-      return
-    }
+  const strengthLabel = ['', 'Weak', 'Fair', 'Strong'][strength] ?? ''
+  const strengthColor = [
+    Colors.warmWhite,
+    Colors.error,
+    Colors.gold,
+    Colors.success,
+  ][strength] ?? Colors.warmWhite
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters')
-      return
-    }
-
+  async function handleRegister() {
+    if (!email.trim()) { setError('Email is required.'); return }
+    if (!password) { setError('Password is required.'); return }
+    if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
+    if (password !== confirmPassword) { setError('Passwords do not match.'); return }
+    setError('')
     try {
-      await register(email, password, role, {
-        fullName: fullName || undefined,
-        phone: phone || undefined,
-        clinicName: clinicName || undefined,
-        address: address || undefined,
-        specialization: specialization || undefined,
+      await register(email.trim(), password, {
+        fullName: fullName.trim() || undefined,
+        phone: phone.trim() || undefined,
+        address: address.trim() || undefined,
       })
-    } catch (error) {
-      Alert.alert('Registration Failed', error instanceof Error ? error.message : 'Registration failed')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.')
     }
   }
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Join PawSense</Text>
-          <Text style={styles.subtitle}>Create your account</Text>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
+
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero */}
+        <View style={styles.hero}>
+          <View style={styles.logoWrap}>
+            <PawLogo size={44} />
+          </View>
+          <Text style={styles.brandName}>
+            Paw<Text style={styles.brandAccent}>Sense</Text>
+          </Text>
+          <Text style={styles.tagline}>Create your account</Text>
         </View>
 
-        <View style={styles.formContainer}>
-          <Text style={styles.sectionTitle}>Account Type</Text>
-          <View style={styles.roleContainer}>
-            <TouchableOpacity
-              style={[styles.roleButton, role === 'CUSTOMER' && styles.roleButtonActive]}
-              onPress={() => setRole('CUSTOMER')}
-            >
-              <Text style={[styles.roleButtonText, role === 'CUSTOMER' && styles.roleButtonTextActive]}>
-                Pet Owner
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.roleButton, role === 'VET' && styles.roleButtonActive]}
-              onPress={() => setRole('VET')}
-            >
-              <Text style={[styles.roleButtonText, role === 'VET' && styles.roleButtonTextActive]}>
-                Veterinarian
-              </Text>
-            </TouchableOpacity>
-          </View>
+        {/* Form card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Join PawSense</Text>
+          <Text style={styles.cardSubtitle}>Track and manage your pet's health in one place</Text>
 
-          <Text style={styles.label}>Email *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="you@example.com"
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-            editable={!isLoading}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+          {error ? <AlertBanner type="error" message={error} /> : null}
 
-          <Text style={styles.label}>Full Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="John Doe"
-            placeholderTextColor="#999"
-            value={fullName}
-            onChangeText={setFullName}
-            editable={!isLoading}
-          />
+          {/* Personal information */}
+          <SectionTitle title="Personal information" />
 
-          <Text style={styles.label}>Phone</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="+1 (555) 000-0000"
-            placeholderTextColor="#999"
-            value={phone}
-            onChangeText={setPhone}
-            editable={!isLoading}
-            keyboardType="phone-pad"
-          />
+          <Field label="Full name" optional>
+            <TextInput
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="Jane Smith"
+              autoComplete="name"
+              editable={!isLoading}
+            />
+          </Field>
 
-          <Text style={styles.label}>Address</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="123 Main St, City"
-            placeholderTextColor="#999"
-            value={address}
-            onChangeText={setAddress}
-            editable={!isLoading}
-          />
+          <Field label="Phone" optional>
+            <TextInput
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="+84 90 000 0000"
+              keyboardType="phone-pad"
+              autoComplete="tel"
+              editable={!isLoading}
+            />
+          </Field>
 
-          {role === 'VET' && (
-            <>
-              <Text style={styles.label}>Clinic Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Your clinic name"
-                placeholderTextColor="#999"
-                value={clinicName}
-                onChangeText={setClinicName}
-                editable={!isLoading}
-              />
+          <Field label="Address" optional>
+            <TextInput
+              value={address}
+              onChangeText={setAddress}
+              placeholder="123 Street, Ho Chi Minh City"
+              autoComplete="street-address"
+              editable={!isLoading}
+            />
+          </Field>
 
-              <Text style={styles.label}>Specialization</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., Feline Medicine"
-                placeholderTextColor="#999"
-                value={specialization}
-                onChangeText={setSpecialization}
-                editable={!isLoading}
-              />
-            </>
-          )}
+          {/* Login credentials */}
+          <SectionTitle title="Login credentials" />
 
-          <Text style={styles.label}>Password *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••"
-            placeholderTextColor="#999"
-            value={password}
-            onChangeText={setPassword}
-            editable={!isLoading}
-            secureTextEntry
-          />
+          <Field label="Email address">
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@email.com"
+              keyboardType="email-address"
+              autoComplete="email"
+              editable={!isLoading}
+            />
+          </Field>
 
-          <Text style={styles.label}>Confirm Password *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••"
-            placeholderTextColor="#999"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            editable={!isLoading}
-            secureTextEntry
-          />
-
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Create Account</Text>
+          <Field label="Password">
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="••••••••"
+              secureTextEntry
+              secureToggle
+              autoComplete="new-password"
+              editable={!isLoading}
+            />
+            {/* Strength meter */}
+            {password.length > 0 && (
+              <View style={styles.strengthWrap}>
+                <View style={styles.strengthBars}>
+                  {[1, 2, 3].map(i => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.strengthBar,
+                        { backgroundColor: i <= strength ? strengthColor : Colors.warmWhite },
+                      ]}
+                    />
+                  ))}
+                </View>
+                <Text style={[styles.strengthLabel, { color: strengthColor }]}>
+                  {strengthLabel}
+                </Text>
+              </View>
             )}
-          </TouchableOpacity>
+          </Field>
+
+          <Field label="Confirm password">
+            <TextInput
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="••••••••"
+              secureTextEntry
+              secureToggle
+              autoComplete="new-password"
+              editable={!isLoading}
+              onSubmitEditing={handleRegister}
+              returnKeyType="done"
+            />
+            {/* Match indicator */}
+            {confirmPassword.length > 0 && (
+              <Text style={[
+                styles.matchText,
+                { color: confirmPassword === password ? Colors.success : Colors.error },
+              ]}>
+                {confirmPassword === password ? '✓ Passwords match' : '✗ Passwords do not match'}
+              </Text>
+            )}
+          </Field>
+
+          <Button
+            label="Create account"
+            onPress={handleRegister}
+            loading={isLoading}
+            style={styles.submitBtn}
+          />
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.footerLink}>Login</Text>
+              <Text style={styles.footerLink}>Sign in</Text>
             </TouchableOpacity>
           </View>
         </View>
+
+        <View style={{ height: Spacing['3xl'] }} />
       </ScrollView>
     </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.greenDeep,
   },
-  scrollContent: {
+  scroll: {
     flexGrow: 1,
-    paddingVertical: 20,
-    paddingHorizontal: 20,
   },
-  header: {
-    marginBottom: 24,
+
+  // ── Hero ──────────────────────────────────────────
+  hero: {
+    paddingTop: Spacing['4xl'] + Spacing.lg,
+    paddingBottom: Spacing['3xl'],
     alignItems: 'center',
+    gap: Spacing.sm,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#667eea',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-  },
-  formContainer: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginBottom: 40,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
-  roleButton: {
-    flex: 1,
-    borderWidth: 2,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingVertical: 10,
+  logoWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: Radius.xl,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
-  },
-  roleButtonActive: {
-    borderColor: '#667eea',
-    backgroundColor: '#f0f4ff',
-  },
-  roleButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#999',
-  },
-  roleButtonTextActive: {
-    color: '#667eea',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  input: {
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#333',
+    borderColor: 'rgba(255,255,255,0.18)',
   },
-  button: {
-    backgroundColor: '#667eea',
-    borderRadius: 8,
-    paddingVertical: 12,
-    marginTop: 24,
-    alignItems: 'center',
+  brandName: {
+    fontFamily: 'System',
+    fontSize: Typography['3xl'],
+    fontWeight: '300',
+    color: Colors.cream,
+    letterSpacing: -0.5,
   },
-  buttonDisabled: {
-    opacity: 0.6,
+  brandAccent: {
+    color: Colors.gold,
+    fontWeight: '300',
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
+  tagline: {
+    fontSize: Typography.base,
+    color: 'rgba(245,240,232,0.65)',
+    letterSpacing: 0.2,
+  },
+
+  // ── Card ─────────────────────────────────────────
+  card: {
+    backgroundColor: Colors.cream,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    flex: 1,
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing['3xl'],
+    paddingBottom: Spacing['2xl'],
+    ...Shadow.lg,
+  },
+  cardTitle: {
+    fontSize: Typography['2xl'],
     fontWeight: '600',
+    color: Colors.textPrimary,
+    letterSpacing: -0.4,
+    marginBottom: Spacing.xs,
+  },
+  cardSubtitle: {
+    fontSize: Typography.base,
+    color: Colors.textMuted,
+    marginBottom: Spacing['2xl'],
+    lineHeight: 22,
+  },
+
+  // ── Password helpers ──────────────────────────────
+  strengthWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginTop: Spacing.sm,
+  },
+  strengthBars: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  strengthBar: {
+    width: 32,
+    height: 4,
+    borderRadius: 2,
+  },
+  strengthLabel: {
+    fontSize: Typography.sm,
+    fontWeight: '500',
+  },
+  matchText: {
+    fontSize: Typography.sm,
+    marginTop: Spacing.xs,
+    fontWeight: '500',
+  },
+
+  // ── Actions ───────────────────────────────────────
+  submitBtn: {
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xl,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
+    alignItems: 'center',
   },
   footerText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: Typography.base,
+    color: Colors.textMuted,
   },
   footerLink: {
-    fontSize: 14,
-    color: '#667eea',
+    fontSize: Typography.base,
+    color: Colors.greenForest,
     fontWeight: '600',
   },
 })

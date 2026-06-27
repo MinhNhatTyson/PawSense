@@ -1,64 +1,97 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 export interface UserProfile {
+  id: string
+  fullName?: string
+  phone?: string
+  address?: string
+  avatar?: string
+  // Pet owners don't have clinic/specialization
+}
+
+export interface AuthUser {
   id: string
   email: string
   role: 'VET' | 'CUSTOMER'
-  profile?: {
-    id: string
-    fullName?: string
-    phone?: string
-    clinicName?: string
-    address?: string
-    specialization?: string
-    avatar?: string
-  }
+  profile?: UserProfile
 }
 
 export interface AuthContextType {
   token: string | null
-  user: UserProfile | null
+  user: AuthUser | null
   isLoading: boolean
+  isInitializing: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, role: 'VET' | 'CUSTOMER', profileData?: Partial<UserProfile['profile']>) => Promise<void>
-  logout: () => void
+  register: (
+    email: string,
+    password: string,
+    profileData?: { fullName?: string; phone?: string; address?: string }
+  ) => Promise<void>
+  logout: () => Promise<void>
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>
-  updateProfile: (profileData: Partial<UserProfile['profile']>) => Promise<void>
-  getProfile: () => Promise<void>
+  updateProfile: (profileData: {
+    fullName?: string
+    phone?: string
+    address?: string
+  }) => Promise<void>
+  refreshProfile: () => Promise<void>
 }
+
+// ── Context ───────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+const API_URL = 'http://localhost:3000/api'
+const TOKEN_KEY = 'auth_token'
+
+// ── Provider ──────────────────────────────────────────────────────────────────
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
-  const [user, setUser] = useState<UserProfile | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
 
-  const API_URL = 'http://localhost:3000/api'
-
+  // Restore token on mount
   useEffect(() => {
-    bootstrapAsync()
+    async function bootstrap() {
+      try {
+        const stored = await AsyncStorage.getItem(TOKEN_KEY)
+        if (stored) {
+          setToken(stored)
+          await fetchProfile(stored)
+        }
+      } catch {
+        // token invalid or expired — stay logged out
+      } finally {
+        setIsInitializing(false)
+      }
+    }
+    bootstrap()
   }, [])
 
-  useEffect(() => {
-    if (token) {
-      getProfile()
-    }
-  }, [token])
+  // ── Helpers ─────────────────────────────────────────────────────────────────
 
-  const bootstrapAsync = async () => {
-    try {
-      const storedToken = await AsyncStorage.getItem('auth_token')
-      setToken(storedToken)
-    } catch (e) {
-      console.error('Failed to restore token', e)
-    } finally {
-      setIsLoading(false)
-    }
+  async function fetchProfile(authToken: string) {
+    const res = await fetch(`${API_URL}/auth/profile`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    })
+    if (!res.ok) throw new Error('Session expired')
+    const data = await res.json()
+    setUser(data.user)
   }
 
-  const login = async (email: string, password: string) => {
+  async function persistToken(newToken: string) {
+    setToken(newToken)
+    await AsyncStorage.setItem(TOKEN_KEY, newToken)
+  }
+
+  // ── Auth actions ─────────────────────────────────────────────────────────────
+
+  async function login(email: string, password: string) {
     setIsLoading(true)
     try {
       const res = await fetch(`${API_URL}/auth/login`, {
@@ -66,27 +99,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
-
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Login failed')
-      }
-
       const data = await res.json()
-      setToken(data.token)
+      if (!res.ok) throw new Error(data.error || 'Login failed')
+      await persistToken(data.token)
       setUser(data.user)
-      await AsyncStorage.setItem('auth_token', data.token)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const register = async (
+  async function register(
     email: string,
     password: string,
-    role: 'VET' | 'CUSTOMER',
-    profileData?: Partial<UserProfile['profile']>
-  ) => {
+    profileData?: { fullName?: string; phone?: string; address?: string }
+  ) {
     setIsLoading(true)
     try {
       const res = await fetch(`${API_URL}/auth/register`, {
@@ -95,36 +121,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({
           email,
           password,
-          role,
+          role: 'CUSTOMER', // Mobile is always Pet Owner
           fullName: profileData?.fullName,
           phone: profileData?.phone,
-          clinicName: profileData?.clinicName,
           address: profileData?.address,
-          specialization: profileData?.specialization,
         }),
       })
-
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Registration failed')
-      }
-
       const data = await res.json()
-      setToken(data.token)
+      if (!res.ok) throw new Error(data.error || 'Registration failed')
+      await persistToken(data.token)
       setUser(data.user)
-      await AsyncStorage.setItem('auth_token', data.token)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const logout = async () => {
+  async function logout() {
     setToken(null)
     setUser(null)
-    await AsyncStorage.removeItem('auth_token')
+    await AsyncStorage.removeItem(TOKEN_KEY)
   }
 
-  const changePassword = async (currentPassword: string, newPassword: string) => {
+  async function changePassword(currentPassword: string, newPassword: string) {
     setIsLoading(true)
     try {
       const res = await fetch(`${API_URL}/auth/change-password`, {
@@ -135,17 +153,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify({ currentPassword, newPassword }),
       })
-
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Password change failed')
-      }
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Password change failed')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const updateProfile = async (profileData: Partial<UserProfile['profile']>) => {
+  async function updateProfile(profileData: {
+    fullName?: string
+    phone?: string
+    address?: string
+  }) {
     setIsLoading(true)
     try {
       const res = await fetch(`${API_URL}/auth/profile`, {
@@ -156,33 +175,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify(profileData),
       })
-
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Profile update failed')
-      }
-
-      await getProfile()
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Profile update failed')
+      // Refresh user state
+      if (token) await fetchProfile(token)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const getProfile = async () => {
+  async function refreshProfile() {
     if (!token) return
-    try {
-      const res = await fetch(`${API_URL}/auth/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (!res.ok) throw new Error('Failed to fetch profile')
-
-      const data = await res.json()
-      setUser(data.user)
-    } catch (error) {
-      console.error('Failed to fetch profile:', error)
-      logout()
-    }
+    await fetchProfile(token)
   }
 
   return (
@@ -191,12 +195,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         user,
         isLoading,
+        isInitializing,
         login,
         register,
         logout,
         changePassword,
         updateProfile,
-        getProfile,
+        refreshProfile,
       }}
     >
       {children}
@@ -205,9 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-  return context
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
+  return ctx
 }

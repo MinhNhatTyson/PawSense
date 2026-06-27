@@ -1252,6 +1252,363 @@ const DISEASES = [
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MEDICINES
+// ─────────────────────────────────────────────────────────────────────────────
+const MEDICINES = [
+  {
+    name: 'Amoxicillin-Clavulanate (Co-amoxiclav)',
+    description: 'Broad-spectrum penicillin-class antibiotic combined with clavulanic acid to overcome beta-lactamase resistance. First-line choice for skin, soft tissue, urinary tract, and dental infections in cats and dogs.',
+    dosage: '12.5–25 mg/kg orally every 12 hours with food',
+    sideEffects: [
+      'Vomiting and nausea (most common)',
+      'Diarrhoea',
+      'Loss of appetite',
+      'Hypersensitivity reactions (rare)',
+    ],
+    usageInstructions: 'Administer orally with food to reduce gastrointestinal upset. Complete the full prescribed course even if clinical signs resolve. Shake oral suspension well before use. Store suspension in the refrigerator.',
+    warnings: [
+      'Do not use in animals with known penicillin allergy',
+      'Use with caution in patients with hepatic impairment',
+      'Can alter gut flora — monitor for secondary diarrhoea',
+      'Not recommended in rabbits, guinea pigs, hamsters, or other small herbivores (potentially fatal)',
+    ],
+    manufacturer: 'Norbrook / Generic',
+  },
+  {
+    name: 'Doxycycline',
+    description: 'Tetracycline-class broad-spectrum antibiotic with activity against intracellular pathogens including Mycoplasma, Chlamydophila, Rickettsia, Bartonella, and Bordetella. Preferred antibiotic for feline upper respiratory infections and tick-borne diseases.',
+    dosage: '5–10 mg/kg orally every 12–24 hours with food and water',
+    sideEffects: [
+      'Oesophageal stricture if given without water (cats)',
+      'Vomiting and nausea',
+      'Photosensitisation',
+      'Tooth discolouration in young animals',
+    ],
+    usageInstructions: 'Always follow administration with at least 6 mL of water in cats to prevent oesophageal stricture. Give with food to reduce nausea. Avoid giving within 2 hours of antacids or dairy products. Never crush tablets and give dry.',
+    warnings: [
+      'CRITICAL in cats: always follow with water to prevent fatal oesophageal stricture',
+      'Avoid in pregnant animals and neonates (affects bone and tooth development)',
+      'Use with caution in patients with hepatic impairment',
+      'Avoid prolonged sun exposure during treatment',
+    ],
+    manufacturer: 'Generic',
+  },
+  {
+    name: 'Metronidazole',
+    description: 'Nitroimidazole antibiotic and antiprotozoal with anaerobic spectrum. Widely used for gastrointestinal infections, Giardia, anaerobic bacterial infections, and as adjunct therapy in inflammatory bowel disease.',
+    dosage: '10–15 mg/kg orally every 12 hours; 25–50 mg/kg once daily for Giardia (5 days)',
+    sideEffects: [
+      'Anorexia and nausea',
+      'Hypersalivation (cats)',
+      'Neurological signs at high doses: ataxia, tremors, seizures',
+      'Vomiting',
+    ],
+    usageInstructions: 'Administer with food to reduce GI upset. Bitter taste — use pill pockets or compounding formulations for cats. Do not exceed recommended dose. Monitor for neurological signs during prolonged use.',
+    warnings: [
+      'Reduce dose in hepatic insufficiency — metronidazole is hepatically metabolised',
+      'Neurological toxicity at doses >66 mg/kg/day or with prolonged use',
+      'Do not use in first trimester of pregnancy',
+      'Avoid concomitant use with anticoagulants (potentiates warfarin effect)',
+    ],
+    manufacturer: 'Generic',
+  },
+  {
+    name: 'Meloxicam (Metacam)',
+    description: 'Non-steroidal anti-inflammatory drug (NSAID) — COX-2 preferential inhibitor. Provides analgesia and anti-inflammatory action. Licensed for perioperative pain, osteoarthritis, and acute musculoskeletal disorders in cats and dogs.',
+    dosage: 'Dogs: 0.2 mg/kg loading dose, then 0.1 mg/kg once daily with food. Cats: 0.05–0.1 mg/kg once daily (use with extreme caution — narrow therapeutic index)',
+    sideEffects: [
+      'Gastrointestinal ulceration and haemorrhage',
+      'Vomiting and diarrhoea',
+      'Renal papillary necrosis (chronic use or dehydration)',
+      'Hepatotoxicity (rare)',
+    ],
+    usageInstructions: 'Administer with food. Use the lowest effective dose for the shortest duration. Ensure patient is well-hydrated before and during use. Do not use concurrently with other NSAIDs or corticosteroids. Monitor renal function with long-term use.',
+    warnings: [
+      'CONTRAINDICATED with concurrent corticosteroid or NSAID use',
+      'Do not use in dehydrated, hypotensive, or renally compromised patients',
+      'Extreme caution in cats — use lowest possible dose and shortest duration',
+      'Do not use perioperatively without adequate fluid support',
+      'Monitor for GI signs: black/tarry stools, vomiting blood, abdominal pain',
+    ],
+    manufacturer: 'Boehringer Ingelheim',
+  },
+  {
+    name: 'Prednisolone',
+    description: 'Synthetic glucocorticoid with potent anti-inflammatory and immunosuppressive properties. First-line treatment for immune-mediated diseases, allergic conditions, inflammatory bowel disease, and neoplasia. Preferred over prednisone in cats due to superior bioavailability.',
+    dosage: 'Anti-inflammatory: 1–2 mg/kg/day orally. Immunosuppressive: 2–4 mg/kg/day orally. Taper gradually once remission achieved.',
+    sideEffects: [
+      'PU/PD (polyuria/polydipsia)',
+      'Polyphagia and weight gain',
+      'Iatrogenic hyperadrenocorticism with long-term use',
+      'Muscle wasting and pot-bellied appearance',
+      'Predisposition to infection',
+      'GI ulceration',
+    ],
+    usageInstructions: 'Administer with food to reduce GI irritation. Never abruptly discontinue after prolonged use — taper gradually to allow HPA axis recovery. Use the lowest effective dose for maintenance. Avoid giving modified-live vaccines during immunosuppressive therapy.',
+    warnings: [
+      'Do not abruptly discontinue after >2 weeks of use — risk of Addisonian crisis',
+      'Contraindicated with active fungal or systemic viral infections',
+      'Contraindicated with concurrent NSAID use (increased GI ulceration risk)',
+      'Causes insulin resistance — use with caution in diabetic patients',
+      'Avoid in pregnant animals in first trimester (teratogenic risk)',
+    ],
+    manufacturer: 'Generic',
+  },
+  {
+    name: 'Maropitant (Cerenia)',
+    description: 'Neurokinin-1 (NK1) receptor antagonist — the most effective antiemetic for both central and peripheral vomiting in dogs and cats. Licensed for treatment and prevention of vomiting and motion sickness. Provides 24-hour anti-emetic coverage.',
+    dosage: 'Dogs: 2 mg/kg SC or 8 mg/kg PO once daily. Cats: 1 mg/kg SC or PO once daily. Max 5 consecutive days.',
+    sideEffects: [
+      'Pain on subcutaneous injection (reduce by refrigerating solution)',
+      'Hypersalivation (cats — oral route)',
+      'Lethargy (uncommon)',
+      'Anorexia (uncommon)',
+    ],
+    usageInstructions: 'For SC injection: refrigerate solution and inject slowly to minimise pain. For oral use in cats, may cause hypersalivation due to bitter taste — use with food. Administer at least 1 hour before travel for motion sickness prevention.',
+    warnings: [
+      'Do not use in animals <8 weeks (dogs) or <16 weeks (cats)',
+      'Use with caution in animals with hepatic impairment (hepatic metabolism)',
+      'Avoid in animals with known hypersensitivity to maropitant',
+      'Not recommended as monotherapy when vomiting is caused by a primary GI obstruction',
+    ],
+    manufacturer: 'Zoetis',
+  },
+  {
+    name: 'Furosemide (Frusemide)',
+    description: 'Loop diuretic that inhibits the Na-K-2Cl cotransporter in the thick ascending loop of Henle. Essential for management of congestive heart failure, pulmonary oedema, and ascites. Rapid onset of action (within 30 minutes IV).',
+    dosage: 'Acute: 2–4 mg/kg IV or IM. Chronic maintenance: 1–2 mg/kg PO every 12 hours (adjust to lowest effective dose).',
+    sideEffects: [
+      'Hypokalaemia (electrolyte imbalance — most important)',
+      'Dehydration and pre-renal azotaemia',
+      'Hyponatraemia',
+      'Ototoxicity with high doses (rare)',
+    ],
+    usageInstructions: 'Monitor electrolytes (especially potassium) and renal function regularly during chronic use. Supplement potassium if hypokalaemia develops. Use the lowest effective dose for maintenance. Weigh patient regularly to assess fluid status.',
+    warnings: [
+      'Monitor renal function and electrolytes (especially K+) regularly',
+      'Avoid concurrent use with nephrotoxic drugs (aminoglycosides, NSAIDs)',
+      'Ototoxicity risk with concurrent aminoglycoside use',
+      'Dose reduction required in renal impairment',
+      'Ensure adequate hydration to prevent pre-renal azotaemia',
+    ],
+    manufacturer: 'Generic',
+  },
+  {
+    name: 'Methimazole (Felimazole)',
+    description: 'Thionamide antithyroid agent that inhibits thyroid peroxidase, blocking synthesis of T3 and T4. First-line medical management of feline hyperthyroidism. Available as oral tablets or transdermal gel applied to the inner pinna.',
+    dosage: 'Initial: 2.5 mg per cat orally every 12 hours or 5 mg per cat every 24 hours. Adjust based on T4 levels after 2–4 weeks. Transdermal: 5 mg per ear pinna every 12 hours.',
+    sideEffects: [
+      'Facial excoriation and pruritus (5–10% of cats)',
+      'Vomiting and anorexia (GI side effects)',
+      'Haematological: leucopenia, thrombocytopenia (serious — monitor CBC)',
+      'Hepatotoxicity (rare)',
+      'Acquired myasthenia gravis (rare)',
+    ],
+    usageInstructions: 'Monitor T4 levels at 2–4 weeks after initiating treatment and after each dose adjustment. CBC and chemistry every 3 months during maintenance. Transdermal application: rotate between ears. Wear gloves when applying — methimazole is absorbed through human skin.',
+    warnings: [
+      'Monitor CBC — discontinue if leucopenia or thrombocytopenia develops',
+      'Wear gloves when handling — teratogenic risk to humans',
+      'Renal function may deteriorate after treatment initiation (unmasking of CKD)',
+      'Facial pruritus/excoriation is indication to discontinue and switch treatment',
+      'Not a cure — hyperthyroidism recurs within days of cessation',
+    ],
+    manufacturer: 'Dechra',
+  },
+  {
+    name: 'Insulin Glargine (Lantus)',
+    description: 'Long-acting human insulin analogue providing peakless 24-hour basal insulin coverage. The preferred insulin for management of feline diabetes mellitus due to its pharmacokinetic profile promoting diabetic remission in cats. Administered subcutaneously twice daily.',
+    dosage: 'Cats: 1–2 U per cat SC every 12 hours initially. Adjust in 0.5–1 U increments based on serial glucose curves. Target nadir: 5–8 mmol/L (90–144 mg/dL).',
+    sideEffects: [
+      'Hypoglycaemia (most serious — owner must recognise signs)',
+      'Injection site reactions (rare)',
+      'Local lipoatrophy with repeated injection at same site',
+    ],
+    usageInstructions: 'Administer SC immediately after a meal. Rotate injection sites. Keep pen at room temperature for up to 28 days; store unopened vials in refrigerator. Never shake — gently roll to mix. Train owners to monitor for hypoglycaemia: weakness, ataxia, seizures. Emergency: oral Karo syrup on gums.',
+    warnings: [
+      'Never administer if blood glucose <4 mmol/L (72 mg/dL)',
+      'Owners must be trained in recognition and treatment of hypoglycaemia',
+      'Do not dilute glargine — alters pH and destroys the long-acting formulation',
+      'Do not mix with other insulins in the same syringe',
+      'Dose reduction required if cat is unwell or not eating',
+    ],
+    manufacturer: 'Sanofi',
+  },
+  {
+    name: 'Oclacitinib (Apoquel)',
+    description: 'Janus kinase (JAK) inhibitor that selectively targets JAK1, inhibiting cytokine signalling pathways involved in itch and inflammation. Provides rapid relief of pruritus associated with allergic and atopic dermatitis in dogs. Faster onset than steroids with fewer systemic side effects.',
+    dosage: 'Dogs: 0.4–0.6 mg/kg orally every 12 hours for up to 14 days, then every 24 hours for maintenance.',
+    sideEffects: [
+      'Increased susceptibility to infections (bacterial, fungal, viral) — immunomodulatory',
+      'Vomiting and diarrhoea',
+      'Papillomas and skin masses with long-term use',
+      'Lethargy',
+    ],
+    usageInstructions: 'Can be given with or without food. Perform full physical examination and assess for signs of infection before initiating treatment. Monitor for demodicosis and neoplasia with long-term use. Not indicated for use in dogs <12 months of age or <3 kg.',
+    warnings: [
+      'Do not use in dogs <12 months of age',
+      'Discontinue if serious infection develops',
+      'Screen for parasitism before use — may exacerbate demodicosis',
+      'Monitor for neoplasia with long-term use',
+      'Not for use in cats — not licensed and safety not established',
+    ],
+    manufacturer: 'Zoetis',
+  },
+  {
+    name: 'Clindamycin',
+    description: 'Lincosamide antibiotic with excellent activity against gram-positive cocci, obligate anaerobes, and intracellular protozoa (Toxoplasma gondii). Drug of choice for toxoplasmosis in cats and dogs, and for dental/oral infections and soft tissue infections.',
+    dosage: 'Dogs: 11 mg/kg orally every 12 hours or 5.5 mg/kg every 12 hours. Cats: 12.5–25 mg/kg orally every 12 hours. Toxoplasmosis: 12.5–25 mg/kg every 12 hours for 4 weeks.',
+    sideEffects: [
+      'Vomiting and oesophagitis (cats — follow with water)',
+      'Diarrhoea',
+      'Pseudomembranous colitis (Clostridioides difficile overgrowth — rare)',
+    ],
+    usageInstructions: 'Administer with food and water to reduce oesophagitis risk in cats. Complete the full course. Liquid formulation available for cats. Store oral solution in refrigerator.',
+    warnings: [
+      'NEVER use in rabbits, hamsters, guinea pigs, or horses — can cause fatal enterocolitis',
+      'Follow oral dosing with water in cats to prevent oesophagitis',
+      'Discontinue immediately if severe diarrhoea develops (possible pseudomembranous colitis)',
+      'Use with caution in patients with hepatic or renal impairment',
+    ],
+    manufacturer: 'Generic',
+  },
+  {
+    name: 'Amlodipine (Norvasc)',
+    description: 'Dihydropyridine calcium channel blocker — drug of choice for hypertension in cats. Produces arterial vasodilation with minimal negative chronotropic or inotropic effects. Highly effective in reducing systolic blood pressure in feline hypertension secondary to CKD or hyperthyroidism.',
+    dosage: 'Cats: 0.625–1.25 mg per cat orally once daily. Dogs: 0.05–0.1 mg/kg orally once daily (second-line for dogs).',
+    sideEffects: [
+      'Gingival hyperplasia with long-term use',
+      'Reflex tachycardia',
+      'Peripheral oedema (uncommon)',
+      'Hypotension with overdose',
+    ],
+    usageInstructions: 'Can be given with or without food. Tablet may be crushed and mixed with food. Monitor blood pressure 1–2 weeks after initiating or changing dose. Target systolic blood pressure <140 mmHg. Compounding to lower doses available.',
+    warnings: [
+      'Monitor blood pressure closely — avoid hypotension (systolic <100 mmHg)',
+      'Gingival hyperplasia risk with prolonged use — maintain dental hygiene',
+      'Do not abruptly discontinue in hypertensive emergency',
+      'Use caution in aortic stenosis',
+    ],
+    manufacturer: 'Generic / Pfizer',
+  },
+]
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAT BREEDS
+// ─────────────────────────────────────────────────────────────────────────────
+const CAT_BREEDS = [
+  {
+    name: 'Maine Coon',
+    origin: 'United States',
+    description: 'One of the largest domesticated cat breeds and the official state cat of Maine. Known as the "gentle giant" of the cat world, the Maine Coon has a centuries-old history as a working farm cat in the northeastern United States. Beloved for its dog-like personality, tufted ears, and magnificent bushy tail.',
+    physicalAppearance: 'Large, muscular, rectangular body with a broad chest. Dense, water-resistant semi-long coat with a silky undercoat and ruff around the neck. Notably large, tufted ears with lynx tips, large wide-set eyes in gold, green, or copper, and a long, flowing bushy tail. Paws are large and tufted between toes (natural snowshoes). Coat colours: virtually all patterns and colours except pointed.',
+    weightRange: '5–9 kg (males), 3.5–6 kg (females)',
+    lifespan: '12–15 years',
+    temperament: ['Gentle', 'Playful', 'Intelligent', 'Social', 'Dog-friendly', 'Kid-friendly', 'Loyal', 'Adaptable'],
+    personality: 'Maine Coons are affectionate but not overly demanding, often described as dog-like in their loyalty. They enjoy being near their people but are not typically lap cats. Highly intelligent and playful well into adulthood — they enjoy interactive toys and puzzle feeders. Known for their distinctive chirping trill vocalisation. Generally good with children and other pets including dogs.',
+    imageUrls: [],
+  },
+  {
+    name: 'Siamese',
+    origin: 'Thailand',
+    description: 'One of the oldest and most recognised cat breeds in the world, originating from ancient Siam (modern-day Thailand). Siamese cats were revered as sacred temple cats and were once exclusive to Thai royalty. Their striking pointed colouration and vivid blue eyes make them instantly recognisable worldwide.',
+    physicalAppearance: 'Elegant, slender, tubular body with fine bone structure and long legs. Wedge-shaped head with large, wide-set ears continuing the lines of the wedge. Striking almond-shaped vivid blue eyes. Short, fine, glossy coat lying close to the body. Distinctive colour-point pattern: pale body with darker colouration (points) on face mask, ears, paws, and tail. Point colours: seal, blue, chocolate, lilac, flame, and tortie.',
+    weightRange: '3–5 kg',
+    lifespan: '12–20 years',
+    temperament: ['Vocal', 'Affectionate', 'Social', 'Intelligent', 'Energetic', 'Curious', 'Loyal'],
+    personality: 'Siamese cats are extremely vocal and communicative — they will hold conversations with their owners. Highly social and people-oriented; they do not do well when left alone for extended periods. Form strong bonds with their primary caregivers. Intelligent and curious, they require mental stimulation. Can be demanding and assertive. Known as the "extroverts" of the cat world.',
+    imageUrls: [],
+  },
+  {
+    name: 'Persian',
+    origin: 'Iran (Persia)',
+    description: 'One of the oldest and most popular cat breeds, associated with luxury and aristocracy. Persians have been documented in hieroglyphics dating back to 1684 BC. Their serene temperament and glamorous appearance have made them consistently one of the most popular pedigree breeds worldwide.',
+    physicalAppearance: 'Heavy-boned, cobby body with short legs and a broad, round head. Distinctive flat face (brachycephalic) with a short, upturned nose, full round cheeks, and large, round eyes. Extremely long, thick, luxurious double coat requiring daily grooming. Small, rounded ears set low. Eyes are large, round, and brilliant copper, blue, green, or odd-coloured depending on coat colour. Coat colours: virtually every colour and pattern.',
+    weightRange: '3.5–7 kg',
+    lifespan: '10–15 years',
+    temperament: ['Calm', 'Gentle', 'Quiet', 'Docile', 'Affectionate', 'Lap cat', 'Adaptable'],
+    personality: 'Persians are quintessential lap cats — serene, gentle, and undemanding. They prefer quiet, stable environments and are not suited to boisterous households. They show affection in a calm, dignified manner and are often described as decorative but deeply loving companions. Not particularly playful but enjoy gentle interaction. Their flat face requires daily cleaning of facial folds and tear staining.',
+    imageUrls: [],
+  },
+  {
+    name: 'Bengal',
+    origin: 'United States',
+    description: 'Created by crossing domestic cats with the Asian Leopard Cat (Prionailurus bengalensis), the Bengal was developed to combine the wild appearance of jungle cats with the temperament of a domestic companion. The breed was developed in the 1960s–1980s by Jean Mill in California and recognised by TICA in 1983.',
+    physicalAppearance: 'Medium to large, muscular, athletic body with a long, substantial frame. Distinctive wild-looking spotted or marbled coat with a glittery sheen unique to the breed — the "glitter gene" causes individual hairs to refract light. Broad, wedge-shaped head with high cheekbones. Large, oval eyes in green, gold, or blue. Short, dense, luxuriously soft coat. Classic rosette spotting closely resembles a leopard or jaguar pattern.',
+    weightRange: '4–7 kg (males), 3–5 kg (females)',
+    lifespan: '12–16 years',
+    temperament: ['Energetic', 'Playful', 'Curious', 'Intelligent', 'Active', 'Bold', 'Vocal'],
+    personality: 'Bengals are highly active and athletic cats that need substantial environmental enrichment. They are intelligent, curious, and often described as "dog-like" in their willingness to play fetch and learn tricks. Many Bengals enjoy water. They form strong bonds with their owners but can be demanding. Not recommended for first-time cat owners or sedentary households. Need vertical space, puzzle feeders, and interactive play.',
+    imageUrls: [],
+  },
+  {
+    name: 'Ragdoll',
+    origin: 'United States',
+    description: 'Developed in the 1960s by breeder Ann Baker in Riverside, California. Named for their tendency to go limp and relaxed when picked up — like a ragdoll. Ragdolls are one of the largest domestic cat breeds and are known for their extraordinarily docile, affectionate temperament, often described as "puppy-like."',
+    physicalAppearance: 'Very large, broad-chested, heavily-boned body with a semi-long silky coat. Blue eyes are a breed requirement — large, oval, and vivid blue. Medium-sized ears with rounded tips. The coat is rabbit-like in texture, low-matting, and longer around the neck and on the tail. Colour-pointed pattern (like Siamese) in seal, blue, chocolate, lilac, flame, and cream; with mitted or bicolour white patterns.',
+    weightRange: '5.4–9 kg (males), 3.6–6.8 kg (females)',
+    lifespan: '13–18 years',
+    temperament: ['Gentle', 'Calm', 'Affectionate', 'Docile', 'Lap cat', 'Kid-friendly', 'Dog-friendly', 'Quiet'],
+    personality: 'Ragdolls are the ultimate gentle companions. They are known for their tendency to go limp when held, their calm acceptance of handling, and their deep attachment to their families. They follow their owners from room to room. Not particularly active or demanding. Excellent with children due to their patient, tolerant nature. Not aggressive. They often greet owners at the door like dogs. Generally indoor-only cats due to their trusting nature.',
+    imageUrls: [],
+  },
+  {
+    name: 'British Shorthair',
+    origin: 'United Kingdom',
+    description: 'One of the oldest and most established cat breeds, descended from domestic cats of Rome that were brought to Britain by Roman invaders. Selectively bred in the 19th century by Harrison Weir, often called the "father of the cat fancy." The blue (grey) variant — British Blue — is the most iconic and widely recognised.',
+    physicalAppearance: 'Large, cobby, powerful body with a broad chest, thick neck, and strong legs. Distinctive round, broad head with full cheeks and a short broad nose. Large, round eyes in copper or gold (blue in white cats, odd eyes possible). Dense, crisp, plush double coat that stands away from the body. The coat has a characteristic "crunchy" texture. Most common colour: blue (grey), though all colours and patterns are recognised.',
+    weightRange: '4–8 kg (males), 3–6 kg (females)',
+    lifespan: '14–20 years',
+    temperament: ['Calm', 'Gentle', 'Independent', 'Quiet', 'Adaptable', 'Loyal', 'Affectionate'],
+    personality: 'British Shorthairs are calm, easy-going cats that are affectionate without being clingy. They are independent enough to tolerate time alone but enjoy company on their terms. Not typically lap cats but will sit beside you contentedly. Low-energy compared to many breeds. Excellent adaptability makes them ideal for apartment living. Generally get on well with children and other pets. Males are typically more affectionate than females.',
+    imageUrls: [],
+  },
+  {
+    name: 'Abyssinian',
+    origin: 'Ethiopia (Abyssinia)',
+    description: 'One of the oldest known cat breeds, with a history speculated to trace back to ancient Egypt — they bear a striking resemblance to cats depicted in Egyptian artefacts. First documented in the UK in the 1860s when brought from Abyssinia (Ethiopia). Known as the "Clown of the Cat Kingdom" for their entertaining antics.',
+    physicalAppearance: 'Medium-sized, slender, elegant, and muscular body — the Abyssinian embodies athletic grace. Distinctive ticked coat where each hair has alternating bands of colour, producing a wild, agouti appearance similar to wild felids. Large, almond-shaped, expressive eyes in gold, green, hazel, or copper, accentuated by a dark rim. Large, alert, moderately pointed ears. Coat colours: ruddy (original), sorrel/cinnamon, blue, and fawn.',
+    weightRange: '3–5 kg',
+    lifespan: '12–15 years',
+    temperament: ['Energetic', 'Curious', 'Playful', 'Intelligent', 'Active', 'Social', 'Bold'],
+    personality: 'Abyssinians are one of the most active and curious cat breeds. They are perpetually in motion — climbing, investigating, and playing. They form strong bonds with their owners but prefer participation to lap-sitting. Highly intelligent and need substantial mental and physical stimulation. They do not do well in solitary or boring environments. Often compared to monkeys for their acrobatic ability and insatiable curiosity.',
+    imageUrls: [],
+  },
+  {
+    name: 'Scottish Fold',
+    origin: 'Scotland',
+    description: 'Originated from a spontaneous mutation discovered in a barn cat named "Susie" in Perthshire, Scotland in 1961. The characteristic folded ears are caused by a dominant gene mutation affecting cartilage throughout the body. All Scottish Folds trace their lineage back to Susie. Due to welfare concerns related to the fold mutation, breeding regulations vary by country.',
+    physicalAppearance: 'Medium-sized, rounded body with a round head, large round eyes, and the distinctive forward-folding ears that give an "owl-like" or "teddy bear" appearance. The degree of fold varies: single fold (tip only), double fold (two-thirds), or triple fold (lying completely flat). Dense, soft plush coat. Eyes are large and round in any colour. Straight-eared kittens (Scottish Straights) are also born in every litter.',
+    weightRange: '4–6 kg (males), 3–5 kg (females)',
+    lifespan: '11–15 years',
+    temperament: ['Calm', 'Gentle', 'Adaptable', 'Affectionate', 'Quiet', 'Social', 'Lap cat'],
+    personality: 'Scottish Folds have a sweet, placid temperament and adapt well to various households including families with children and other pets. They enjoy human company but are not overly demanding. They are playful but not hyperactive. Known for their unusual postures — sitting upright like a Buddha, lying flat on their backs. Soft, quiet voice. Importantly: all Scottish Fold cats should be monitored for Osteochondrodysplasia (OCD), a painful skeletal condition caused by the fold gene.',
+    imageUrls: [],
+  },
+  {
+    name: 'Sphynx',
+    origin: 'Canada',
+    description: 'The Sphynx originated from a natural mutation producing hairlessness, first documented in Toronto, Canada in 1966. Despite appearances, Sphynx cats are not truly hairless — they are covered in a fine, peach-like down. One of the most distinctive and controversial cat breeds, now highly popular worldwide for their unique appearance and extraordinarily affectionate personality.',
+    physicalAppearance: 'Medium-sized, muscular body with a surprising weight for their size — dense and heavy-boned. Hairless or near-hairless with a chamois-leather skin texture, wrinkled particularly around the muzzle, between the ears, and at the shoulder. Large, lemon-shaped eyes that are deep-set. Very large, open, bat-like ears. Prominent cheekbones. Skin colour shows the underlying pattern that would be expressed in the coat. Long, whip-like tail.',
+    weightRange: '3.5–7 kg',
+    lifespan: '12–16 years',
+    temperament: ['Affectionate', 'Energetic', 'Social', 'Curious', 'Playful', 'Vocal', 'Loyal', 'Kid-friendly'],
+    personality: 'Sphynx cats are intensely people-oriented — the most extroverted and social of all cat breeds. They seek warmth (human or otherwise) constantly due to their lack of coat. They are described as part cat, part dog, part monkey. Highly vocal and entertaining. They do not do well as sole pets and benefit from feline companionship. Require weekly bathing to remove skin oil build-up. Their affectionate, almost needy nature makes them unsuitable for owners who work long hours.',
+    imageUrls: [],
+  },
+  {
+    name: 'Norwegian Forest Cat',
+    origin: 'Norway',
+    description: 'An ancient breed native to Scandinavia, featuring prominently in Norse mythology as the "Skogkatt" (forest cat). Well-adapted to cold Nordic climates through centuries of natural selection. Nearly extinct during WWII, the breed was saved by dedicated Norwegian breeders in the 1970s. Often confused with the Maine Coon.',
+    physicalAppearance: 'Large, muscular, long-bodied with sturdy bone structure. Distinguished by a dense, water-resistant double coat: a woolly insulating undercoat and a glossy, flowing guard coat that sheds water. The coat forms a distinctive "bib" at the throat, a full ruff, and britches on the hind legs. Triangular head with a straight profile (unlike the Maine Coon\'s slight concave profile). Large, almond-shaped eyes. Large, tufted ears. Tail is long and bushy.',
+    weightRange: '4.5–9 kg (males), 3–6 kg (females)',
+    lifespan: '14–16 years',
+    temperament: ['Independent', 'Gentle', 'Calm', 'Adaptable', 'Playful', 'Curious', 'Loyal'],
+    personality: 'Norwegian Forest Cats are calm, confident, and self-sufficient. They are affectionate with their families but on their own terms — friendly without being clingy. They are excellent climbers and need tall cat trees. Playful and active outdoors, more sedentary indoors. Generally adaptable and tolerant of other pets and children. They shed heavily twice a year (seasonal moult). A hardy, undemanding breed that copes well with outdoor access.',
+    imageUrls: [],
+  },
+]
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SEED FUNCTION
 // ─────────────────────────────────────────────────────────────────────────────
 async function main() {
@@ -1354,17 +1711,49 @@ async function main() {
     }
   }
 
+  // ── 4. Upsert Medicines ───────────────────────────────────────────────────
+  console.log(`\n💊 Seeding ${MEDICINES.length} medicines...`)
+
+  for (const m of MEDICINES) {
+    const existing = await prisma.medicine.findUnique({ where: { name: m.name } })
+    if (existing) {
+      await prisma.medicine.update({ where: { id: existing.id }, data: m })
+      process.stdout.write(`  ↺ ${m.name}\n`)
+    } else {
+      await prisma.medicine.create({ data: m })
+      process.stdout.write(`  ✓ ${m.name}\n`)
+    }
+  }
+
+  // ── 5. Upsert Cat Breeds ──────────────────────────────────────────────────
+  console.log(`\n🐱 Seeding ${CAT_BREEDS.length} cat breeds...`)
+
+  for (const b of CAT_BREEDS) {
+    const existing = await prisma.catBreed.findUnique({ where: { name: b.name } })
+    if (existing) {
+      await prisma.catBreed.update({ where: { id: existing.id }, data: b })
+      process.stdout.write(`  ↺ ${b.name}\n`)
+    } else {
+      await prisma.catBreed.create({ data: b })
+      process.stdout.write(`  ✓ ${b.name}\n`)
+    }
+  }
+
   // ── Summary ───────────────────────────────────────────────────────────────
-  const [sc, tc, dc] = await Promise.all([
+  const [sc, tc, dc, mc, bc] = await Promise.all([
     prisma.symptom.count(),
     prisma.treatment.count(),
     prisma.disease.count(),
+    prisma.medicine.count(),
+    prisma.catBreed.count(),
   ])
 
   console.log('\n✅ Seed complete!')
   console.log(`   Symptoms:   ${sc}`)
   console.log(`   Treatments: ${tc}`)
   console.log(`   Diseases:   ${dc}`)
+  console.log(`   Medicines:  ${mc}`)
+  console.log(`   Cat Breeds: ${bc}`)
 }
 
 main()
