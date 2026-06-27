@@ -1,205 +1,259 @@
-import React, { useState } from 'react'
+import React from 'react'
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
+  TouchableOpacity,
+  StatusBar,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native'
 import { useAuth } from '../contexts/AuthContext'
+import { Button, Card, DetailRow } from '../components/UI'
+import { Colors, Typography, Spacing, Radius, Shadow } from '../theme'
 
-export function EditProfileScreen({ navigation }: any) {
-  const { user, updateProfile, isLoading } = useAuth()
-  const [fullName, setFullName] = useState(user?.profile?.fullName || '')
-  const [phone, setPhone] = useState(user?.profile?.phone || '')
-  const [clinicName, setClinicName] = useState(user?.profile?.clinicName || '')
-  const [address, setAddress] = useState(user?.profile?.address || '')
-  const [specialization, setSpecialization] = useState(user?.profile?.specialization || '')
+export function ProfileScreen({ navigation }: any) {
+  const { user, logout, isLoading } = useAuth()
 
-  const handleSave = async () => {
-    try {
-      await updateProfile({
-        fullName: fullName || undefined,
-        phone: phone || undefined,
-        clinicName: clinicName || undefined,
-        address: address || undefined,
-        specialization: specialization || undefined,
-      })
-      Alert.alert('Success', 'Profile updated successfully')
-      navigation.goBack()
-    } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update profile')
-    }
+  const initials = (
+    user?.profile?.fullName?.charAt(0) ||
+    user?.email?.charAt(0) ||
+    '?'
+  ).toUpperCase()
+
+  async function handleLogout() {
+    Alert.alert(
+      'Sign out',
+      'Are you sure you want to sign out of PawSense?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign out',
+          style: 'destructive',
+          onPress: async () => {
+            await logout()
+          },
+        },
+      ]
+    )
   }
 
   if (!user) return null
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.scroll}
+      showsVerticalScrollIndicator={false}
     >
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
 
-          <Text style={styles.label}>Full Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="John Doe"
-            placeholderTextColor="#999"
-            value={fullName}
-            onChangeText={setFullName}
-            editable={!isLoading}
-          />
-
-          <Text style={styles.label}>Phone</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="+1 (555) 000-0000"
-            placeholderTextColor="#999"
-            value={phone}
-            onChangeText={setPhone}
-            editable={!isLoading}
-            keyboardType="phone-pad"
-          />
-
-          <Text style={styles.label}>Address</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="123 Main St, City"
-            placeholderTextColor="#999"
-            value={address}
-            onChangeText={setAddress}
-            editable={!isLoading}
-          />
+      {/* Hero banner */}
+      <View style={styles.hero}>
+        {/* Avatar circle */}
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{initials}</Text>
         </View>
+        <Text style={styles.heroName}>
+          {user.profile?.fullName || 'Pet Owner'}
+        </Text>
+        <View style={styles.rolePill}>
+          <Text style={styles.rolePillText}>Pet Owner</Text>
+        </View>
+      </View>
 
-        {user.role === 'VET' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Professional Information</Text>
+      {/* Content */}
+      <View style={styles.content}>
 
-            <Text style={styles.label}>Clinic Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Your clinic name"
-              placeholderTextColor="#999"
-              value={clinicName}
-              onChangeText={setClinicName}
-              editable={!isLoading}
-            />
+        {/* Contact info card */}
+        <Text style={styles.sectionHeading}>Contact information</Text>
+        <Card>
+          <DetailRow label="Email" value={user.email} />
+          {user.profile?.phone && (
+            <DetailRow label="Phone" value={user.profile.phone} />
+          )}
+          {user.profile?.address && (
+            <DetailRow label="Address" value={user.profile.address} />
+          )}
+          {!user.profile?.phone && !user.profile?.address && (
+            <Text style={styles.emptyHint}>
+              No additional contact information added yet.
+            </Text>
+          )}
+        </Card>
 
-            <Text style={styles.label}>Specialization</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., Feline Medicine"
-              placeholderTextColor="#999"
-              value={specialization}
-              onChangeText={setSpecialization}
-              editable={!isLoading}
-            />
+        {/* Actions */}
+        <Text style={styles.sectionHeading}>Account</Text>
+
+        <TouchableOpacity
+          style={styles.actionRow}
+          onPress={() => navigation.navigate('EditProfile')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.actionIcon}>
+            {/* Edit icon */}
+            <Text style={styles.actionIconText}>✎</Text>
           </View>
-        )}
+          <View style={styles.actionContent}>
+            <Text style={styles.actionTitle}>Edit profile</Text>
+            <Text style={styles.actionDesc}>Update your name, phone, and address</Text>
+          </View>
+          <Text style={styles.actionChevron}>›</Text>
+        </TouchableOpacity>
 
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleSave}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Save Changes</Text>
-            )}
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionRow}
+          onPress={() => navigation.navigate('ChangePassword')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.actionIcon}>
+            <Text style={styles.actionIconText}>🔒</Text>
+          </View>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionTitle}>Change password</Text>
+            <Text style={styles.actionDesc}>Update your login credentials</Text>
+          </View>
+          <Text style={styles.actionChevron}>›</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.buttonSecondary}
-            onPress={() => navigation.goBack()}
-            disabled={isLoading}
-          >
-            <Text style={styles.buttonSecondaryText}>Cancel</Text>
-          </TouchableOpacity>
+        {/* Sign out */}
+        <View style={styles.signOutWrap}>
+          <Button
+            label="Sign out"
+            onPress={handleLogout}
+            variant="danger"
+            loading={isLoading}
+          />
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+      </View>
+    </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.cream,
   },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
+  scroll: {
+    paddingBottom: Spacing['4xl'],
   },
-  section: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+
+  // ── Hero ──────────────────────────────────────────
+  hero: {
+    backgroundColor: Colors.greenDeep,
+    paddingTop: Spacing['3xl'],
+    paddingBottom: Spacing['4xl'],
+    alignItems: 'center',
+    gap: Spacing.md,
   },
-  sectionTitle: {
-    fontSize: 14,
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.greenPale,
+    borderWidth: 3,
+    borderColor: Colors.greenSage,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  avatarText: {
+    fontSize: Typography['3xl'],
+    fontWeight: '500',
+    color: Colors.greenForest,
+    fontFamily: 'System',
+  },
+  heroName: {
+    fontSize: Typography.xl,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
+    color: Colors.cream,
+    letterSpacing: -0.3,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  input: {
+  rolePill: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: Radius.full,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#333',
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  actions: {
-    gap: 12,
+  rolePillText: {
+    fontSize: Typography.sm,
+    color: Colors.cream,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
-  button: {
-    backgroundColor: '#667eea',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
+
+  // ── Content ───────────────────────────────────────
+  content: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing['3xl'],
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 14,
+  sectionHeading: {
+    fontSize: Typography.xs,
     fontWeight: '600',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: Colors.textLight,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.sm,
   },
-  buttonSecondary: {
-    backgroundColor: '#e2e8f0',
-    borderRadius: 8,
-    paddingVertical: 12,
+
+  emptyHint: {
+    fontSize: Typography.base,
+    color: Colors.textLight,
+    fontStyle: 'italic',
+    paddingVertical: Spacing.md,
+  },
+
+  // ── Action rows ───────────────────────────────────
+  actionRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.warmWhite,
+    gap: Spacing.md,
+    ...Shadow.sm,
   },
-  buttonSecondaryText: {
-    color: '#2d3748',
-    fontSize: 14,
-    fontWeight: '600',
+  actionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.greenPale,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  actionIconText: {
+    fontSize: 18,
+  },
+  actionContent: {
+    flex: 1,
+  },
+  actionTitle: {
+    fontSize: Typography.base,
+    fontWeight: '500',
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  actionDesc: {
+    fontSize: Typography.sm,
+    color: Colors.textMuted,
+  },
+  actionChevron: {
+    fontSize: 22,
+    color: Colors.textLight,
+    lineHeight: 26,
+  },
+
+  // ── Sign out ──────────────────────────────────────
+  signOutWrap: {
+    marginTop: Spacing.xl,
   },
 })

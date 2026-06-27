@@ -1,269 +1,259 @@
-import React, { useState } from 'react'
+import React from 'react'
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
+  TouchableOpacity,
+  StatusBar,
   Alert,
 } from 'react-native'
 import { useAuth } from '../contexts/AuthContext'
+import { Button, Card, DetailRow } from '../components/UI'
+import { Colors, Typography, Spacing, Radius, Shadow } from '../theme'
 
 export function ProfileScreen({ navigation }: any) {
   const { user, logout, isLoading } = useAuth()
-  const [loggingOut, setLoggingOut] = useState(false)
 
-  const handleLogout = async () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        onPress: async () => {
-          setLoggingOut(true)
-          try {
+  const initials = (
+    user?.profile?.fullName?.charAt(0) ||
+    user?.email?.charAt(0) ||
+    '?'
+  ).toUpperCase()
+
+  async function handleLogout() {
+    Alert.alert(
+      'Sign out',
+      'Are you sure you want to sign out of PawSense?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign out',
+          style: 'destructive',
+          onPress: async () => {
             await logout()
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            })
-          } finally {
-            setLoggingOut(false)
-          }
+          },
         },
-        style: 'destructive',
-      },
-    ])
-  }
-
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#667eea" />
-      </View>
+      ]
     )
   }
 
-  if (!user) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>User information not available</Text>
-      </View>
-    )
-  }
+  if (!user) return null
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.header}>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.scroll}
+      showsVerticalScrollIndicator={false}
+    >
+      <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
+
+      {/* Hero banner */}
+      <View style={styles.hero}>
+        {/* Avatar circle */}
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {(user.profile?.fullName?.charAt(0) || user.email.charAt(0)).toUpperCase()}
-          </Text>
+          <Text style={styles.avatarText}>{initials}</Text>
         </View>
-        <Text style={styles.name}>{user.profile?.fullName || 'User'}</Text>
-        <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>{user.role}</Text>
+        <Text style={styles.heroName}>
+          {user.profile?.fullName || 'Pet Owner'}
+        </Text>
+        <View style={styles.rolePill}>
+          <Text style={styles.rolePillText}>Pet Owner</Text>
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Contact Information</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Email:</Text>
-          <Text style={styles.value}>{user.email}</Text>
-        </View>
+      {/* Content */}
+      <View style={styles.content}>
 
-        {user.profile?.phone && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Phone:</Text>
-            <Text style={styles.value}>{user.profile.phone}</Text>
-          </View>
-        )}
-
-        {user.profile?.address && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Address:</Text>
-            <Text style={styles.value}>{user.profile.address}</Text>
-          </View>
-        )}
-      </View>
-
-      {user.role === 'VET' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Professional Information</Text>
-          {user.profile?.clinicName && (
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Clinic:</Text>
-              <Text style={styles.value}>{user.profile.clinicName}</Text>
-            </View>
+        {/* Contact info card */}
+        <Text style={styles.sectionHeading}>Contact information</Text>
+        <Card>
+          <DetailRow label="Email" value={user.email} />
+          {user.profile?.phone && (
+            <DetailRow label="Phone" value={user.profile.phone} />
           )}
-
-          {user.profile?.specialization && (
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Specialization:</Text>
-              <Text style={styles.value}>{user.profile.specialization}</Text>
-            </View>
+          {user.profile?.address && (
+            <DetailRow label="Address" value={user.profile.address} />
           )}
-        </View>
-      )}
+          {!user.profile?.phone && !user.profile?.address && (
+            <Text style={styles.emptyHint}>
+              No additional contact information added yet.
+            </Text>
+          )}
+        </Card>
 
-      <View style={styles.actions}>
+        {/* Actions */}
+        <Text style={styles.sectionHeading}>Account</Text>
+
         <TouchableOpacity
-          style={styles.button}
+          style={styles.actionRow}
           onPress={() => navigation.navigate('EditProfile')}
-          disabled={isLoading}
+          activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Edit Profile</Text>
+          <View style={styles.actionIcon}>
+            {/* Edit icon */}
+            <Text style={styles.actionIconText}>✎</Text>
+          </View>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionTitle}>Edit profile</Text>
+            <Text style={styles.actionDesc}>Update your name, phone, and address</Text>
+          </View>
+          <Text style={styles.actionChevron}>›</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.button}
+          style={styles.actionRow}
           onPress={() => navigation.navigate('ChangePassword')}
-          disabled={isLoading}
+          activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Change Password</Text>
+          <View style={styles.actionIcon}>
+            <Text style={styles.actionIconText}>🔒</Text>
+          </View>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionTitle}>Change password</Text>
+            <Text style={styles.actionDesc}>Update your login credentials</Text>
+          </View>
+          <Text style={styles.actionChevron}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.button, styles.logoutButton]}
-          onPress={handleLogout}
-          disabled={loggingOut || isLoading}
-        >
-          {loggingOut ? (
-            <ActivityIndicator color="#c53030" />
-          ) : (
-            <Text style={[styles.buttonText, styles.logoutButtonText]}>Logout</Text>
-          )}
-        </TouchableOpacity>
+        {/* Sign out */}
+        <View style={styles.signOutWrap}>
+          <Button
+            label="Sign out"
+            onPress={handleLogout}
+            variant="danger"
+            loading={isLoading}
+          />
+        </View>
+
       </View>
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.cream,
   },
-  contentContainer: {
-    padding: 20,
+  scroll: {
+    paddingBottom: Spacing['4xl'],
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+
+  // ── Hero ──────────────────────────────────────────
+  hero: {
+    backgroundColor: Colors.greenDeep,
+    paddingTop: Spacing['3xl'],
+    paddingBottom: Spacing['4xl'],
     alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 24,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingVertical: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    gap: Spacing.md,
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#667eea',
-    justifyContent: 'center',
+    backgroundColor: Colors.greenPale,
+    borderWidth: 3,
+    borderColor: Colors.greenSage,
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
   },
   avatarText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  roleBadge: {
-    backgroundColor: '#667eea',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  roleText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  section: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  label: {
-    fontSize: 14,
+    fontSize: Typography['3xl'],
     fontWeight: '500',
-    color: '#666',
+    color: Colors.greenForest,
+    fontFamily: 'System',
   },
-  value: {
-    fontSize: 14,
-    color: '#333',
-    flex: 1,
-    textAlign: 'right',
-  },
-  actions: {
-    gap: 12,
-  },
-  button: {
-    backgroundColor: '#667eea',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 14,
+  heroName: {
+    fontSize: Typography.xl,
     fontWeight: '600',
+    color: Colors.cream,
+    letterSpacing: -0.3,
   },
-  logoutButton: {
-    backgroundColor: '#fed7d7',
+  rolePill: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  logoutButtonText: {
-    color: '#c53030',
+  rolePillText: {
+    fontSize: Typography.sm,
+    color: Colors.cream,
+    fontWeight: '500',
+    letterSpacing: 0.3,
+  },
+
+  // ── Content ───────────────────────────────────────
+  content: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing['3xl'],
+  },
+  sectionHeading: {
+    fontSize: Typography.xs,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: Colors.textLight,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.sm,
+  },
+
+  emptyHint: {
+    fontSize: Typography.base,
+    color: Colors.textLight,
+    fontStyle: 'italic',
+    paddingVertical: Spacing.md,
+  },
+
+  // ── Action rows ───────────────────────────────────
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.warmWhite,
+    gap: Spacing.md,
+    ...Shadow.sm,
+  },
+  actionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.greenPale,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  actionIconText: {
+    fontSize: 18,
+  },
+  actionContent: {
+    flex: 1,
+  },
+  actionTitle: {
+    fontSize: Typography.base,
+    fontWeight: '500',
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  actionDesc: {
+    fontSize: Typography.sm,
+    color: Colors.textMuted,
+  },
+  actionChevron: {
+    fontSize: 22,
+    color: Colors.textLight,
+    lineHeight: 26,
+  },
+
+  // ── Sign out ──────────────────────────────────────
+  signOutWrap: {
+    marginTop: Spacing.xl,
   },
 })
