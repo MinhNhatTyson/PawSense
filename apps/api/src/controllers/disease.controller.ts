@@ -261,7 +261,7 @@ export async function updateDisease(req: AuthRequest, res: Response) {
 
   if (req.file) {
     if (disease.imageUrl) {
-      const publicId = disease.imageUrl.split('/').slice(-1)[0].split('.')[0]
+      const publicId = disease.imageUrl.split('/').slice(-1)[0]?.split('.')[0] ?? ''
       await cloudinary.uploader.destroy(`PawSense/diseases/${publicId}`)
     }
     const b64 = Buffer.from(req.file.buffer).toString('base64')

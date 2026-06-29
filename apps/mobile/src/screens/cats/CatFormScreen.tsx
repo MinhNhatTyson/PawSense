@@ -1,20 +1,219 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Alert, KeyboardAvoidingView, Platform, StatusBar,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  Animated,
+  Pressable,
 } from 'react-native'
 import { catProfileAPI, type CatGender, type CatProfile } from '../../api/catProfileAPI'
-import { Button, AlertBanner, SectionTitle, Field } from '../../components/UI'
+import { Button, AlertBanner, Field } from '../../components/UI'
 import { TextInput } from '../../components/TextInput'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
 
-type GenderOption = { value: CatGender; label: string; emoji: string }
-const GENDER_OPTIONS: GenderOption[] = [
-  { value: 'MALE', label: 'Male', emoji: '♂' },
-  { value: 'FEMALE', label: 'Female', emoji: '♀' },
-  { value: 'UNKNOWN', label: 'Unknown', emoji: '?' },
-]
+// ── Animated form card ────────────────────────────────────────────────────────
+function FormCard({
+  children,
+  delay = 0,
+}: {
+  children: React.ReactNode
+  delay?: number
+}) {
+  const fadeAnim = useRef(new Animated.Value(0)).current
+  const slideAnim = useRef(new Animated.Value(20)).current
 
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 350,
+        delay,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 70,
+        friction: 11,
+        delay,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [])
+
+  return (
+    <Animated.View
+      style={[
+        cardStyles.card,
+        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  )
+}
+
+const cardStyles = StyleSheet.create({
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.xl,
+    padding: Spacing['2xl'],
+    borderWidth: 1,
+    borderColor: Colors.warmWhite,
+    gap: Spacing.xs,
+    ...Shadow.sm,
+  },
+})
+
+// ── Animated section title ────────────────────────────────────────────────────
+function SectionHeading({ title }: { title: string }) {
+  return (
+    <View style={sectionStyles.wrap}>
+      <Text style={sectionStyles.text}>{title}</Text>
+      <View style={sectionStyles.line} />
+    </View>
+  )
+}
+
+const sectionStyles = StyleSheet.create({
+  wrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  text: {
+    fontSize: Typography.xs,
+    fontWeight: '700',
+    color: Colors.textLight,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+  },
+  line: { flex: 1, height: 1, backgroundColor: Colors.warmWhite },
+})
+
+// ── Gender option button ──────────────────────────────────────────────────────
+function GenderOption({
+  value,
+  label,
+  emoji,
+  selected,
+  onSelect,
+  disabled,
+}: {
+  value: CatGender
+  label: string
+  emoji: string
+  selected: boolean
+  onSelect: (v: CatGender) => void
+  disabled: boolean
+}) {
+  const scaleAnim = useRef(new Animated.Value(1)).current
+  const bgAnim = useRef(new Animated.Value(selected ? 1 : 0)).current
+
+  React.useEffect(() => {
+    Animated.spring(bgAnim, {
+      toValue: selected ? 1 : 0,
+      tension: 120,
+      friction: 10,
+      useNativeDriver: false,
+    }).start()
+    if (selected) {
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 0.93,
+          tension: 200,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 200,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start()
+    }
+  }, [selected])
+
+  const borderColor = bgAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [Colors.warmWhite, Colors.greenSage],
+  })
+  const backgroundColor = bgAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [Colors.ivory, Colors.greenPale],
+  })
+
+  return (
+    <Animated.View
+      style={[
+        genderStyles.option,
+        { borderColor, backgroundColor, transform: [{ scale: scaleAnim }] },
+      ]}
+    >
+      <Pressable
+        onPress={() => !disabled && onSelect(value)}
+        style={genderStyles.pressable}
+      >
+        <Text style={genderStyles.emoji}>{emoji}</Text>
+        <Text
+          style={[
+            genderStyles.label,
+            selected && genderStyles.labelSelected,
+          ]}
+        >
+          {label}
+        </Text>
+        {selected && (
+          <View style={genderStyles.checkDot} />
+        )}
+      </Pressable>
+    </Animated.View>
+  )
+}
+
+const genderStyles = StyleSheet.create({
+  option: {
+    flex: 1,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+  },
+  pressable: {
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    gap: 4,
+    position: 'relative',
+  },
+  emoji: { fontSize: 22 },
+  label: {
+    fontSize: Typography.sm,
+    fontWeight: '500',
+    color: Colors.textMuted,
+  },
+  labelSelected: {
+    color: Colors.greenForest,
+    fontWeight: '700',
+  },
+  checkDot: {
+    position: 'absolute',
+    top: 6,
+    right: 8,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: Colors.greenForest,
+  },
+})
+
+// ── Vaccination row ───────────────────────────────────────────────────────────
 interface VaccinationEntry {
   vaccineName: string
   dateGiven: string
@@ -23,7 +222,7 @@ interface VaccinationEntry {
   notes: string
 }
 
-function VaccinationItem({
+function VaccinationRow({
   item,
   index,
   onChange,
@@ -32,24 +231,54 @@ function VaccinationItem({
 }: {
   item: VaccinationEntry
   index: number
-  onChange: (index: number, field: keyof VaccinationEntry, value: string) => void
-  onRemove: (index: number) => void
+  onChange: (i: number, f: keyof VaccinationEntry, v: string) => void
+  onRemove: (i: number) => void
   disabled: boolean
 }) {
+  const slideAnim = useRef(new Animated.Value(0)).current
+  const fadeAnim = useRef(new Animated.Value(0)).current
+  const [expanded, setExpanded] = useState(true)
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 1, tension: 60, friction: 9, useNativeDriver: true }),
+    ]).start()
+  }, [])
+
   return (
-    <View style={vaccStyles.card}>
+    <Animated.View
+      style={[
+        vaccStyles.card,
+        {
+          opacity: fadeAnim,
+          transform: [
+            {
+              translateX: slideAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [40, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
       <View style={vaccStyles.header}>
-        <View style={vaccStyles.num}>
-          <Text style={vaccStyles.numText}>{index + 1}</Text>
+        <View style={vaccStyles.indexBadge}>
+          <Text style={vaccStyles.indexText}>{index + 1}</Text>
         </View>
+        <Text style={vaccStyles.headerTitle} numberOfLines={1}>
+          {item.vaccineName || 'New vaccination'}
+        </Text>
         <TouchableOpacity
-          onPress={() => onRemove(index)}
-          disabled={disabled}
+          onPress={() => !disabled && onRemove(index)}
           style={vaccStyles.removeBtn}
+          disabled={disabled}
         >
           <Text style={vaccStyles.removeBtnText}>Remove</Text>
         </TouchableOpacity>
       </View>
+
       <Field label="Vaccine name *">
         <TextInput
           value={item.vaccineName}
@@ -66,23 +295,29 @@ function VaccinationItem({
           editable={!disabled}
         />
       </Field>
-      <Field label="Next due date" optional>
-        <TextInput
-          value={item.nextDueDate}
-          onChangeText={v => onChange(index, 'nextDueDate', v)}
-          placeholder="YYYY-MM-DD"
-          editable={!disabled}
-        />
-      </Field>
-      <Field label="Veterinarian" optional>
-        <TextInput
-          value={item.veterinarian}
-          onChangeText={v => onChange(index, 'veterinarian', v)}
-          placeholder="Dr. Smith"
-          editable={!disabled}
-        />
-      </Field>
-    </View>
+      <View style={vaccStyles.row}>
+        <View style={vaccStyles.rowHalf}>
+          <Field label="Next due" optional>
+            <TextInput
+              value={item.nextDueDate}
+              onChangeText={v => onChange(index, 'nextDueDate', v)}
+              placeholder="YYYY-MM-DD"
+              editable={!disabled}
+            />
+          </Field>
+        </View>
+        <View style={vaccStyles.rowHalf}>
+          <Field label="Veterinarian" optional>
+            <TextInput
+              value={item.veterinarian}
+              onChangeText={v => onChange(index, 'veterinarian', v)}
+              placeholder="Dr. Smith"
+              editable={!disabled}
+            />
+          </Field>
+        </View>
+      </View>
+    </Animated.View>
   )
 }
 
@@ -94,46 +329,147 @@ const vaccStyles = StyleSheet.create({
     borderColor: Colors.warmWhite,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
-    gap: Spacing.xs,
+    gap: 2,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
   },
-  num: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  indexBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: Colors.greenDeep,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
-  numText: { fontSize: Typography.sm, fontWeight: '700', color: Colors.cream },
+  indexText: { fontSize: Typography.xs, fontWeight: '700', color: Colors.cream },
+  headerTitle: {
+    flex: 1,
+    fontSize: Typography.base,
+    fontWeight: '600',
+    color: Colors.textBody,
+  },
   removeBtn: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     backgroundColor: Colors.errorBg,
     borderRadius: Radius.sm,
   },
-  removeBtnText: { fontSize: Typography.sm, color: Colors.error, fontWeight: '500' },
+  removeBtnText: { fontSize: Typography.xs, color: Colors.error, fontWeight: '600' },
+  row: { flexDirection: 'row', gap: Spacing.sm },
+  rowHalf: { flex: 1 },
 })
 
+// ── Photo thumbnail ───────────────────────────────────────────────────────────
+function PhotoThumbnail({
+  uri,
+  onRemove,
+  label,
+  isNew = false,
+  disabled,
+}: {
+  uri: string
+  onRemove: () => void
+  label?: string
+  isNew?: boolean
+  disabled: boolean
+}) {
+  const scaleAnim = useRef(new Animated.Value(0)).current
+
+  React.useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 100,
+      friction: 8,
+      useNativeDriver: true,
+    }).start()
+  }, [])
+
+  return (
+    <Animated.View
+      style={[photoStyles.thumb, { transform: [{ scale: scaleAnim }] }]}
+    >
+      <Image source={{ uri }} style={photoStyles.image} resizeMode="cover" />
+      <TouchableOpacity
+        style={photoStyles.remove}
+        onPress={onRemove}
+        disabled={disabled}
+      >
+        <Text style={photoStyles.removeText}>×</Text>
+      </TouchableOpacity>
+      {label ? (
+        <View style={[photoStyles.label, isNew && photoStyles.labelNew]}>
+          <Text style={photoStyles.labelText}>{label}</Text>
+        </View>
+      ) : null}
+    </Animated.View>
+  )
+}
+
+const photoStyles = StyleSheet.create({
+  thumb: {
+    width: 88,
+    height: 88,
+    borderRadius: Radius.md,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: Colors.warmWhite,
+    flexShrink: 0,
+  },
+  image: { width: '100%', height: '100%' },
+  remove: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(26,58,42,0.80)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeText: { color: Colors.white, fontSize: 16, lineHeight: 20, fontWeight: '700' },
+  label: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+    backgroundColor: 'rgba(26,58,42,0.80)',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  labelNew: { backgroundColor: 'rgba(74,124,95,0.90)' },
+  labelText: { color: Colors.white, fontSize: 9, fontWeight: '700' },
+})
+
+// ── Main form screen ──────────────────────────────────────────────────────────
 export function CatFormScreen({ navigation, route }: any) {
   const { mode, cat } = route.params as { mode: 'create' | 'edit'; cat?: CatProfile }
   const isEditing = mode === 'edit' && !!cat
 
+  // ── State ─────────────────────────────────────────
   const [name, setName] = useState(cat?.name ?? '')
   const [gender, setGender] = useState<CatGender>(cat?.gender ?? 'UNKNOWN')
-  const [ageYears, setAgeYears] = useState(cat?.ageYears != null ? String(cat.ageYears) : '')
-  const [ageMonths, setAgeMonths] = useState(cat?.ageMonths != null ? String(cat.ageMonths) : '')
-  const [weightKg, setWeightKg] = useState(cat?.weightKg != null ? String(cat.weightKg) : '')
+  const [ageYears, setAgeYears] = useState(
+    cat?.ageYears != null ? String(cat.ageYears) : ''
+  )
+  const [ageMonths, setAgeMonths] = useState(
+    cat?.ageMonths != null ? String(cat.ageMonths) : ''
+  )
+  const [weightKg, setWeightKg] = useState(
+    cat?.weightKg != null ? String(cat.weightKg) : ''
+  )
   const [breed, setBreed] = useState(cat?.breed ?? '')
   const [color, setColor] = useState(cat?.color ?? '')
   const [notes, setNotes] = useState(cat?.notes ?? '')
 
-  const [existingImageUrls, setExistingImageUrls] = useState<string[]>(cat?.imageUrls ?? [])
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>(
+    cat?.imageUrls ?? []
+  )
   const [newImageUris, setNewImageUris] = useState<string[]>([])
 
   const [vaccinations, setVaccinations] = useState<VaccinationEntry[]>(
@@ -148,49 +484,64 @@ export function CatFormScreen({ navigation, route }: any) {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const scrollRef = useRef<ScrollView>(null)
 
-  // ── Image picking (simulated — real app uses expo-image-picker) ───────────
+  // ── Header animation ──────────────────────────────
+  const headerAnim = useRef(new Animated.Value(0)).current
+  React.useEffect(() => {
+    Animated.spring(headerAnim, {
+      toValue: 1,
+      tension: 60,
+      friction: 10,
+      useNativeDriver: true,
+    }).start()
+  }, [])
+
+  // ── Image picking ─────────────────────────────────
   const pickImage = () => {
-    Alert.alert(
-      'Add Photo',
-      'In production this opens the camera roll. For now, enter an image URL:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Use placeholder',
-          onPress: () => {
-            const placeholder = `https://placekitten.com/400/${300 + newImageUris.length * 10}`
-            setNewImageUris(prev => [...prev, placeholder])
-          },
+    Alert.alert('Add photo', 'In production this opens your camera roll.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Use placeholder',
+        onPress: () => {
+          const url = `https://placekitten.com/400/${320 + newImageUris.length * 8}`
+          setNewImageUris(prev => [...prev, url])
         },
-      ]
-    )
-  }
-
-  const removeExistingImage = (url: string) => {
-    setExistingImageUrls(prev => prev.filter(u => u !== url))
-  }
-  const removeNewImage = (idx: number) => {
-    setNewImageUris(prev => prev.filter((_, i) => i !== idx))
+      },
+    ])
   }
 
   // ── Vaccinations ──────────────────────────────────
   const addVaccination = () => {
-    setVaccinations(prev => [...prev, {
-      vaccineName: '', dateGiven: '', nextDueDate: '', veterinarian: '', notes: '',
-    }])
+    setVaccinations(prev => [
+      ...prev,
+      { vaccineName: '', dateGiven: '', nextDueDate: '', veterinarian: '', notes: '' },
+    ])
+    // Scroll down after a tick
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100)
   }
-  const updateVaccination = (index: number, field: keyof VaccinationEntry, value: string) => {
-    setVaccinations(prev => prev.map((v, i) => i === index ? { ...v, [field]: value } : v))
-  }
-  const removeVaccination = (index: number) => {
-    setVaccinations(prev => prev.filter((_, i) => i !== index))
-  }
+
+  const updateVaccination = useCallback(
+    (i: number, f: keyof VaccinationEntry, v: string) => {
+      setVaccinations(prev => prev.map((item, idx) => (idx === i ? { ...item, [f]: v } : item)))
+    },
+    []
+  )
+
+  const removeVaccination = useCallback((i: number) => {
+    setVaccinations(prev => prev.filter((_, idx) => idx !== i))
+  }, [])
 
   // ── Submit ────────────────────────────────────────
   const handleSubmit = async () => {
-    if (!name.trim()) { setError('Cat name is required.'); return }
-    const validVaccinations = vaccinations.filter(v => v.vaccineName.trim() && v.dateGiven.trim())
+    if (!name.trim()) {
+      setError("Cat's name is required.")
+      scrollRef.current?.scrollTo({ y: 0, animated: true })
+      return
+    }
+    const validVaccinations = vaccinations.filter(
+      v => v.vaccineName.trim() && v.dateGiven.trim()
+    )
     setError('')
     setLoading(true)
     try {
@@ -213,11 +564,15 @@ export function CatFormScreen({ navigation, route }: any) {
           newImageUris.length > 0 ? newImageUris : undefined
         )
       } else {
-        await catProfileAPI.create(payload, newImageUris.length > 0 ? newImageUris : undefined)
+        await catProfileAPI.create(
+          payload,
+          newImageUris.length > 0 ? newImageUris : undefined
+        )
       }
       navigation.goBack()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save cat profile')
+      scrollRef.current?.scrollTo({ y: 0, animated: true })
     } finally {
       setLoading(false)
     }
@@ -233,60 +588,82 @@ export function CatFormScreen({ navigation, route }: any) {
       <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
 
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+      <Animated.View
+        style={[
+          styles.header,
+          {
+            opacity: headerAnim,
+            transform: [
+              {
+                translateY: headerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-16, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          activeOpacity={0.7}
+        >
           <Text style={styles.backBtnText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
-          {isEditing ? `Edit ${cat!.name}` : 'Add New Cat'}
+          {isEditing ? `Edit ${cat!.name}` : 'Add new cat'}
         </Text>
         <Text style={styles.headerSubtitle}>
-          {isEditing ? 'Update your cat\'s profile' : 'Fill in your cat\'s details'}
+          {isEditing
+            ? 'Update your cat's health profile'
+            : 'Fill in what you know — you can always add more later'}
         </Text>
-      </View>
+      </Animated.View>
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {error ? <AlertBanner type="error" message={error} /> : null}
+        {error ? (
+          <Animated.View>
+            <AlertBanner type="error" message={error} />
+          </Animated.View>
+        ) : null}
 
-        {/* ── Basic Info ──────────────────────────── */}
-        <View style={styles.card}>
-          <SectionTitle title="Basic information" />
+        {/* ── Basic info ── */}
+        <FormCard delay={80}>
+          <SectionHeading title="About your cat" />
 
-          <Field label="Cat's name *">
+          <Field label="Name *">
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder="e.g. Luna, Mochi, Oliver"
               editable={!loading}
+              autoFocus={!isEditing}
             />
           </Field>
 
-          {/* Gender selector */}
-          <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>Gender</Text>
-            <View style={styles.genderRow}>
-              {GENDER_OPTIONS.map(opt => (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[styles.genderOption, gender === opt.value && styles.genderOptionSelected]}
-                  onPress={() => setGender(opt.value)}
-                  disabled={loading}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.genderEmoji}>{opt.emoji}</Text>
-                  <Text style={[
-                    styles.genderLabel,
-                    gender === opt.value && styles.genderLabelSelected,
-                  ]}>
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+          <View style={styles.fieldLabel}>
+            <Text style={styles.labelText}>Gender</Text>
+          </View>
+          <View style={styles.genderRow}>
+            {([
+              { value: 'MALE', label: 'Male', emoji: '♂️' },
+              { value: 'FEMALE', label: 'Female', emoji: '♀️' },
+              { value: 'UNKNOWN', label: 'Unknown', emoji: '❓' },
+            ] as const).map(opt => (
+              <GenderOption
+                key={opt.value}
+                {...opt}
+                selected={gender === opt.value}
+                onSelect={setGender}
+                disabled={loading}
+              />
+            ))}
           </View>
 
           <Field label="Breed" optional>
@@ -306,15 +683,15 @@ export function CatFormScreen({ navigation, route }: any) {
               editable={!loading}
             />
           </Field>
-        </View>
+        </FormCard>
 
-        {/* ── Age & Weight ────────────────────────── */}
-        <View style={styles.card}>
-          <SectionTitle title="Age & weight" />
+        {/* ── Age & weight ── */}
+        <FormCard delay={160}>
+          <SectionHeading title="Age & weight" />
 
-          <View style={styles.rowFields}>
-            <View style={styles.rowField}>
-              <Field label="Age (years)" optional>
+          <View style={styles.twoCol}>
+            <View style={styles.col}>
+              <Field label="Years" optional>
                 <TextInput
                   value={ageYears}
                   onChangeText={setAgeYears}
@@ -324,8 +701,8 @@ export function CatFormScreen({ navigation, route }: any) {
                 />
               </Field>
             </View>
-            <View style={styles.rowField}>
-              <Field label="Age (months)" optional>
+            <View style={styles.col}>
+              <Field label="Months" optional>
                 <TextInput
                   value={ageMonths}
                   onChangeText={setAgeMonths}
@@ -346,77 +723,85 @@ export function CatFormScreen({ navigation, route }: any) {
               editable={!loading}
             />
           </Field>
-        </View>
+        </FormCard>
 
-        {/* ── Photos ──────────────────────────────── */}
-        <View style={styles.card}>
-          <SectionTitle title={`Photos (${totalImages}/5)`} />
+        {/* ── Photos ── */}
+        <FormCard delay={240}>
+          <SectionHeading title={`Photos ${totalImages > 0 ? `(${totalImages}/5)` : ''}`} />
 
           {totalImages > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.photoScroll}
+              contentContainerStyle={{ gap: Spacing.sm, paddingVertical: 4 }}
+            >
               {existingImageUrls.map((url, idx) => (
-                <View key={`existing-${idx}`} style={styles.imageThumbnail}>
-                  <Image source={{ uri: url }} style={styles.thumbnailImg} />
-                  <TouchableOpacity
-                    style={styles.thumbnailRemove}
-                    onPress={() => removeExistingImage(url)}
-                    disabled={loading}
-                  >
-                    <Text style={styles.thumbnailRemoveText}>×</Text>
-                  </TouchableOpacity>
-                  {idx === 0 && existingImageUrls.length > 0 && (
-                    <View style={styles.primaryBadge}>
-                      <Text style={styles.primaryBadgeText}>Main</Text>
-                    </View>
-                  )}
-                </View>
+                <PhotoThumbnail
+                  key={`e-${idx}`}
+                  uri={url}
+                  label={idx === 0 ? 'Main' : undefined}
+                  onRemove={() =>
+                    setExistingImageUrls(prev => prev.filter(u => u !== url))
+                  }
+                  disabled={loading}
+                />
               ))}
               {newImageUris.map((uri, idx) => (
-                <View key={`new-${idx}`} style={[styles.imageThumbnail, styles.imageThumbnailNew]}>
-                  <Image source={{ uri }} style={styles.thumbnailImg} />
-                  <TouchableOpacity
-                    style={styles.thumbnailRemove}
-                    onPress={() => removeNewImage(idx)}
-                    disabled={loading}
-                  >
-                    <Text style={styles.thumbnailRemoveText}>×</Text>
-                  </TouchableOpacity>
-                  <View style={[styles.primaryBadge, styles.primaryBadgeNew]}>
-                    <Text style={styles.primaryBadgeText}>New</Text>
-                  </View>
-                </View>
+                <PhotoThumbnail
+                  key={`n-${idx}`}
+                  uri={uri}
+                  label="New"
+                  isNew
+                  onRemove={() =>
+                    setNewImageUris(prev => prev.filter((_, i) => i !== idx))
+                  }
+                  disabled={loading}
+                />
               ))}
             </ScrollView>
           )}
 
-          {totalImages < 5 && (
+          {totalImages < 5 ? (
             <TouchableOpacity
-              style={styles.uploadArea}
+              style={styles.uploadZone}
               onPress={pickImage}
               disabled={loading}
               activeOpacity={0.8}
             >
-              <Text style={styles.uploadIcon}>📷</Text>
-              <Text style={styles.uploadLabel}>
+              <Text style={styles.uploadZoneIcon}>📷</Text>
+              <Text style={styles.uploadZoneLabel}>
                 {totalImages === 0 ? 'Add photos of your cat' : 'Add more photos'}
               </Text>
-              <Text style={styles.uploadHint}>Up to {5 - totalImages} more photo{5 - totalImages !== 1 ? 's' : ''}</Text>
+              <Text style={styles.uploadZoneHint}>
+                Up to {5 - totalImages} more · PNG, JPG, HEIC
+              </Text>
             </TouchableOpacity>
+          ) : (
+            <View style={styles.uploadFull}>
+              <Text style={styles.uploadFullText}>Maximum 5 photos reached</Text>
+            </View>
           )}
-        </View>
+        </FormCard>
 
-        {/* ── Vaccination History ──────────────────── */}
-        <View style={styles.card}>
-          <SectionTitle title={`Vaccination history${vaccinations.length > 0 ? ` (${vaccinations.length})` : ''}`} />
+        {/* ── Vaccinations ── */}
+        <FormCard delay={320}>
+          <SectionHeading
+            title={
+              vaccinations.length > 0
+                ? `Vaccination history (${vaccinations.length})`
+                : 'Vaccination history'
+            }
+          />
 
           {vaccinations.length === 0 && (
             <Text style={styles.emptyHint}>
-              No vaccinations recorded yet. Tap below to add vaccination records.
+              No vaccinations recorded yet. Keep track of your cat's shots below.
             </Text>
           )}
 
           {vaccinations.map((v, idx) => (
-            <VaccinationItem
+            <VaccinationRow
               key={idx}
               item={v}
               index={idx}
@@ -432,39 +817,53 @@ export function CatFormScreen({ navigation, route }: any) {
             disabled={loading}
             activeOpacity={0.8}
           >
-            <Text style={styles.addVaccineBtnText}>+ Add vaccination</Text>
+            <Text style={styles.addVaccineBtnText}>+ Add vaccination record</Text>
           </TouchableOpacity>
-        </View>
+        </FormCard>
 
-        {/* ── Notes ───────────────────────────────── */}
-        <View style={styles.card}>
-          <SectionTitle title="Additional notes" />
-          <Field label="Notes" optional>
+        {/* ── Notes ── */}
+        <FormCard delay={400}>
+          <SectionHeading title="Notes" />
+          <Field label="Any other details" optional>
             <TextInput
               value={notes}
               onChangeText={setNotes}
-              placeholder="Any other important information about your cat…"
+              placeholder="Allergies, special diet, favourite toys, vet clinic…"
               multiline
               numberOfLines={4}
               style={{ height: 100, textAlignVertical: 'top', paddingTop: Spacing.md }}
               editable={!loading}
             />
           </Field>
-        </View>
+        </FormCard>
 
-        {/* ── Actions ─────────────────────────────── */}
-        <Button
-          label={loading ? 'Saving…' : isEditing ? 'Save changes' : 'Add cat'}
-          onPress={handleSubmit}
-          loading={loading}
-        />
-        <Button
-          label="Cancel"
-          onPress={() => navigation.goBack()}
-          variant="secondary"
-          disabled={loading}
-          style={{ marginTop: Spacing.md }}
-        />
+        {/* ── Actions ── */}
+        <Animated.View
+          style={{
+            opacity: headerAnim,
+            transform: [
+              {
+                translateY: headerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [16, 0],
+                }),
+              },
+            ],
+            gap: Spacing.md,
+          }}
+        >
+          <Button
+            label={isEditing ? 'Save changes' : 'Add cat'}
+            onPress={handleSubmit}
+            loading={loading}
+          />
+          <Button
+            label="Cancel"
+            onPress={() => navigation.goBack()}
+            variant="secondary"
+            disabled={loading}
+          />
+        </Animated.View>
 
         <View style={{ height: Spacing['4xl'] }} />
       </ScrollView>
@@ -479,124 +878,84 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: Colors.greenDeep,
     paddingHorizontal: Spacing['2xl'],
-    paddingTop: Spacing['3xl'],
+    paddingTop: Platform.OS === 'ios' ? 56 : Spacing['3xl'],
     paddingBottom: Spacing['2xl'],
   },
-  backBtn: { marginBottom: Spacing.sm },
-  backBtnText: { fontSize: Typography.base, color: 'rgba(245,240,232,0.7)', fontWeight: '500' },
+  backBtn: { marginBottom: Spacing.sm, alignSelf: 'flex-start' },
+  backBtnText: {
+    fontSize: Typography.base,
+    color: 'rgba(245,240,232,0.70)',
+    fontWeight: '500',
+  },
   headerTitle: {
-    fontSize: Typography['2xl'],
-    fontWeight: '600',
+    fontSize: 26,
+    fontWeight: '700',
     color: Colors.cream,
-    letterSpacing: -0.4,
+    letterSpacing: -0.5,
     marginBottom: 4,
   },
-  headerSubtitle: { fontSize: Typography.base, color: 'rgba(245,240,232,0.65)' },
-
-  // ── Scroll ────────────────────────────────────────
-  scroll: { padding: Spacing['2xl'], gap: Spacing.lg, paddingBottom: Spacing['4xl'] },
-
-  // ── Card ─────────────────────────────────────────
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.xl,
-    padding: Spacing['2xl'],
-    borderWidth: 1,
-    borderColor: Colors.warmWhite,
-    gap: Spacing.xs,
-    ...Shadow.sm,
+  headerSubtitle: {
+    fontSize: Typography.sm,
+    color: 'rgba(245,240,232,0.60)',
+    lineHeight: 20,
   },
 
-  // ── Field ─────────────────────────────────────────
-  fieldWrap: { marginBottom: Spacing.lg },
-  fieldLabel: {
+  // ── Scroll ────────────────────────────────────────
+  scroll: {
+    padding: Spacing['2xl'],
+    gap: Spacing.lg,
+    paddingBottom: Spacing['4xl'],
+  },
+
+  // ── Fields ────────────────────────────────────────
+  fieldLabel: { marginBottom: Spacing.sm },
+  labelText: {
     fontSize: Typography.sm,
     fontWeight: '600',
     color: Colors.textMuted,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
-    marginBottom: Spacing.sm,
   },
-
-  // ── Gender selector ───────────────────────────────
-  genderRow: { flexDirection: 'row', gap: Spacing.sm },
-  genderOption: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    backgroundColor: Colors.ivory,
-    borderRadius: Radius.md,
-    borderWidth: 1.5,
-    borderColor: Colors.warmWhite,
-    gap: 4,
+  genderRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
   },
-  genderOptionSelected: {
-    backgroundColor: Colors.greenPale,
-    borderColor: Colors.greenSage,
-  },
-  genderEmoji: { fontSize: 20 },
-  genderLabel: { fontSize: Typography.sm, fontWeight: '500', color: Colors.textBody },
-  genderLabelSelected: { color: Colors.greenForest, fontWeight: '600' },
-
-  // ── Row fields ────────────────────────────────────
-  rowFields: { flexDirection: 'row', gap: Spacing.md },
-  rowField: { flex: 1 },
+  twoCol: { flexDirection: 'row', gap: Spacing.md },
+  col: { flex: 1 },
 
   // ── Photos ────────────────────────────────────────
-  imageScroll: { marginBottom: Spacing.md },
-  imageThumbnail: {
-    width: 90,
-    height: 90,
-    borderRadius: Radius.md,
-    overflow: 'hidden',
-    marginRight: Spacing.sm,
-    borderWidth: 2,
-    borderColor: Colors.warmWhite,
-    position: 'relative',
-  },
-  imageThumbnailNew: { borderColor: Colors.greenPale },
-  thumbnailImg: { width: '100%', height: '100%', resizeMode: 'cover' },
-  thumbnailRemove: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(26,58,42,0.75)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  thumbnailRemoveText: { color: Colors.white, fontSize: 14, lineHeight: 18 },
-  primaryBadge: {
-    position: 'absolute',
-    bottom: 4,
-    left: 4,
-    backgroundColor: 'rgba(26,58,42,0.75)',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  primaryBadgeNew: { backgroundColor: 'rgba(74,124,95,0.85)' },
-  primaryBadgeText: { color: Colors.white, fontSize: 9, fontWeight: '700' },
-  uploadArea: {
-    borderWidth: 2,
+  photoScroll: { marginBottom: Spacing.md },
+  uploadZone: {
+    borderWidth: 1.5,
     borderColor: Colors.warmWhite,
     borderStyle: 'dashed',
     borderRadius: Radius.lg,
-    padding: Spacing.xl,
+    paddingVertical: Spacing.xl,
     alignItems: 'center',
-    gap: Spacing.xs,
+    gap: 6,
+    backgroundColor: Colors.ivory,
   },
-  uploadIcon: { fontSize: 32 },
-  uploadLabel: {
+  uploadZoneIcon: { fontSize: 28 },
+  uploadZoneLabel: {
     fontSize: Typography.base,
-    fontWeight: '500',
+    fontWeight: '600',
     color: Colors.textBody,
   },
-  uploadHint: { fontSize: Typography.sm, color: Colors.textLight },
+  uploadZoneHint: { fontSize: Typography.sm, color: Colors.textLight },
+  uploadFull: {
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    backgroundColor: Colors.ivory,
+    borderRadius: Radius.md,
+  },
+  uploadFullText: {
+    fontSize: Typography.sm,
+    color: Colors.textLight,
+    fontStyle: 'italic',
+  },
 
-  // ── Vaccination ───────────────────────────────────
+  // ── Vaccinations ──────────────────────────────────
   emptyHint: {
     fontSize: Typography.base,
     color: Colors.textLight,
@@ -606,16 +965,17 @@ const styles = StyleSheet.create({
   },
   addVaccineBtn: {
     borderWidth: 1.5,
-    borderColor: Colors.warmWhite,
+    borderColor: Colors.greenPale,
     borderStyle: 'dashed',
     borderRadius: Radius.md,
     paddingVertical: Spacing.md,
     alignItems: 'center',
     marginTop: Spacing.xs,
+    backgroundColor: 'rgba(232,240,235,0.4)',
   },
   addVaccineBtnText: {
     fontSize: Typography.base,
-    color: Colors.greenSage,
+    color: Colors.greenForest,
     fontWeight: '600',
   },
 })

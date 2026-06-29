@@ -179,6 +179,69 @@ function DashboardPage() {
     fetchStats()
   }, [])
 
+  const [analytics, setAnalytics] = useState<AnalyticsData>({
+    topDiseases: [], severityCounts: {}, topBreeds: [],
+    activityTotals: { diseases: 0, symptoms: 0, treatments: 0, medicines: 0, breeds: 0, foods: 0 },
+    loading: true,
+  })
+
+  useEffect(() => {
+    async function fetchAnalytics() {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+        const token = localStorage.getItem('auth_token')
+        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
+        const [diseases, symptoms, treatments, medicines, breeds, foods] = await Promise.all([
+          fetch(`${API_URL}/diseases?take=100`, { headers }).then(r => r.json()),
+          fetch(`${API_URL}/symptoms?take=1`, { headers }).then(r => r.json()),
+          fetch(`${API_URL}/treatments?take=1`, { headers }).then(r => r.json()),
+          fetch(`${API_URL}/medicines?take=1`, { headers }).then(r => r.json()),
+          fetch(`${API_URL}/cat-breeds?take=100`, { headers }).then(r => r.json()),
+          fetch(`${API_URL}/cat-foods?take=1`, { headers }).then(r => r.json()),
+        ])
+
+        // Top diseases by severity weight
+        const diseaseList = diseases.data || []
+        const sevWeight: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
+        const topDiseases = [...diseaseList]
+          .sort((a: any, b: any) => (sevWeight[b.severity] || 0) - (sevWeight[a.severity] || 0))
+          .slice(0, 6)
+          .map((d: any) => ({ name: d.name, severity: d.severity, count: sevWeight[d.severity] || 1 }))
+
+        // Severity distribution
+        const severityCounts = diseaseList.reduce((acc: Record<string, number>, d: any) => {
+          acc[d.severity] = (acc[d.severity] || 0) + 1
+          return acc
+        }, {})
+
+        // Top breeds
+        const breedList = breeds.data || []
+        const topBreeds = breedList.slice(0, 6).map((b: any) => ({
+          name: b.name, origin: b.origin, count: b.temperament?.length || 0,
+        }))
+
+        setAnalytics({
+          topDiseases,
+          severityCounts,
+          topBreeds,
+          activityTotals: {
+            diseases: diseases.pagination?.total || 0,
+            symptoms: symptoms.pagination?.total || 0,
+            treatments: treatments.pagination?.total || 0,
+            medicines: medicines.pagination?.total || 0,
+            breeds: breeds.pagination?.total || 0,
+            foods: foods.pagination?.total || 0,
+          },
+          loading: false,
+        })
+      } catch {
+        setAnalytics(prev => ({ ...prev, loading: false }))
+      }
+    }
+    fetchAnalytics()
+  }, [])
+
   function handleLogout() {
     logout()
     navigate('/login')
@@ -439,6 +502,155 @@ function DashboardPage() {
                 </div>
               </Link>
             ))}
+          </div>
+        </div>
+
+        {/* ── Analytics Dashboard ── */}
+        <div className="analytics-section animate-in" style={{ animationDelay: '0.45s', maxWidth: 720 }}>
+          <div className="analytics-section-header">
+            <div>
+              <h2 className="analytics-section-title">Knowledge Base Analytics</h2>
+              <p className="analytics-section-subtitle">
+                Insights across your veterinary knowledge base
+              </p>
+            </div>
+          </div>
+
+          {/* Activity totals row */}
+          <div className="analytics-card" style={{ marginBottom: 'var(--space-md)' }}>
+            <div className="analytics-card-title">Record overview</div>
+            <div className="analytics-activity-grid">
+              {[
+                { label: 'Diseases', value: analytics.activityTotals.diseases, color: 'var(--error)', bg: 'var(--error-bg)',
+                  icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.4"/><path d="M9 5v4l2.5 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg> },
+                { label: 'Symptoms', value: analytics.activityTotals.symptoms, color: 'var(--green-forest)', bg: 'var(--green-pale)',
+                  icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9h10M9 4v10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.4"/></svg> },
+                { label: 'Treatments', value: analytics.activityTotals.treatments, color: 'var(--green-sage)', bg: '#e8f0eb',
+                  icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 9h8M9 5v8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.4"/></svg> },
+                { label: 'Medicines', value: analytics.activityTotals.medicines, color: 'var(--gold-deep)', bg: 'rgba(196,149,106,0.12)',
+                  icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 3h4a1 1 0 011 1v1H6V4a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3"/><rect x="3" y="5" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4"/></svg> },
+                { label: 'Cat Breeds', value: analytics.activityTotals.breeds, color: '#4338ca', bg: '#eef2ff',
+                  icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="8" r="4" stroke="currentColor" strokeWidth="1.4"/><polygon points="5,5.5 3.5,2 7,4.5" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinejoin="round"/><polygon points="13,5.5 14.5,2 11,4.5" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinejoin="round"/></svg> },
+                { label: 'Cat Foods', value: analytics.activityTotals.foods, color: '#0369a1', bg: '#e0f2fe',
+                  icon: <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="6" width="12" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><path d="M6 6V5a3 3 0 016 0v1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg> },
+              ].map(item => (
+                <div key={item.label} className="analytics-activity-item">
+                  <div className="analytics-activity-icon" style={{ background: item.bg, color: item.color }}>
+                    {item.icon}
+                  </div>
+                  <div className="analytics-activity-value" style={{ color: analytics.loading ? 'var(--text-light)' : 'var(--text-primary)' }}>
+                    {analytics.loading ? '—' : item.value}
+                  </div>
+                  <div className="analytics-activity-label">{item.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="analytics-grid">
+            {/* Disease severity breakdown */}
+            <div className="analytics-card">
+              <div className="analytics-card-title">Disease severity</div>
+              {analytics.loading ? (
+                <div className="analytics-shimmer" />
+              ) : Object.keys(analytics.severityCounts).length === 0 ? (
+                <div className="analytics-empty">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="currentColor" strokeWidth="1.5"/><path d="M14 9v5M14 17h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  No disease records yet
+                </div>
+              ) : (
+                <div className="analytics-severity-grid">
+                  {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(sev => {
+                    const count = analytics.severityCounts[sev] || 0
+                    const style = SEV_PILL_STYLES[sev]
+                    return (
+                      <div key={sev} className="analytics-sev-pill" style={{ background: style.bg }}>
+                        <span className="analytics-sev-pill-count" style={{ color: style.color }}>{count}</span>
+                        <span className="analytics-sev-pill-label" style={{ color: style.color }}>
+                          {sev.charAt(0) + sev.slice(1).toLowerCase()}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Top diseases */}
+            <div className="analytics-card">
+              <div className="analytics-card-title">Top diseases by severity</div>
+              {analytics.loading ? (
+                <div className="analytics-shimmer" />
+              ) : analytics.topDiseases.length === 0 ? (
+                <div className="analytics-empty">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="currentColor" strokeWidth="1.5"/><path d="M14 9v5M14 17h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  No disease records yet
+                </div>
+              ) : (
+                <div className="analytics-bar-list">
+                  {analytics.topDiseases.map((d, i) => {
+                    const maxCount = 4
+                    const pct = Math.round((d.count / maxCount) * 100)
+                    return (
+                      <div key={d.name} className="analytics-bar-row">
+                        <span className="analytics-bar-label" title={d.name}>{d.name}</span>
+                        <div className="analytics-bar-track">
+                          <div
+                            className="analytics-bar-fill"
+                            style={{ width: `${pct}%`, background: BAR_COLORS[i % BAR_COLORS.length] }}
+                          />
+                        </div>
+                        <span className="analytics-bar-value">
+                          <span className={`sev-badge sev-${d.severity.toLowerCase()}`} style={{ fontSize: 9, padding: '1px 5px' }}>
+                            {d.severity.charAt(0)}
+                          </span>
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Cat breeds ranked */}
+            <div className="analytics-card analytics-grid-full">
+              <div className="analytics-card-title">Cat breed catalogue</div>
+              {analytics.loading ? (
+                <div className="analytics-shimmer" />
+              ) : analytics.topBreeds.length === 0 ? (
+                <div className="analytics-empty">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="currentColor" strokeWidth="1.5"/><path d="M14 9v5M14 17h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  No cat breed records yet
+                </div>
+              ) : (
+                <div className="analytics-rank-list">
+                  {analytics.topBreeds.map((b, i) => {
+                    const maxTraits = Math.max(...analytics.topBreeds.map(x => x.count), 1)
+                    const rankColors = ['var(--gold)', 'var(--text-muted)', '#c4956a', 'var(--green-mist)', 'var(--green-pale)', 'var(--warm-white)']
+                    const numBg = ['rgba(196,149,106,0.2)', 'rgba(74,124,95,0.1)', 'rgba(196,149,106,0.12)',
+                      'var(--ivory)', 'var(--ivory)', 'var(--ivory)']
+                    return (
+                      <div key={b.name} className="analytics-rank-row">
+                        <div className="analytics-rank-num" style={{ background: numBg[i] || 'var(--ivory)', color: rankColors[i] || 'var(--text-muted)' }}>
+                          {i + 1}
+                        </div>
+                        <span className="analytics-rank-name">{b.name}</span>
+                        <span className="analytics-rank-origin">{b.origin}</span>
+                        <div className="analytics-rank-bar-wrap">
+                          <div className="analytics-rank-bar-track">
+                            <div
+                              className="analytics-rank-bar-fill"
+                              style={{ width: `${maxTraits > 0 ? Math.round((b.count / maxTraits) * 100) : 0}%` }}
+                            />
+                          </div>
+                          <span className="analytics-rank-count">{b.count} traits</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
