@@ -80,14 +80,15 @@ export interface DiseaseListResponse {
 }
 
 export const diseaseAPI = {
-  create: async (
-    data: Omit<Disease, 'id' | 'createdAt' | 'updatedAt'> & {
-      relatedDiseaseIds?: string[]
-      symptomIds?: string[]
-      treatmentIds?: string[]
-    },
-    imageFile?: File
-  ) => {
+create: async (
+  data: Omit<Disease, 'id' | 'createdAt' | 'updatedAt'> & {
+    relatedDiseaseIds?: string[]
+    symptomIds?: string[]
+    treatmentIds?: string[]
+    medicineIds?: string[]
+  },
+  imageFile?: File
+) => {
     const formData = new FormData()
 
     Object.entries(data).forEach(([key, value]) => {
@@ -129,14 +130,15 @@ export const diseaseAPI = {
   },
 
   update: async (
-    id: string,
-    data: Partial<Disease> & {
-      relatedDiseaseIds?: string[]
-      symptomIds?: string[]
-      treatmentIds?: string[]
-    },
-    imageFile?: File
-  ) => {
+  id: string,
+  data: Partial<Disease> & {
+    relatedDiseaseIds?: string[]
+    symptomIds?: string[]
+    treatmentIds?: string[]
+    medicineIds?: string[]
+  },
+  imageFile?: File
+) => {
     const formData = new FormData()
 
     Object.entries(data).forEach(([key, value]) => {

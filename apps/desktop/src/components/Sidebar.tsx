@@ -80,6 +80,17 @@ const NAV_ITEMS = [
     ),
   },
   {
+    to: '/diagnosis',
+    label: 'AI Diagnosis',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M5.5 8h5M8 5.5v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+        <path d="M8 1.5A6.5 6.5 0 012 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity=".45"/>
+      </svg>
+    ),
+  },
+  {
     to: '/profile',
     label: 'My Profile',
     icon: (
