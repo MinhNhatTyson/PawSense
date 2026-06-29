@@ -136,7 +136,10 @@ export async function changePassword(req: Request, res: Response) {
     res.status(404).json({ error: 'User not found' })
     return
   }
-
+  if (!user.password) {
+    res.status(400).json({ error: 'This account uses Google Sign-In and has no password set.' })
+    return
+  }
   const valid = await bcrypt.compare(currentPassword, user.password)
   if (!valid) {
     res.status(401).json({ error: 'Current password is incorrect' })

@@ -1,117 +1,502 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, StatusBar, RefreshControl, Alert,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  StatusBar,
+  RefreshControl,
+  Alert,
+  Animated,
+  Dimensions,
+  Platform,
 } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import { catProfileAPI, type CatProfile } from '../../api/catProfileAPI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
 import { Button } from '../../components/UI'
 
-function GenderBadge({ gender }: { gender: string }) {
-  const config = {
-    MALE: { label: 'Male', bg: '#e8f0f7', color: '#2a5a8a' },
-    FEMALE: { label: 'Female', bg: '#f7e8f0', color: '#8a2a5a' },
-    UNKNOWN: { label: 'Unknown', bg: Colors.ivory, color: Colors.textLight },
-  }[gender] ?? { label: gender, bg: Colors.ivory, color: Colors.textLight }
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
+
+// ── Skeleton pulse animation ──────────────────────────────────────────────────
+function SkeletonBlock({
+  width,
+  height,
+  style,
+}: {
+  width: number | string
+  height: number
+  style?: any
+}) {
+  const opacity = useRef(new Animated.Value(0.3)).current
+
+  React.useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    )
+    pulse.start()
+    return () => pulse.stop()
+  }, [opacity])
 
   return (
-    <View style={[styles.genderBadge, { backgroundColor: config.bg }]}>
-      <Text style={[styles.genderBadgeText, { color: config.color }]}>{config.label}</Text>
+    <Animated.View
+      style={[
+        {
+          width,
+          height,
+          borderRadius: Radius.sm,
+          backgroundColor: Colors.warmWhite,
+          opacity,
+        },
+        style,
+      ]}
+    />
+  )
+}
+
+// ── Skeleton card ─────────────────────────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <View style={skeletonStyles.card}>
+      <SkeletonBlock width="100%" height={160} style={{ borderRadius: 0 }} />
+      <View style={skeletonStyles.body}>
+        <SkeletonBlock width="55%" height={22} />
+        <View style={{ gap: 8, marginTop: 8 }}>
+          <SkeletonBlock width="80%" height={14} />
+          <SkeletonBlock width="60%" height={14} />
+        </View>
+      </View>
     </View>
   )
 }
 
+const skeletonStyles = StyleSheet.create({
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: Colors.warmWhite,
+    overflow: 'hidden',
+    ...Shadow.sm,
+  },
+  body: { padding: Spacing.lg, gap: 6 },
+})
+
+// ── Gender badge ──────────────────────────────────────────────────────────────
+function GenderBadge({ gender }: { gender: string }) {
+  const cfg =
+    {
+      MALE: { label: '♂ Male', bg: '#E8F4FA', color: '#1A5276' },
+      FEMALE: { label: '♀ Female', bg: '#FAEAEA', color: '#78281F' },
+      UNKNOWN: { label: '? Unknown', bg: Colors.ivory, color: Colors.textLight },
+    }[gender] ?? { label: gender, bg: Colors.ivory, color: Colors.textLight }
+
+  return (
+    <View style={[gBadge.wrap, { backgroundColor: cfg.bg }]}>
+      <Text style={[gBadge.text, { color: cfg.color }]}>{cfg.label}</Text>
+    </View>
+  )
+}
+
+const gBadge = StyleSheet.create({
+  wrap: {
+    position: 'absolute',
+    top: Spacing.sm,
+    left: Spacing.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+  },
+  text: { fontSize: Typography.xs, fontWeight: '700', letterSpacing: 0.3 },
+})
+
+// ── Animated cat card ─────────────────────────────────────────────────────────
 function CatCard({
   cat,
+  index,
   onPress,
   onEdit,
   onDelete,
 }: {
   cat: CatProfile
+  index: number
   onPress: () => void
   onEdit: () => void
   onDelete: () => void
 }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current
+  const slideAnim = useRef(new Animated.Value(24)).current
+  const scaleAnim = useRef(new Animated.Value(1)).current
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 380,
+        delay: index * 80,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 60,
+        friction: 10,
+        delay: index * 80,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [])
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.975,
+      tension: 200,
+      friction: 10,
+      useNativeDriver: true,
+    }).start()
+  }
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 200,
+      friction: 10,
+      useNativeDriver: true,
+    }).start()
+  }
+
   const primaryImage = cat.imageUrls[0]
-  const ageDisplay = cat.ageYears != null
-    ? `${cat.ageYears}y${cat.ageMonths ? ` ${cat.ageMonths}m` : ''}`
-    : cat.ageMonths != null ? `${cat.ageMonths}mo` : null
+  const ageDisplay =
+    cat.ageYears != null
+      ? `${cat.ageYears}y${cat.ageMonths ? ` ${cat.ageMonths}m` : ''}`
+      : cat.ageMonths != null
+      ? `${cat.ageMonths}mo`
+      : null
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      {/* Image */}
-      <View style={styles.cardImageWrap}>
-        {primaryImage ? (
-          <Image source={{ uri: primaryImage }} style={styles.cardImage} />
-        ) : (
-          <View style={styles.cardImagePlaceholder}>
-            <Text style={styles.cardImagePlaceholderText}>🐱</Text>
-          </View>
-        )}
-        {cat.imageUrls.length > 1 && (
-          <View style={styles.imageCountBadge}>
-            <Text style={styles.imageCountText}>+{cat.imageUrls.length - 1}</Text>
-          </View>
-        )}
-        <GenderBadge gender={cat.gender} />
-      </View>
-
-      {/* Body */}
-      <View style={styles.cardBody}>
-        <Text style={styles.cardName}>{cat.name}</Text>
-
-        <View style={styles.cardMeta}>
-          {cat.breed ? (
-            <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Breed</Text>
-              <Text style={styles.metaValue}>{cat.breed}</Text>
+    <Animated.View
+      style={{
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+      }}
+    >
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+        style={cardStyles.card}
+      >
+        {/* Image */}
+        <View style={cardStyles.imageWrap}>
+          {primaryImage ? (
+            <Image
+              source={{ uri: primaryImage }}
+              style={cardStyles.image}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={cardStyles.imagePlaceholder}>
+              <Text style={cardStyles.imagePlaceholderEmoji}>🐱</Text>
+              <Text style={cardStyles.imagePlaceholderText}>No photo yet</Text>
             </View>
-          ) : null}
-          {ageDisplay ? (
-            <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Age</Text>
-              <Text style={styles.metaValue}>{ageDisplay}</Text>
+          )}
+          <GenderBadge gender={cat.gender} />
+          {cat.imageUrls.length > 1 && (
+            <View style={cardStyles.imageCountPill}>
+              <Text style={cardStyles.imageCountText}>
+                +{cat.imageUrls.length - 1}
+              </Text>
             </View>
-          ) : null}
-          {cat.weightKg != null ? (
-            <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Weight</Text>
-              <Text style={styles.metaValue}>{cat.weightKg} kg</Text>
-            </View>
-          ) : null}
+          )}
+          {/* Gradient overlay for readability */}
+          <View style={cardStyles.imageGradient} />
         </View>
 
-        {cat.vaccinations.length > 0 && (
-          <View style={styles.vaccineBadge}>
-            <Text style={styles.vaccineBadgeText}>
-              💉 {cat.vaccinations.length} vaccination{cat.vaccinations.length !== 1 ? 's' : ''}
-            </Text>
-          </View>
-        )}
-      </View>
+        {/* Body */}
+        <View style={cardStyles.body}>
+          <Text style={cardStyles.name}>{cat.name}</Text>
 
-      {/* Footer */}
-      <View style={styles.cardFooter}>
-        <TouchableOpacity style={styles.footerBtn} onPress={onEdit}>
-          <Text style={styles.footerBtnText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.footerBtn, styles.footerBtnDanger]}
-          onPress={onDelete}
-        >
-          <Text style={[styles.footerBtnText, styles.footerBtnTextDanger]}>Delete</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+          <View style={cardStyles.metaGrid}>
+            {cat.breed ? (
+              <View style={cardStyles.metaItem}>
+                <Text style={cardStyles.metaLabel}>Breed</Text>
+                <Text style={cardStyles.metaValue} numberOfLines={1}>
+                  {cat.breed}
+                </Text>
+              </View>
+            ) : null}
+            {ageDisplay ? (
+              <View style={cardStyles.metaItem}>
+                <Text style={cardStyles.metaLabel}>Age</Text>
+                <Text style={cardStyles.metaValue}>{ageDisplay}</Text>
+              </View>
+            ) : null}
+            {cat.weightKg != null ? (
+              <View style={cardStyles.metaItem}>
+                <Text style={cardStyles.metaLabel}>Weight</Text>
+                <Text style={cardStyles.metaValue}>{cat.weightKg} kg</Text>
+              </View>
+            ) : null}
+          </View>
+
+          {cat.vaccinations.length > 0 && (
+            <View style={cardStyles.vaccinePill}>
+              <Text style={cardStyles.vaccinePillText}>
+                💉 {cat.vaccinations.length} vaccination
+                {cat.vaccinations.length !== 1 ? 's' : ''}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Footer */}
+        <View style={cardStyles.footer}>
+          <TouchableOpacity
+            style={cardStyles.footerActionBtn}
+            onPress={onEdit}
+            activeOpacity={0.75}
+          >
+            <Text style={cardStyles.footerActionText}>Edit</Text>
+          </TouchableOpacity>
+          <View style={cardStyles.footerDivider} />
+          <TouchableOpacity
+            style={[cardStyles.footerActionBtn, cardStyles.viewBtn]}
+            onPress={onPress}
+            activeOpacity={0.75}
+          >
+            <Text style={[cardStyles.footerActionText, cardStyles.viewBtnText]}>
+              View profile →
+            </Text>
+          </TouchableOpacity>
+          <View style={cardStyles.footerDivider} />
+          <TouchableOpacity
+            style={[cardStyles.footerActionBtn, cardStyles.deleteBtn]}
+            onPress={onDelete}
+            activeOpacity={0.75}
+          >
+            <Text style={cardStyles.deleteBtnText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
   )
 }
 
+const cardStyles = StyleSheet.create({
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: Colors.warmWhite,
+    overflow: 'hidden',
+    ...Shadow.md,
+  },
+  imageWrap: { width: '100%', height: 200, position: 'relative' },
+  image: { width: '100%', height: '100%' },
+  imagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: Colors.greenPale,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+  },
+  imagePlaceholderEmoji: { fontSize: 52 },
+  imagePlaceholderText: {
+    fontSize: Typography.sm,
+    color: Colors.greenSage,
+    fontWeight: '500',
+  },
+  imageGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+  },
+  imageCountPill: {
+    position: 'absolute',
+    bottom: Spacing.sm,
+    right: Spacing.sm,
+    backgroundColor: 'rgba(26,58,42,0.80)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+  },
+  imageCountText: { fontSize: Typography.xs, color: Colors.cream, fontWeight: '600' },
+  body: {
+    padding: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  name: {
+    fontSize: Typography['2xl'],
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    letterSpacing: -0.5,
+  },
+  metaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginTop: 2,
+  },
+  metaItem: {
+    backgroundColor: Colors.ivory,
+    borderRadius: Radius.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: Colors.warmWhite,
+    minWidth: 72,
+  },
+  metaLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: Colors.textLight,
+    marginBottom: 1,
+  },
+  metaValue: {
+    fontSize: Typography.sm,
+    fontWeight: '600',
+    color: Colors.textBody,
+  },
+  vaccinePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.greenPale,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(74,124,95,0.2)',
+    marginTop: 2,
+  },
+  vaccinePillText: {
+    fontSize: Typography.xs,
+    color: Colors.greenForest,
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: Colors.ivory,
+  },
+  footerActionBtn: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerActionText: {
+    fontSize: Typography.sm,
+    fontWeight: '600',
+    color: Colors.textMuted,
+  },
+  viewBtn: { flex: 2 },
+  viewBtnText: { color: Colors.greenForest },
+  deleteBtn: { flex: 0.7 },
+  deleteBtnText: {
+    fontSize: Typography.sm,
+    fontWeight: '600',
+    color: Colors.error,
+  },
+  footerDivider: { width: 1, backgroundColor: Colors.ivory, marginVertical: 8 },
+})
+
+// ── Empty state with animation ────────────────────────────────────────────────
+function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const bounceAnim = useRef(new Animated.Value(0)).current
+  const fadeAnim = useRef(new Animated.Value(0)).current
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(bounceAnim, {
+            toValue: -10,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(bounceAnim, {
+            toValue: 0,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+    ]).start()
+  }, [])
+
+  return (
+    <Animated.View style={[emptyStyles.wrap, { opacity: fadeAnim }]}>
+      <Animated.Text
+        style={[emptyStyles.emoji, { transform: [{ translateY: bounceAnim }] }]}
+      >
+        🐾
+      </Animated.Text>
+      <Text style={emptyStyles.title}>No cats yet</Text>
+      <Text style={emptyStyles.desc}>
+        Add your first cat to start tracking their health, vaccinations, and more.
+      </Text>
+      <Button
+        label="Add my first cat"
+        onPress={onAdd}
+        style={{ marginTop: Spacing.xl, width: '100%' } as any}
+      />
+    </Animated.View>
+  )
+}
+
+const emptyStyles = StyleSheet.create({
+  wrap: {
+    alignItems: 'center',
+    paddingVertical: Spacing['4xl'],
+    paddingHorizontal: Spacing['2xl'],
+    gap: Spacing.md,
+  },
+  emoji: { fontSize: 72, marginBottom: Spacing.md },
+  title: {
+    fontSize: Typography.xl,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    letterSpacing: -0.4,
+  },
+  desc: {
+    fontSize: Typography.base,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: 280,
+  },
+})
+
+// ── Main screen ───────────────────────────────────────────────────────────────
 export function CatListScreen({ navigation }: any) {
   const [cats, setCats] = useState<CatProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const headerAnim = useRef(new Animated.Value(0)).current
 
   const loadCats = useCallback(async () => {
     try {
@@ -126,12 +511,24 @@ export function CatListScreen({ navigation }: any) {
     }
   }, [])
 
-  useFocusEffect(useCallback(() => { loadCats() }, [loadCats]))
+  useFocusEffect(
+    useCallback(() => {
+      // Animate header in on focus
+      headerAnim.setValue(0)
+      Animated.spring(headerAnim, {
+        toValue: 1,
+        tension: 60,
+        friction: 9,
+        useNativeDriver: true,
+      }).start()
+      loadCats()
+    }, [loadCats])
+  )
 
   const handleDelete = (cat: CatProfile) => {
     Alert.alert(
       `Delete ${cat.name}?`,
-      'This will permanently remove this cat profile and all their records.',
+      'This will permanently remove this cat profile and all their health records. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -142,7 +539,7 @@ export function CatListScreen({ navigation }: any) {
               await catProfileAPI.delete(cat.id)
               setCats(prev => prev.filter(c => c.id !== cat.id))
             } catch {
-              Alert.alert('Error', 'Failed to delete cat profile')
+              Alert.alert('Error', 'Failed to delete cat profile. Please try again.')
             }
           },
         },
@@ -154,14 +551,31 @@ export function CatListScreen({ navigation }: any) {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
+      {/* Animated header */}
+      <Animated.View
+        style={[
+          styles.header,
+          {
+            opacity: headerAnim,
+            transform: [
+              {
+                translateY: headerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-12, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <View style={styles.headerText}>
           <Text style={styles.headerTitle}>My Cats</Text>
           <Text style={styles.headerSubtitle}>
-            {cats.length > 0
+            {loading
+              ? 'Loading…'
+              : cats.length > 0
               ? `${cats.length} cat${cats.length !== 1 ? 's' : ''} in your family`
-              : 'Manage your cat health profiles'}
+              : 'Your cat family lives here'}
           </Text>
         </View>
         <TouchableOpacity
@@ -169,9 +583,9 @@ export function CatListScreen({ navigation }: any) {
           onPress={() => navigation.navigate('CatForm', { mode: 'create' })}
           activeOpacity={0.8}
         >
-          <Text style={styles.addBtnText}>+ Add Cat</Text>
+          <Text style={styles.addBtnText}>+ New cat</Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -179,47 +593,49 @@ export function CatListScreen({ navigation }: any) {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); loadCats() }}
+            onRefresh={() => {
+              setRefreshing(true)
+              loadCats()
+            }}
             tintColor={Colors.greenSage}
+            colors={[Colors.greenForest]}
           />
         }
       >
-        {loading && cats.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🐱</Text>
-            <Text style={styles.emptyTitle}>Loading cats…</Text>
-          </View>
+        {loading ? (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
         ) : error ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>⚠️</Text>
-            <Text style={styles.emptyTitle}>Something went wrong</Text>
-            <Text style={styles.emptyDesc}>{error}</Text>
-            <Button label="Try again" onPress={loadCats} variant="secondary" style={{ marginTop: Spacing.lg }} />
-          </View>
-        ) : cats.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🐾</Text>
-            <Text style={styles.emptyTitle}>No cats yet</Text>
-            <Text style={styles.emptyDesc}>
-              Add your first cat to start tracking their health, vaccinations, and more.
-            </Text>
+          <View style={styles.errorWrap}>
+            <Text style={styles.errorEmoji}>⚠️</Text>
+            <Text style={styles.errorTitle}>Something went wrong</Text>
+            <Text style={styles.errorDesc}>{error}</Text>
             <Button
-              label="Add my first cat"
-              onPress={() => navigation.navigate('CatForm', { mode: 'create' })}
-              style={{ marginTop: Spacing.xl }}
+              label="Try again"
+              onPress={loadCats}
+              variant="secondary"
+              style={{ marginTop: Spacing.lg } as any}
             />
           </View>
+        ) : cats.length === 0 ? (
+          <EmptyState
+            onAdd={() => navigation.navigate('CatForm', { mode: 'create' })}
+          />
         ) : (
-          cats.map(cat => (
+          cats.map((cat, index) => (
             <CatCard
               key={cat.id}
               cat={cat}
+              index={index}
               onPress={() => navigation.navigate('CatDetail', { catId: cat.id })}
               onEdit={() => navigation.navigate('CatForm', { mode: 'edit', cat })}
               onDelete={() => handleDelete(cat)}
             />
           ))
         )}
+        <View style={{ height: Spacing['4xl'] }} />
       </ScrollView>
     </View>
   )
@@ -227,28 +643,27 @@ export function CatListScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.cream },
-
-  // ── Header ────────────────────────────────────────
   header: {
     backgroundColor: Colors.greenDeep,
     paddingHorizontal: Spacing['2xl'],
-    paddingTop: Spacing['3xl'],
+    paddingTop: Platform.OS === 'ios' ? 56 : Spacing['3xl'],
     paddingBottom: Spacing['2xl'],
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: Spacing.md,
   },
+  headerText: { flex: 1 },
   headerTitle: {
-    fontSize: Typography['2xl'],
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: '700',
     color: Colors.cream,
-    letterSpacing: -0.4,
+    letterSpacing: -0.6,
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: Typography.base,
-    color: 'rgba(245,240,232,0.65)',
+    color: 'rgba(245,240,232,0.62)',
   },
   addBtn: {
     backgroundColor: Colors.gold,
@@ -256,169 +671,29 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm + 2,
     borderRadius: Radius.full,
     flexShrink: 0,
+    ...Shadow.sm,
   },
   addBtnText: {
     fontSize: Typography.sm,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.white,
     letterSpacing: 0.2,
   },
-
-  // ── Scroll ────────────────────────────────────────
   scroll: {
     padding: Spacing['2xl'],
-    paddingBottom: Spacing['4xl'],
     gap: Spacing.lg,
   },
-
-  // ── Card ─────────────────────────────────────────
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.warmWhite,
-    overflow: 'hidden',
-    ...Shadow.sm,
-  },
-  cardImageWrap: {
-    width: '100%',
-    height: 180,
-    position: 'relative',
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  cardImagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: Colors.greenPale,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardImagePlaceholderText: { fontSize: 56 },
-  imageCountBadge: {
-    position: 'absolute',
-    bottom: Spacing.sm,
-    right: Spacing.sm,
-    backgroundColor: 'rgba(26,58,42,0.75)',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-  },
-  imageCountText: {
-    fontSize: Typography.xs,
-    color: Colors.cream,
-    fontWeight: '500',
-  },
-  genderBadge: {
-    position: 'absolute',
-    top: Spacing.sm,
-    left: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-  },
-  genderBadgeText: {
-    fontSize: Typography.xs,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-
-  // ── Card body ─────────────────────────────────────
-  cardBody: {
-    padding: Spacing.lg,
-    gap: Spacing.sm,
-  },
-  cardName: {
-    fontSize: Typography.xl,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    letterSpacing: -0.3,
-  },
-  cardMeta: { gap: 6 },
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  metaLabel: {
-    fontSize: Typography.sm,
-    color: Colors.textLight,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  metaValue: {
-    fontSize: Typography.base,
-    color: Colors.textBody,
-    fontWeight: '500',
-  },
-  vaccineBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.greenPale,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(74,124,95,0.2)',
-    marginTop: 4,
-  },
-  vaccineBadgeText: {
-    fontSize: Typography.xs,
-    color: Colors.greenForest,
-    fontWeight: '600',
-  },
-
-  // ── Card footer ────────────────────────────────────
-  cardFooter: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: Colors.ivory,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-  },
-  footerBtn: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-    borderRadius: Radius.md,
-    backgroundColor: Colors.ivory,
-    borderWidth: 1,
-    borderColor: Colors.warmWhite,
-  },
-  footerBtnDanger: {
-    backgroundColor: Colors.errorBg,
-    borderColor: 'rgba(192,58,43,0.15)',
-    flex: 0,
-    paddingHorizontal: Spacing.lg,
-  },
-  footerBtnText: {
-    fontSize: Typography.base,
-    fontWeight: '500',
-    color: Colors.textBody,
-  },
-  footerBtnTextDanger: { color: Colors.error },
-
-  // ── Empty state ───────────────────────────────────
-  emptyState: {
+  errorWrap: {
     alignItems: 'center',
     paddingVertical: Spacing['4xl'],
-    paddingHorizontal: Spacing['2xl'],
     gap: Spacing.md,
   },
-  emptyIcon: { fontSize: 64 },
-  emptyTitle: {
+  errorEmoji: { fontSize: 48 },
+  errorTitle: {
     fontSize: Typography.xl,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
-  emptyDesc: {
-    fontSize: Typography.base,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  errorDesc: { fontSize: Typography.base, color: Colors.textMuted, textAlign: 'center' },
 })

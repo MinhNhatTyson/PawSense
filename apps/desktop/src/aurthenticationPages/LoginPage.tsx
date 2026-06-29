@@ -111,7 +111,7 @@ export function LoginPage() {
 </div>
 
 
- <a href="http://localhost:3000/api/auth/google"
+<a href={`${import.meta.env.VITE_API_URL}/api/auth/google`}
   className="btn btn-secondary"
   style={{
     display: 'flex',
