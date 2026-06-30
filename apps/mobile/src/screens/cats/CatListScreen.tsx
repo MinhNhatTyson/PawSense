@@ -568,6 +568,25 @@ export function CatListScreen({ navigation }: any) {
           },
         ]}
       >
+        {/* Top row: back + add button */}
+        <View style={styles.headerTopRow}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.75}
+          >
+            <Text style={styles.backBtnText}>← Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => navigation.navigate('CatForm', { mode: 'create' })}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.addBtnText}>+ New cat</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Title row */}
         <View style={styles.headerText}>
           <Text style={styles.headerTitle}>My Cats</Text>
           <Text style={styles.headerSubtitle}>
@@ -578,13 +597,6 @@ export function CatListScreen({ navigation }: any) {
               : 'Your cat family lives here'}
           </Text>
         </View>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => navigation.navigate('CatForm', { mode: 'create' })}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.addBtnText}>+ New cat</Text>
-        </TouchableOpacity>
       </Animated.View>
 
       <ScrollView
@@ -648,12 +660,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing['2xl'],
     paddingTop: Platform.OS === 'ios' ? 56 : Spacing['3xl'],
     paddingBottom: Spacing['2xl'],
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
     gap: Spacing.md,
   },
-  headerText: { flex: 1 },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backBtn: {
+    paddingVertical: Spacing.xs,
+  },
+  backBtnText: {
+    fontSize: Typography.base,
+    color: 'rgba(245,240,232,0.70)',
+    fontWeight: '500',
+  },
+  headerText: {},
   headerTitle: {
     fontSize: 28,
     fontWeight: '700',
