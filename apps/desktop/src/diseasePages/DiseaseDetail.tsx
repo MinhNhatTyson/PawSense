@@ -10,6 +10,7 @@ interface Props {
   onEdit: () => void
   onDelete: () => void
   onBack: () => void
+  onStatusChange?: () => void   // optional callback so parent can reload after approve/flag
 }
 
 // ── Quick-view panel types ────────────────────────────────────────────────────
@@ -83,9 +84,7 @@ function PanelCloseButton({ onClose }: { onClose: () => void }) {
 
 // ── Symptom panel content ─────────────────────────────────────────────────────
 function SymptomPanel({
-  symptom,
-  onClose,
-  scrollRef,
+  symptom, onClose, scrollRef,
 }: {
   symptom: NonNullable<Disease['diseaseSymptoms']>[number]['symptom']
   onClose: () => void
@@ -97,12 +96,7 @@ function SymptomPanel({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-      <div style={{
-        background: 'linear-gradient(135deg, var(--green-deep) 0%, var(--green-forest) 100%)',
-        padding: '32px 28px 28px',
-        position: 'relative',
-        flexShrink: 0,
-      }}>
+      <div style={{ background: 'linear-gradient(135deg, var(--green-deep) 0%, var(--green-forest) 100%)', padding: '32px 28px 28px', position: 'relative', flexShrink: 0 }}>
         <PanelCloseButton onClose={onClose} />
         <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 8 }}>
           Symptom record
@@ -114,9 +108,7 @@ function SymptomPanel({
           <span className={`sym-badge ${commonality.class}`} style={{ background: 'rgba(255,255,255,0.15)', color: 'var(--cream)', border: '1px solid rgba(255,255,255,0.2)' }}>
             {commonality.label}
           </span>
-          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>
-            {onsetLabel}
-          </span>
+          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>{onsetLabel}</span>
         </div>
       </div>
 
@@ -128,13 +120,9 @@ function SymptomPanel({
 
         {areas.length > 0 && (
           <div style={{ background: '#fff', border: '1px solid var(--warm-white)', borderRadius: 'var(--radius-lg)', padding: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: 10 }}>
-              Affected body areas
-            </div>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: 10 }}>Affected body areas</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {areas.map(area => (
-                <span key={area} className="sym-area-chip">{area}</span>
-              ))}
+              {areas.map(area => <span key={area} className="sym-area-chip">{area}</span>)}
             </div>
           </div>
         )}
@@ -146,24 +134,12 @@ function SymptomPanel({
           </div>
         )}
 
-        <a
-          href="/symptoms"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            padding: '12px 20px',
-            background: 'var(--green-deep)', color: 'var(--cream)',
-            borderRadius: 'var(--radius-md)', textDecoration: 'none',
-            fontSize: 14, fontWeight: 500,
-            transition: 'background 0.15s',
-            flexShrink: 0,
-          }}
+        <a href="/symptoms" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 20px', background: 'var(--green-deep)', color: 'var(--cream)', borderRadius: 'var(--radius-md)', textDecoration: 'none', fontSize: 14, fontWeight: 500, transition: 'background 0.15s', flexShrink: 0 }}
           onMouseEnter={e => (e.currentTarget.style.background = 'var(--green-forest)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'var(--green-deep)')}
         >
           View full record in Symptom Library
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </a>
       </div>
     </div>
@@ -172,9 +148,7 @@ function SymptomPanel({
 
 // ── Treatment panel content ───────────────────────────────────────────────────
 function TreatmentPanel({
-  treatment,
-  onClose,
-  scrollRef,
+  treatment, onClose, scrollRef,
 }: {
   treatment: NonNullable<Disease['diseaseTreatments']>[number]['treatment']
   onClose: () => void
@@ -182,12 +156,7 @@ function TreatmentPanel({
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-      <div style={{
-        background: 'linear-gradient(135deg, var(--green-deep) 0%, var(--green-forest) 100%)',
-        padding: '32px 28px 28px',
-        position: 'relative',
-        flexShrink: 0,
-      }}>
+      <div style={{ background: 'linear-gradient(135deg, var(--green-deep) 0%, var(--green-forest) 100%)', padding: '32px 28px 28px', position: 'relative', flexShrink: 0 }}>
         <PanelCloseButton onClose={onClose} />
         <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 8 }}>
           Treatment protocol
@@ -197,58 +166,29 @@ function TreatmentPanel({
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {treatment.steps?.length > 0 && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '4px 12px',
-              background: 'rgba(255,255,255,0.15)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 100, fontSize: 12, color: 'var(--cream)',
-            }}>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 3h8M2 6h6M2 9h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-              </svg>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, fontSize: 12, color: 'var(--cream)' }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M2 6h6M2 9h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
               {treatment.steps.length} step{treatment.steps.length !== 1 ? 's' : ''}
             </span>
           )}
-          {treatment.estimatedDuration && (
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>
-              {treatment.estimatedDuration}
-            </span>
-          )}
-          {treatment.successRate != null && (
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>
-              {treatment.successRate}% success
-            </span>
-          )}
+          {treatment.estimatedDuration && <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>{treatment.estimatedDuration}</span>}
+          {treatment.successRate != null && <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>{treatment.successRate}% success</span>}
         </div>
       </div>
 
       <div ref={scrollRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {treatment.steps && treatment.steps.length > 0 && (
           <div style={{ background: '#fff', border: '1px solid var(--warm-white)', borderRadius: 'var(--radius-lg)', padding: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: 14 }}>
-              Procedure steps
-            </div>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: 14 }}>Procedure steps</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {treatment.steps.map((step, idx) => (
                 <div key={step.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <div style={{
-                    width: 24, height: 24, borderRadius: '50%',
-                    background: 'var(--green-deep)', color: 'var(--cream)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 600, flexShrink: 0, marginTop: 2,
-                  }}>
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--green-deep)', color: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, flexShrink: 0, marginTop: 2 }}>
                     {idx + 1}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 2 }}>
-                      {step.title}
-                    </div>
-                    {step.durationMinutes && (
-                      <div style={{ fontSize: 11, color: 'var(--text-light)', marginBottom: 4 }}>
-                        {step.durationMinutes} min
-                      </div>
-                    )}
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 2 }}>{step.title}</div>
+                    {step.durationMinutes && <div style={{ fontSize: 11, color: 'var(--text-light)', marginBottom: 4 }}>{step.durationMinutes} min</div>}
                   </div>
                 </div>
               ))}
@@ -256,24 +196,12 @@ function TreatmentPanel({
           </div>
         )}
 
-        <a
-          href="/treatments"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            padding: '12px 20px',
-            background: 'var(--green-deep)', color: 'var(--cream)',
-            borderRadius: 'var(--radius-md)', textDecoration: 'none',
-            fontSize: 14, fontWeight: 500,
-            transition: 'background 0.15s',
-            flexShrink: 0,
-          }}
+        <a href="/treatments" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 20px', background: 'var(--green-deep)', color: 'var(--cream)', borderRadius: 'var(--radius-md)', textDecoration: 'none', fontSize: 14, fontWeight: 500, transition: 'background 0.15s', flexShrink: 0 }}
           onMouseEnter={e => (e.currentTarget.style.background = 'var(--green-forest)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'var(--green-deep)')}
         >
           View full record in Treatment Library
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </a>
       </div>
     </div>
@@ -285,10 +213,7 @@ function QuickViewPanel({ panel, onClose }: { panel: NonNullable<PanelContent>; 
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: 0 })
-    })
-    // Lock the dm-main scroll container, not body
+    const frame = requestAnimationFrame(() => { scrollRef.current?.scrollTo({ top: 0 }) })
     const mainEl = document.querySelector('.dm-main') as HTMLElement | null
     if (mainEl) mainEl.style.overflow = 'hidden'
     return () => {
@@ -297,46 +222,109 @@ function QuickViewPanel({ panel, onClose }: { panel: NonNullable<PanelContent>; 
     }
   }, [panel])
 
-  const portalContent = (
+  return createPortal(
     <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(26,58,42,0.18)',
-          backdropFilter: 'blur(2px)',
-          zIndex: 9998,
-          animation: 'fadeIn 0.18s ease both',
-        }}
-      />
-      {/* Panel */}
-      <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0,
-        width: 'min(520px, 100vw)',
-        background: 'var(--cream)',
-        borderLeft: '1px solid var(--warm-white)',
-        boxShadow: '-12px 0 48px rgba(26,58,42,0.12)',
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column',
-        animation: 'slideInRight 0.22s var(--ease-out) both',
-        overflow: 'hidden',
-      }}>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(26,58,42,0.18)', backdropFilter: 'blur(2px)', zIndex: 9998, animation: 'fadeIn 0.18s ease both' }} />
+      <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(520px, 100vw)', background: 'var(--cream)', borderLeft: '1px solid var(--warm-white)', boxShadow: '-12px 0 48px rgba(26,58,42,0.12)', zIndex: 9999, display: 'flex', flexDirection: 'column', animation: 'slideInRight 0.22s var(--ease-out) both', overflow: 'hidden' }}>
         {panel.kind === 'symptom'
           ? <SymptomPanel symptom={panel.data} onClose={onClose} scrollRef={scrollRef} />
           : <TreatmentPanel treatment={panel.data} onClose={onClose} scrollRef={scrollRef} />
         }
       </div>
-    </>
+    </>,
+    document.body
   )
+}
 
-  return createPortal(portalContent, document.body)
+// ── Flag modal ────────────────────────────────────────────────────────────────
+function FlagModal({
+  diseaseId,
+  onClose,
+  onSuccess,
+}: {
+  diseaseId: string
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [reason, setReason] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async () => {
+    if (!reason.trim()) { setError('Please describe the issue.'); return }
+    setLoading(true)
+    setError(null)
+    try {
+      await verificationAPI.raiseFlag({ contentType: 'DISEASE', contentId: diseaseId, reason: reason.trim() })
+      onSuccess()
+      onClose()
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to submit flag.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return createPortal(
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(26,58,42,0.18)', backdropFilter: 'blur(2px)', zIndex: 9998 }} />
+      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#fff', borderRadius: 'var(--radius-xl)', padding: 32, width: 'min(480px, 90vw)', boxShadow: 'var(--shadow-lg)', zIndex: 9999, animation: 'fadeUp 0.2s var(--ease-out) both' }}>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 400, color: 'var(--text-primary)', marginBottom: 6 }}>
+          Flag an issue
+        </h3>
+        <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.6 }}>
+          Describe what is incorrect or concerning about this disease record. A veterinarian will review your report.
+        </p>
+
+        {error && (
+          <div style={{ padding: '10px 14px', background: 'var(--error-bg)', color: 'var(--error)', borderRadius: 'var(--radius-md)', fontSize: 13, marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 8 }}>
+            Reason *
+          </label>
+          <textarea
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            placeholder="e.g. The listed dosage is incorrect — should be 5mg/kg not 50mg/kg…"
+            rows={4}
+            style={{ width: '100%', padding: '12px 16px', background: 'var(--ivory)', border: '1.5px solid var(--warm-white)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-primary)', resize: 'vertical', outline: 'none', lineHeight: 1.6 }}
+            autoFocus
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={handleSubmit}
+            disabled={loading || !reason.trim()}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 20px', background: loading || !reason.trim() ? 'var(--warm-white)' : 'var(--error)', color: loading || !reason.trim() ? 'var(--text-light)' : '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500, cursor: loading || !reason.trim() ? 'not-allowed' : 'pointer', transition: 'background 0.15s' }}
+          >
+            {loading && <span className="spinner" />}
+            Submit flag
+          </button>
+          <button
+            onClick={onClose}
+            style={{ padding: '11px 20px', background: 'var(--ivory)', color: 'var(--text-body)', border: '1.5px solid var(--warm-white)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </>,
+    document.body
+  )
 }
 
 // ── Main DiseaseDetail component ──────────────────────────────────────────────
-export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Props) {
-  const [panel, setPanel] = useState<PanelContent>(null)
+export default function DiseaseDetail({ disease, onEdit, onDelete, onBack, onStatusChange }: Props) {
+  const { user } = useAuth()
+  const [panel, setPanel]               = useState<PanelContent>(null)
+  const [showFlagModal, setShowFlagModal] = useState(false)
+  const [approving, setApproving]        = useState(false)
+  const [actionError, setActionError]    = useState<string | null>(null)
 
   const linkedSymptoms   = disease.diseaseSymptoms   ?? []
   const linkedTreatments = disease.diseaseTreatments ?? []
@@ -347,9 +335,34 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
   const openTreatment = (treatment: NonNullable<Disease['diseaseTreatments']>[number]['treatment']) =>
     setPanel({ kind: 'treatment', data: treatment })
 
+  const isVet      = user?.role === 'VET'
+  const isSelf     = disease.createdById === user?.id
+  const isApproved = disease.status === 'APPROVED'
+  const canApprove = isVet && !isSelf && !isApproved
+
+  const handleApprove = async () => {
+    setApproving(true)
+    setActionError(null)
+    try {
+      await verificationAPI.approveDisease(disease.id)
+      onStatusChange?.()
+    } catch (err: any) {
+      setActionError(err.response?.data?.error || 'Approval failed.')
+    } finally {
+      setApproving(false)
+    }
+  }
+
   return (
     <div className="dm-detail">
       {panel && <QuickViewPanel panel={panel} onClose={() => setPanel(null)} />}
+      {showFlagModal && (
+        <FlagModal
+          diseaseId={disease.id}
+          onClose={() => setShowFlagModal(false)}
+          onSuccess={() => onStatusChange?.()}
+        />
+      )}
 
       {/* Hero */}
       <div className="dm-detail-hero">
@@ -360,6 +373,9 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
           <h1 className="dm-detail-hero-name">{disease.name}</h1>
           <div className="dm-detail-hero-meta">
             <SevBadge sev={disease.severity} />
+            {disease.status && (
+              <VerificationBadge status={disease.status} size="md" />
+            )}
             {disease.recoveryPeriod && (
               <span className="dm-detail-hero-recovery">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -373,6 +389,13 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
         </div>
       </div>
 
+      {/* Action error */}
+      {actionError && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'var(--error-bg)', color: 'var(--error)', border: '1px solid rgba(192,57,43,0.15)', borderRadius: 'var(--radius-md)', fontSize: 14, marginBottom: 16 }}>
+          {actionError}
+        </div>
+      )}
+
       {/* Action bar */}
       <div className="dm-detail-actions-bar">
         <button className="btn btn-ghost" style={{ width: 'auto', padding: '9px 14px' }} onClick={onBack}>
@@ -381,12 +404,48 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
           </svg>
           Back to list
         </button>
+
         <button className="btn btn-secondary" style={{ width: 'auto', padding: '9px 20px' }} onClick={onEdit}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M9.5 1.5l3 3-8 8H1.5v-3l8-8z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
           </svg>
           Edit record
         </button>
+
+        {/* Approve — only for VETs who didn't create this record, and only when not yet approved */}
+        {canApprove && (
+          <button
+            className="btn btn-primary"
+            style={{ width: 'auto', padding: '9px 20px', background: 'var(--green-deep)' }}
+            onClick={handleApprove}
+            disabled={approving}
+          >
+            {approving
+              ? <><span className="spinner" /> Approving…</>
+              : <>
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 7l4 4 6-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Approve
+                </>
+            }
+          </button>
+        )}
+
+        {/* Flag — available to all authenticated users */}
+        {disease.status !== 'FLAGGED' && (
+          <button
+            className="btn btn-secondary"
+            style={{ width: 'auto', padding: '9px 20px' }}
+            onClick={() => setShowFlagModal(true)}
+          >
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+              <path d="M3 2v10M3 2l8 3.5L3 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Flag issue
+          </button>
+        )}
+
         <button className="btn btn-danger" style={{ width: 'auto', padding: '9px 20px' }} onClick={onDelete}>
           Delete
         </button>
@@ -487,22 +546,14 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
                       <div className="dm-linked-symptom-top">
                         <span className="dm-linked-symptom-name">{t.name}</span>
                         {t.steps?.length > 0 && (
-                          <span style={{
-                            fontSize: 10, padding: '2px 8px',
-                            background: 'var(--green-pale)', color: 'var(--green-forest)',
-                            borderRadius: 100, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
-                          }}>
+                          <span style={{ fontSize: 10, padding: '2px 8px', background: 'var(--green-pale)', color: 'var(--green-forest)', borderRadius: 100, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
                             {t.steps.length} step{t.steps.length !== 1 ? 's' : ''}
                           </span>
                         )}
                       </div>
                       <div className="dm-linked-symptom-meta">
-                        {t.estimatedDuration && (
-                          <span className="dm-linked-symptom-onset">{t.estimatedDuration}</span>
-                        )}
-                        {t.successRate != null && (
-                          <span className="dm-linked-symptom-onset">{t.successRate}% success</span>
-                        )}
+                        {t.estimatedDuration && <span className="dm-linked-symptom-onset">{t.estimatedDuration}</span>}
+                        {t.successRate != null && <span className="dm-linked-symptom-onset">{t.successRate}% success</span>}
                       </div>
                       <div style={{ marginTop: 6, fontSize: 11, color: 'var(--green-sage)', display: 'flex', alignItems: 'center', gap: 4 }}>
                         Preview
@@ -534,9 +585,7 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
           return (
             <Section title={`Linked medicines (${linkedMedicines.length})`} full>
               {linkedMedicines.length === 0 ? (
-                <p className="dm-empty-section">
-                  No medicines from the library are linked to this disease yet.
-                </p>
+                <p className="dm-empty-section">No medicines from the library are linked to this disease yet.</p>
               ) : (
                 <div className="dm-medicines-grid">
                   {linkedMedicines.map((dm: any) => {
@@ -546,13 +595,7 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
                         <div className="dm-medicine-name">{med.name}</div>
                         <div className="dm-medicine-dosage">{med.dosage}</div>
                         {med.manufacturer && (
-                          <div
-                            style={{
-                              fontSize: 11,
-                              color: 'var(--text-light)',
-                              marginTop: 2,
-                            }}
-                          >
+                          <div style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 2 }}>
                             {med.manufacturer}
                           </div>
                         )}
@@ -564,6 +607,24 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack }: Pro
             </Section>
           )
         })()}
+
+        {/* Verification info — show approver when approved */}
+        {disease.status === 'APPROVED' && disease.approvedBy && (
+          <Section title="Verification" full>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <VerificationBadge status="APPROVED" size="md" />
+              <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>
+                Approved by{' '}
+                <strong style={{ color: 'var(--text-primary)' }}>
+                  {disease.approvedBy.profile?.fullName || disease.approvedBy.email}
+                </strong>
+                {disease.approvedAt && (
+                  <> on {new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(disease.approvedAt))}</>
+                )}
+              </span>
+            </div>
+          </Section>
+        )}
       </div>
     </div>
   )
