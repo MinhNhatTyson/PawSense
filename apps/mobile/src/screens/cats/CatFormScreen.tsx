@@ -16,6 +16,7 @@ import {
 import { catProfileAPI, type CatGender, type CatProfile } from '../../api/catProfileAPI'
 import { Button, AlertBanner, Field } from '../../components/UI'
 import { TextInput } from '../../components/TextInput'
+import * as ImagePicker from 'expo-image-picker'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
 
 // ── Animated form card ────────────────────────────────────────────────────────
@@ -498,17 +499,30 @@ export function CatFormScreen({ navigation, route }: any) {
   }, [])
 
   // ── Image picking ─────────────────────────────────
-  const pickImage = () => {
-    Alert.alert('Add photo', 'In production this opens your camera roll.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Use placeholder',
-        onPress: () => {
-          const url = `https://placekitten.com/400/${320 + newImageUris.length * 8}`
-          setNewImageUris(prev => [...prev, url])
-        },
-      },
-    ])
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission needed',
+        'PawSense needs access to your photo library to add cat photos. Please enable it in your device settings.'
+      )
+      return
+    }
+
+    const remaining = 5 - (existingImageUrls.length + newImageUris.length)
+    if (remaining <= 0) return
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: remaining,
+      quality: 0.8,
+    })
+
+    if (result.canceled) return
+
+    const pickedUris = result.assets.map(asset => asset.uri)
+    setNewImageUris(prev => [...prev, ...pickedUris].slice(0, prev.length + remaining))
   }
 
   // ── Vaccinations ──────────────────────────────────

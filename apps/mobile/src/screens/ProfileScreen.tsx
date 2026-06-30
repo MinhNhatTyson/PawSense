@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native'
 import { useAuth } from '../contexts/AuthContext'
-import { Button, Card, DetailRow } from '../components/UI'
+import { Card, DetailRow } from '../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../theme'
 
 export function ProfileScreen({ navigation }: any) {
@@ -21,7 +21,10 @@ export function ProfileScreen({ navigation }: any) {
     '?'
   ).toUpperCase()
 
-  async function handleLogout() {
+  // ── Sign out ──────────────────────────────────────
+  // logout() clears the token in AuthContext, which causes RootNavigator
+  // to swap from AppStack → AuthStack automatically. No manual navigate needed.
+  function handleLogout() {
     Alert.alert(
       'Sign out',
       'Are you sure you want to sign out of PawSense?',
@@ -30,8 +33,8 @@ export function ProfileScreen({ navigation }: any) {
         {
           text: 'Sign out',
           style: 'destructive',
-          onPress: async () => {
-            await logout()
+          onPress: () => {
+            logout()
           },
         },
       ]
@@ -64,16 +67,16 @@ export function ProfileScreen({ navigation }: any) {
       {/* Content */}
       <View style={styles.content}>
 
-        {/* Contact info card */}
+        {/* Contact info */}
         <Text style={styles.sectionHeading}>Contact information</Text>
         <Card>
           <DetailRow label="Email" value={user.email} />
-          {user.profile?.phone && (
+          {user.profile?.phone ? (
             <DetailRow label="Phone" value={user.profile.phone} />
-          )}
-          {user.profile?.address && (
+          ) : null}
+          {user.profile?.address ? (
             <DetailRow label="Address" value={user.profile.address} />
-          )}
+          ) : null}
           {!user.profile?.phone && !user.profile?.address && (
             <Text style={styles.emptyHint}>
               No additional contact information added yet.
@@ -81,81 +84,74 @@ export function ProfileScreen({ navigation }: any) {
           )}
         </Card>
 
-        {/* Actions */}
+        {/* Account actions */}
         <Text style={styles.sectionHeading}>Account</Text>
 
-        <TouchableOpacity
-          style={styles.actionRow}
+        <ActionRow
+          emoji="✎"
+          title="Edit profile"
+          desc="Update your name, phone, and address"
           onPress={() => navigation.navigate('EditProfile')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.actionIcon}>
-            <Text style={styles.actionIconText}>✎</Text>
-          </View>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>Edit profile</Text>
-            <Text style={styles.actionDesc}>Update your name, phone, and address</Text>
-          </View>
-          <Text style={styles.actionChevron}>›</Text>
-        </TouchableOpacity>
+        />
 
-        <TouchableOpacity
-          style={styles.actionRow}
+        <ActionRow
+          emoji="🐱"
+          title="My cats"
+          desc="Manage cat profiles and health records"
           onPress={() => navigation.navigate('CatList')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.actionIcon}>
-            <Text style={styles.actionIconText}>🐱</Text>
-          </View>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>My cats</Text>
-            <Text style={styles.actionDesc}>Manage cat profiles and health records</Text>
-          </View>
-          <Text style={styles.actionChevron}>›</Text>
-        </TouchableOpacity>
+        />
 
-        <TouchableOpacity
-          style={styles.actionRow}
-          onPress={() => navigation.navigate('MedicineList')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.actionIcon}>
-            <Text style={styles.actionIconText}>💊</Text>
-          </View>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>Medicine lookup</Text>
-            <Text style={styles.actionDesc}>Search dosage, side effects & warnings</Text>
-          </View>
-          <Text style={styles.actionChevron}>›</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionRow}
+        <ActionRow
+          emoji="🔒"
+          title="Change password"
+          desc="Update your login credentials"
           onPress={() => navigation.navigate('ChangePassword')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.actionIcon}>
-            <Text style={styles.actionIconText}>🔒</Text>
-          </View>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>Change password</Text>
-            <Text style={styles.actionDesc}>Update your login credentials</Text>
-          </View>
-          <Text style={styles.actionChevron}>›</Text>
-        </TouchableOpacity>
+        />
 
         {/* Sign out */}
-        <View style={styles.signOutWrap}>
-          <Button
-            label="Sign out"
-            onPress={handleLogout}
-            variant="danger"
-            loading={isLoading}
-          />
-        </View>
+        <TouchableOpacity
+          style={styles.signOutBtn}
+          onPress={handleLogout}
+          activeOpacity={0.8}
+          disabled={isLoading}
+        >
+          <Text style={styles.signOutText}>
+            {isLoading ? 'Signing out…' : 'Sign out'}
+          </Text>
+        </TouchableOpacity>
 
       </View>
     </ScrollView>
+  )
+}
+
+// ── Reusable action row ───────────────────────────────────────────────────────
+function ActionRow({
+  emoji,
+  title,
+  desc,
+  onPress,
+}: {
+  emoji: string
+  title: string
+  desc: string
+  onPress: () => void
+}) {
+  return (
+    <TouchableOpacity
+      style={styles.actionRow}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={styles.actionIcon}>
+        <Text style={styles.actionIconText}>{emoji}</Text>
+      </View>
+      <View style={styles.actionContent}>
+        <Text style={styles.actionTitle}>{title}</Text>
+        <Text style={styles.actionDesc}>{desc}</Text>
+      </View>
+      <Text style={styles.actionChevron}>›</Text>
+    </TouchableOpacity>
   )
 }
 
@@ -191,7 +187,6 @@ const styles = StyleSheet.create({
     fontSize: Typography['3xl'],
     fontWeight: '500',
     color: Colors.greenForest,
-    fontFamily: 'System',
   },
   heroName: {
     fontSize: Typography.xl,
@@ -257,12 +252,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  actionIconText: {
-    fontSize: 18,
-  },
-  actionContent: {
-    flex: 1,
-  },
+  actionIconText: { fontSize: 18 },
+  actionContent: { flex: 1 },
   actionTitle: {
     fontSize: Typography.base,
     fontWeight: '500',
@@ -280,7 +271,18 @@ const styles = StyleSheet.create({
   },
 
   // ── Sign out ──────────────────────────────────────
-  signOutWrap: {
+  signOutBtn: {
     marginTop: Spacing.xl,
+    backgroundColor: Colors.errorBg,
+    borderWidth: 1,
+    borderColor: 'rgba(192,58,43,0.18)',
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+  },
+  signOutText: {
+    fontSize: Typography.base,
+    fontWeight: '600',
+    color: Colors.error,
   },
 })
