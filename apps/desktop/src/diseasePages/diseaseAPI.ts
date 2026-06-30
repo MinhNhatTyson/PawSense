@@ -67,6 +67,12 @@ export interface Disease {
   }[]
   createdAt: string
   updatedAt: string
+  status?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'FLAGGED'
+  createdById?: string
+  approvedById?: string
+  approvedAt?: string
+  createdBy?: { id: string; email: string; profile?: { fullName?: string } }
+  approvedBy?: { id: string; email: string; profile?: { fullName?: string } }
 }
 
 export interface DiseaseListResponse {

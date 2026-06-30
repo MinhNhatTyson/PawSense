@@ -15,6 +15,8 @@ const diseaseInclude = {
   diseaseMedicines: { include: { medicine: true } },
   diseaseSymptoms: { include: { symptom: true } },
   diseaseTreatments: { include: { treatment: { include: { steps: { orderBy: { stepOrder: 'asc' as const } } } } } },
+  createdBy: { select: { id: true, email: true, profile: { select: { fullName: true } } } },
+  approvedBy: { select: { id: true, email: true, profile: { select: { fullName: true } } } },
 }
 
 export async function createDisease(req: AuthRequest, res: Response) {
@@ -93,6 +95,7 @@ export async function createDisease(req: AuthRequest, res: Response) {
       treatmentMethods: parsedTreatment,
       recoveryPeriod,
       imageUrl,
+      createdById: req.userId ?? null,
     },
   })
 

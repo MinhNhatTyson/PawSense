@@ -50,7 +50,6 @@ export function ProfileScreen({ navigation }: any) {
 
       {/* Hero banner */}
       <View style={styles.hero}>
-        {/* Avatar circle */}
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
@@ -91,7 +90,6 @@ export function ProfileScreen({ navigation }: any) {
           activeOpacity={0.7}
         >
           <View style={styles.actionIcon}>
-            {/* Edit icon */}
             <Text style={styles.actionIconText}>✎</Text>
           </View>
           <View style={styles.actionContent}>
@@ -100,20 +98,37 @@ export function ProfileScreen({ navigation }: any) {
           </View>
           <Text style={styles.actionChevron}>›</Text>
         </TouchableOpacity>
-          <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => navigation.navigate('CatList')}
-              activeOpacity={0.7}
-            >
-              <View style={styles.actionIcon}>
-                <Text style={styles.actionIconText}>🐱</Text>
-              </View>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>My cats</Text>
-                <Text style={styles.actionDesc}>Manage cat profiles and health records</Text>
-              </View>
-              <Text style={styles.actionChevron}>›</Text>
-            </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionRow}
+          onPress={() => navigation.navigate('CatList')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.actionIcon}>
+            <Text style={styles.actionIconText}>🐱</Text>
+          </View>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionTitle}>My cats</Text>
+            <Text style={styles.actionDesc}>Manage cat profiles and health records</Text>
+          </View>
+          <Text style={styles.actionChevron}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionRow}
+          onPress={() => navigation.navigate('MedicineList')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.actionIcon}>
+            <Text style={styles.actionIconText}>💊</Text>
+          </View>
+          <View style={styles.actionContent}>
+            <Text style={styles.actionTitle}>Medicine lookup</Text>
+            <Text style={styles.actionDesc}>Search dosage, side effects & warnings</Text>
+          </View>
+          <Text style={styles.actionChevron}>›</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.actionRow}
           onPress={() => navigation.navigate('ChangePassword')}
@@ -213,7 +228,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     marginTop: Spacing.sm,
   },
-
   emptyHint: {
     fontSize: Typography.base,
     color: Colors.textLight,

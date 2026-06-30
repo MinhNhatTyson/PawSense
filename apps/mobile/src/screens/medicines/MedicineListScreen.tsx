@@ -1,0 +1,598 @@
+import React, { useState, useCallback, useRef } from 'react'
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  StatusBar,
+  RefreshControl,
+  ActivityIndicator,
+  Image,
+} from 'react-native'
+import { useFocusEffect } from '@react-navigation/native'
+import { medicineAPI, type Medicine } from '../../api/medicineAPI'
+import { Button } from '../../components/UI'
+import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
+
+// ── Severity colour map ───────────────────────────────────────────────────────
+
+const SEV_STYLE: Record<string, { bg: string; color: string }> = {
+  LOW:      { bg: '#edf7f1', color: '#2d7a4f' },
+  MEDIUM:   { bg: '#fdf7ed', color: '#8b6340' },
+  HIGH:     { bg: '#fdf0ee', color: '#c0392b' },
+  CRITICAL: { bg: '#fce8e6', color: '#922b21' },
+}
+
+// ── Disease pill ──────────────────────────────────────────────────────────────
+
+function DiseasePill({ name, severity }: { name: string; severity: string }) {
+  const s = SEV_STYLE[severity] ?? SEV_STYLE.MEDIUM
+  return (
+    <View style={[pillStyles.wrap, { backgroundColor: s.bg }]}>
+      <Text style={[pillStyles.text, { color: s.color }]}>{name}</Text>
+    </View>
+  )
+}
+
+const pillStyles = StyleSheet.create({
+  wrap: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    marginRight: 5,
+    marginBottom: 4,
+  },
+  text: { fontSize: Typography.xs, fontWeight: '600' },
+})
+
+// ── Filter chip ───────────────────────────────────────────────────────────────
+
+function FilterChip({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string
+  selected: boolean
+  onPress: () => void
+}) {
+  return (
+    <TouchableOpacity
+      style={[chipStyles.chip, selected && chipStyles.chipSelected]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <Text style={[chipStyles.label, selected && chipStyles.labelSelected]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  )
+}
+
+const chipStyles = StyleSheet.create({
+  chip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+    borderColor: Colors.warmWhite,
+    backgroundColor: Colors.white,
+    marginRight: Spacing.sm,
+  },
+  chipSelected: {
+    borderColor: Colors.greenSage,
+    backgroundColor: Colors.greenPale,
+  },
+  label: {
+    fontSize: Typography.sm,
+    fontWeight: '500',
+    color: Colors.textBody,
+  },
+  labelSelected: {
+    color: Colors.greenForest,
+    fontWeight: '700',
+  },
+})
+
+// ── Medicine card ─────────────────────────────────────────────────────────────
+
+function MedicineCard({ med, onPress }: { med: Medicine; onPress: () => void }) {
+  const diseases = med.diseaseMedicines?.slice(0, 2) ?? []
+  const extra = (med.diseaseMedicines?.length ?? 0) - 2
+
+  return (
+    <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.85}>
+      {/* Image / placeholder */}
+      <View style={cardStyles.imageWrap}>
+        {med.imageUrl ? (
+          <Image source={{ uri: med.imageUrl }} style={cardStyles.image} />
+        ) : (
+          <View style={cardStyles.imagePlaceholder}>
+            <Text style={cardStyles.imagePlaceholderIcon}>💊</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Body */}
+      <View style={cardStyles.body}>
+        <Text style={cardStyles.name} numberOfLines={2}>{med.name}</Text>
+
+        {med.manufacturer ? (
+          <Text style={cardStyles.manufacturer}>{med.manufacturer}</Text>
+        ) : null}
+
+        <Text style={cardStyles.desc} numberOfLines={2}>{med.description}</Text>
+
+        {/* Dosage preview */}
+        <View style={cardStyles.dosageRow}>
+          <Text style={cardStyles.dosageLabel}>Dosage</Text>
+          <Text style={cardStyles.dosageValue} numberOfLines={1}>{med.dosage}</Text>
+        </View>
+
+        {/* Linked diseases */}
+        {diseases.length > 0 && (
+          <View style={cardStyles.pillsRow}>
+            {diseases.map(dm => (
+              <DiseasePill
+                key={dm.id}
+                name={dm.disease.name}
+                severity={dm.disease.severity}
+              />
+            ))}
+            {extra > 0 && (
+              <View style={pillStyles.wrap}>
+                <Text style={[pillStyles.text, { color: Colors.textLight }]}>
+                  +{extra} more
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Warnings indicator */}
+        {med.warnings.length > 0 && (
+          <View style={cardStyles.warnRow}>
+            <Text style={cardStyles.warnIcon}>⚠</Text>
+            <Text style={cardStyles.warnText}>
+              {med.warnings.length} warning{med.warnings.length !== 1 ? 's' : ''}
+            </Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  )
+}
+
+const cardStyles = StyleSheet.create({
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: Colors.warmWhite,
+    overflow: 'hidden',
+    marginBottom: Spacing.lg,
+    ...Shadow.sm,
+  },
+  imageWrap: { width: '100%', height: 140 },
+  image: { width: '100%', height: '100%', resizeMode: 'cover' },
+  imagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: Colors.greenPale,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imagePlaceholderIcon: { fontSize: 48 },
+  body: { padding: Spacing.lg, gap: Spacing.sm },
+  name: {
+    fontSize: Typography.lg,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    letterSpacing: -0.3,
+  },
+  manufacturer: {
+    fontSize: Typography.sm,
+    color: Colors.textLight,
+    fontStyle: 'italic',
+  },
+  desc: {
+    fontSize: Typography.base,
+    color: Colors.textMuted,
+    lineHeight: 21,
+  },
+  dosageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    backgroundColor: Colors.greenPale,
+    borderRadius: Radius.md,
+    padding: Spacing.sm + 2,
+  },
+  dosageLabel: {
+    fontSize: Typography.xs,
+    fontWeight: '700',
+    color: Colors.greenForest,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingTop: 1,
+    flexShrink: 0,
+  },
+  dosageValue: {
+    fontSize: Typography.sm,
+    color: Colors.greenDeep,
+    fontWeight: '500',
+    flex: 1,
+  },
+  pillsRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  warnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  warnIcon: { fontSize: 13, color: '#c0392b' },
+  warnText: {
+    fontSize: Typography.xs,
+    color: '#c0392b',
+    fontWeight: '600',
+  },
+})
+
+// ── Main screen ───────────────────────────────────────────────────────────────
+
+export function MedicineListScreen({ navigation }: any) {
+  const [medicines, setMedicines] = useState<Medicine[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(0)
+  const [allDiseaseNames, setAllDiseaseNames] = useState<string[]>([])
+  const [selectedDisease, setSelectedDisease] = useState<string | null>(null)
+
+  const PER_PAGE = 20
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const loadMedicines = useCallback(async (searchQ = '', pg = 0) => {
+    try {
+      setError('')
+      const res = await medicineAPI.list(pg * PER_PAGE, PER_PAGE, searchQ || undefined)
+      const data = res.data
+
+      setMedicines(pg === 0 ? data : prev => [...prev, ...data])
+      setTotal(res.pagination.total)
+      setPage(pg)
+
+      // Build disease filter list from first full load only
+      if (pg === 0 && !searchQ) {
+        const names = Array.from(
+          new Set(
+            data.flatMap(m => m.diseaseMedicines?.map(dm => dm.disease.name) ?? [])
+          )
+        ).sort()
+        setAllDiseaseNames(names)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load medicines')
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }, [])
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true)
+      setSearch('')
+      setSelectedDisease(null)
+      loadMedicines('', 0)
+    }, [loadMedicines])
+  )
+
+  const handleSearch = (text: string) => {
+    setSearch(text)
+    setSelectedDisease(null)
+    if (searchTimer.current) clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => {
+      setLoading(true)
+      loadMedicines(text, 0)
+    }, 400)
+  }
+
+  const handleClearSearch = () => {
+    setSearch('')
+    setSelectedDisease(null)
+    setLoading(true)
+    loadMedicines('', 0)
+  }
+
+  const handleDiseaseFilter = (name: string) => {
+    setSelectedDisease(prev => (prev === name ? null : name))
+  }
+
+  // Disease filter applied client-side from the loaded set
+  const displayed = selectedDisease
+    ? medicines.filter(m =>
+        m.diseaseMedicines?.some(dm => dm.disease.name === selectedDisease)
+      )
+    : medicines
+
+  const hasMore = medicines.length < total && !selectedDisease
+
+  return (
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>Medicine Lookup</Text>
+          <Text style={styles.headerSubtitle}>
+            {total > 0
+              ? `${total} medicine${total !== 1 ? 's' : ''} in the database`
+              : 'Veterinary medicine reference'}
+          </Text>
+        </View>
+      </View>
+
+      {/* Top disclaimer */}
+      <View style={styles.disclaimer}>
+        <Text style={styles.disclaimerIcon}>⚕</Text>
+        <Text style={styles.disclaimerText}>
+          For reference only. Always consult your veterinarian before giving any medicine to your pet.
+        </Text>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true)
+              handleClearSearch()
+            }}
+            tintColor={Colors.greenSage}
+          />
+        }
+      >
+        {/* Search bar */}
+        <View style={styles.searchWrap}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search medicines…"
+            placeholderTextColor={Colors.textLight}
+            value={search}
+            onChangeText={handleSearch}
+            clearButtonMode="while-editing"
+            returnKeyType="search"
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={handleClearSearch} style={styles.clearBtn}>
+              <Text style={styles.clearBtnText}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Disease filter chips — only shown when not searching */}
+        {allDiseaseNames.length > 0 && !search && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.chipsScroll}
+            contentContainerStyle={styles.chipsContent}
+          >
+            <FilterChip
+              label="All"
+              selected={selectedDisease === null}
+              onPress={() => setSelectedDisease(null)}
+            />
+            {allDiseaseNames.map(name => (
+              <FilterChip
+                key={name}
+                label={name}
+                selected={selectedDisease === name}
+                onPress={() => handleDiseaseFilter(name)}
+              />
+            ))}
+          </ScrollView>
+        )}
+
+        {/* Active filter label */}
+        {selectedDisease && (
+          <View style={styles.activeFilterRow}>
+            <Text style={styles.activeFilterText}>
+              Filtered by: <Text style={styles.activeFilterName}>{selectedDisease}</Text>
+            </Text>
+            <TouchableOpacity onPress={() => setSelectedDisease(null)}>
+              <Text style={styles.activeFilterClear}>Clear</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Results */}
+        {loading && medicines.length === 0 ? (
+          <View style={styles.centred}>
+            <ActivityIndicator size="large" color={Colors.greenSage} />
+            <Text style={styles.loadingText}>Loading medicines…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.centred}>
+            <Text style={styles.stateIcon}>⚠️</Text>
+            <Text style={styles.stateTitle}>Something went wrong</Text>
+            <Text style={styles.stateDesc}>{error}</Text>
+            <Button
+              label="Try again"
+              onPress={() => { setLoading(true); loadMedicines('', 0) }}
+              variant="secondary"
+              style={{ marginTop: Spacing.lg }}
+            />
+          </View>
+        ) : displayed.length === 0 ? (
+          <View style={styles.centred}>
+            <Text style={styles.stateIcon}>💊</Text>
+            <Text style={styles.stateTitle}>No medicines found</Text>
+            <Text style={styles.stateDesc}>
+              {search
+                ? `No results for "${search}". Try a different search term.`
+                : selectedDisease
+                ? `No medicines linked to ${selectedDisease}.`
+                : 'The medicine database appears to be empty.'}
+            </Text>
+          </View>
+        ) : (
+          <>
+            {displayed.map(med => (
+              <MedicineCard
+                key={med.id}
+                med={med}
+                onPress={() =>
+                  navigation.navigate('MedicineDetail', { medicineId: med.id })
+                }
+              />
+            ))}
+
+            {hasMore && (
+              <Button
+                label="Load more"
+                onPress={() => loadMedicines(search, page + 1)}
+                variant="secondary"
+                style={{ marginTop: Spacing.sm }}
+              />
+            )}
+
+            <View style={{ height: Spacing['2xl'] }} />
+          </>
+        )}
+      </ScrollView>
+    </View>
+  )
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: Colors.cream },
+
+  // Header
+  header: {
+    backgroundColor: Colors.greenDeep,
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing['3xl'],
+    paddingBottom: Spacing['2xl'],
+  },
+  headerTitle: {
+    fontSize: Typography['2xl'],
+    fontWeight: '600',
+    color: Colors.cream,
+    letterSpacing: -0.4,
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: Typography.base,
+    color: 'rgba(245,240,232,0.65)',
+  },
+
+  // Disclaimer
+  disclaimer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    backgroundColor: '#fdf7ed',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0e3c8',
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.md,
+  },
+  disclaimerIcon: { fontSize: 15, lineHeight: 21, flexShrink: 0 },
+  disclaimerText: {
+    fontSize: Typography.sm,
+    color: '#7a5a2a',
+    lineHeight: 19,
+    flex: 1,
+    fontWeight: '500',
+  },
+
+  // Search
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: Colors.warmWhite,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  searchIcon: { fontSize: 16 },
+  searchInput: {
+    flex: 1,
+    height: 46,
+    fontSize: Typography.base,
+    color: Colors.textPrimary,
+  },
+  clearBtn: { padding: Spacing.xs },
+  clearBtnText: { fontSize: Typography.sm, color: Colors.textLight, fontWeight: '600' },
+
+  // Disease chips
+  chipsScroll: { marginBottom: Spacing.md, marginHorizontal: -Spacing['2xl'] },
+  chipsContent: { paddingHorizontal: Spacing['2xl'] },
+
+  // Active filter row
+  activeFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+    paddingHorizontal: 2,
+  },
+  activeFilterText: {
+    fontSize: Typography.sm,
+    color: Colors.textMuted,
+  },
+  activeFilterName: {
+    color: Colors.greenForest,
+    fontWeight: '700',
+  },
+  activeFilterClear: {
+    fontSize: Typography.sm,
+    color: Colors.greenSage,
+    fontWeight: '600',
+  },
+
+  // State screens
+  centred: {
+    alignItems: 'center',
+    paddingVertical: Spacing['4xl'],
+    paddingHorizontal: Spacing['2xl'],
+    gap: Spacing.md,
+  },
+  loadingText: { fontSize: Typography.base, color: Colors.textMuted },
+  stateIcon: { fontSize: 56 },
+  stateTitle: {
+    fontSize: Typography.xl,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    letterSpacing: -0.3,
+  },
+  stateDesc: {
+    fontSize: Typography.base,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+
+  // Scroll
+  scroll: {
+    paddingHorizontal: Spacing['2xl'],
+    paddingTop: Spacing['2xl'],
+    paddingBottom: Spacing['4xl'],
+  },
+})

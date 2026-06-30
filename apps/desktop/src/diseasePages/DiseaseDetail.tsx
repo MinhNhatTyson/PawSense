@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import type { Disease } from './diseaseAPI'
+import { VerificationBadge } from '../components/VerificationBadge'
+import { verificationAPI } from '../verificationPages/verificationAPI'
+import { useAuth } from '../contexts/AuthContext'
 
 interface Props {
   disease: Disease

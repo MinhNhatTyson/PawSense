@@ -9,10 +9,11 @@ import { RegisterScreen } from '../screens/RegisterScreen'
 import { ProfileScreen } from '../screens/ProfileScreen'
 import { EditProfileScreen } from '../screens/EditProfileScreen'
 import { ChangePasswordScreen } from '../screens/ChangePasswordScreen'
-// Add to imports:
 import { CatListScreen } from '../screens/cats/CatListScreen'
 import { CatFormScreen } from '../screens/cats/CatFormScreen'
 import { CatDetailScreen } from '../screens/cats/CatDetailScreen'
+import { MedicineListScreen } from '../screens/medicines/MedicineListScreen'
+import { MedicineDetailScreen } from '../screens/medicines/MedicineDetailScreen'
 
 import { Colors, Typography } from '../theme'
 
@@ -49,7 +50,6 @@ function AuthStack() {
           ...sharedHeaderOptions,
           headerShown: true,
           title: '',
-          // transparent back button over the dark hero
         }}
       />
     </Stack.Navigator>
@@ -64,27 +64,18 @@ function AppStack() {
       <Stack.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{
-          headerShown: false,    // Profile has its own hero header
-          title: 'My Profile',
-        }}
+        options={{ headerShown: false, title: 'My Profile' }}
       />
       <Stack.Screen
         name="EditProfile"
         component={EditProfileScreen}
-        options={{
-          headerShown: false,    // EditProfile has its own dark header
-          title: 'Edit Profile',
-        }}
+        options={{ headerShown: false, title: 'Edit Profile' }}
       />
       <Stack.Screen
         name="ChangePassword"
         component={ChangePasswordScreen}
-        options={{
-          headerShown: false,    // ChangePassword has its own dark header
-          title: 'Change Password',
-        }}
-      />     
+        options={{ headerShown: false, title: 'Change Password' }}
+      />
       <Stack.Screen
         name="CatList"
         component={CatListScreen}
@@ -98,6 +89,16 @@ function AppStack() {
       <Stack.Screen
         name="CatDetail"
         component={CatDetailScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MedicineList"
+        component={MedicineListScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MedicineDetail"
+        component={MedicineDetailScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
