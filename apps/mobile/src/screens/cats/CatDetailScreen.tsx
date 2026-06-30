@@ -1,25 +1,27 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Image,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
+  TouchableOpacity,
   StatusBar,
+  Alert,
+  ActivityIndicator,
   Animated,
-  Pressable,
+  Platform,
+  Dimensions,
 } from 'react-native'
-import { catProfileAPI, type CatGender, type CatProfile } from '../../api/catProfileAPI'
-import { Button, AlertBanner, Field } from '../../components/UI'
-import { TextInput } from '../../components/TextInput'
+import { catProfileAPI, type CatProfile, type Vaccination } from '../../api/catProfileAPI'
+import { Button } from '../../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
 
-// ── Animated form card ────────────────────────────────────────────────────────
-function FormCard({
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
+const HERO_HEIGHT = 300
+
+// ── Animated section card ─────────────────────────────────────────────────────
+function SectionCard({
   children,
   delay = 0,
 }: {
@@ -29,17 +31,17 @@ function FormCard({
   const fadeAnim = useRef(new Animated.Value(0)).current
   const slideAnim = useRef(new Animated.Value(20)).current
 
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 350,
+        duration: 380,
         delay,
         useNativeDriver: true,
       }),
       Animated.spring(slideAnim, {
         toValue: 0,
-        tension: 70,
+        tension: 65,
         friction: 11,
         delay,
         useNativeDriver: true,
@@ -50,7 +52,7 @@ function FormCard({
   return (
     <Animated.View
       style={[
-        cardStyles.card,
+        sectionCardStyles.card,
         { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
       ]}
     >
@@ -59,29 +61,28 @@ function FormCard({
   )
 }
 
-const cardStyles = StyleSheet.create({
+const sectionCardStyles = StyleSheet.create({
   card: {
     backgroundColor: Colors.white,
     borderRadius: Radius.xl,
     padding: Spacing['2xl'],
     borderWidth: 1,
     borderColor: Colors.warmWhite,
-    gap: Spacing.xs,
     ...Shadow.sm,
   },
 })
 
-// ── Animated section title ────────────────────────────────────────────────────
+// ── Section heading ───────────────────────────────────────────────────────────
 function SectionHeading({ title }: { title: string }) {
   return (
-    <View style={sectionStyles.wrap}>
-      <Text style={sectionStyles.text}>{title}</Text>
-      <View style={sectionStyles.line} />
+    <View style={headingStyles.wrap}>
+      <Text style={headingStyles.text}>{title}</Text>
+      <View style={headingStyles.line} />
     </View>
   )
 }
 
-const sectionStyles = StyleSheet.create({
+const headingStyles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -98,884 +99,905 @@ const sectionStyles = StyleSheet.create({
   line: { flex: 1, height: 1, backgroundColor: Colors.warmWhite },
 })
 
-// ── Gender option button ──────────────────────────────────────────────────────
-function GenderOption({
-  value,
-  label,
-  emoji,
-  selected,
-  onSelect,
-  disabled,
-}: {
-  value: CatGender
-  label: string
-  emoji: string
-  selected: boolean
-  onSelect: (v: CatGender) => void
-  disabled: boolean
-}) {
-  const scaleAnim = useRef(new Animated.Value(1)).current
-  const bgAnim = useRef(new Animated.Value(selected ? 1 : 0)).current
-
-  React.useEffect(() => {
-    Animated.spring(bgAnim, {
-      toValue: selected ? 1 : 0,
-      tension: 120,
-      friction: 10,
-      useNativeDriver: false,
-    }).start()
-    if (selected) {
-      Animated.sequence([
-        Animated.spring(scaleAnim, {
-          toValue: 0.93,
-          tension: 200,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          tension: 200,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-      ]).start()
-    }
-  }, [selected])
-
-  const borderColor = bgAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [Colors.warmWhite, Colors.greenSage],
-  })
-  const backgroundColor = bgAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [Colors.ivory, Colors.greenPale],
-  })
-
+// ── Info row with animated underline ─────────────────────────────────────────
+function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <Animated.View
-      style={[
-        genderStyles.option,
-        { borderColor, backgroundColor, transform: [{ scale: scaleAnim }] },
-      ]}
-    >
-      <Pressable
-        onPress={() => !disabled && onSelect(value)}
-        style={genderStyles.pressable}
-      >
-        <Text style={genderStyles.emoji}>{emoji}</Text>
-        <Text
-          style={[
-            genderStyles.label,
-            selected && genderStyles.labelSelected,
-          ]}
-        >
-          {label}
-        </Text>
-        {selected && (
-          <View style={genderStyles.checkDot} />
-        )}
-      </Pressable>
-    </Animated.View>
+    <View style={infoStyles.row}>
+      <Text style={infoStyles.label}>{label}</Text>
+      <Text style={infoStyles.value}>{value}</Text>
+    </View>
   )
 }
 
-const genderStyles = StyleSheet.create({
-  option: {
-    flex: 1,
-    borderRadius: Radius.md,
-    borderWidth: 1.5,
-    overflow: 'hidden',
-  },
-  pressable: {
-    paddingVertical: Spacing.md,
+const infoStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 4,
-    position: 'relative',
+    paddingVertical: Spacing.sm + 2,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.ivory,
   },
-  emoji: { fontSize: 22 },
   label: {
-    fontSize: Typography.sm,
-    fontWeight: '500',
-    color: Colors.textMuted,
-  },
-  labelSelected: {
-    color: Colors.greenForest,
+    fontSize: Typography.xs,
     fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: Colors.textLight,
   },
-  checkDot: {
-    position: 'absolute',
-    top: 6,
-    right: 8,
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: Colors.greenForest,
+  value: {
+    fontSize: Typography.base,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    flexShrink: 1,
+    textAlign: 'right',
+    marginLeft: Spacing.lg,
   },
 })
 
-// ── Vaccination row ───────────────────────────────────────────────────────────
-interface VaccinationEntry {
-  vaccineName: string
-  dateGiven: string
-  nextDueDate: string
-  veterinarian: string
-  notes: string
-}
-
-function VaccinationRow({
-  item,
+// ── Vaccination card with slide-in ────────────────────────────────────────────
+function VaccinationCard({
+  vaccination,
   index,
-  onChange,
-  onRemove,
-  disabled,
 }: {
-  item: VaccinationEntry
+  vaccination: Vaccination
   index: number
-  onChange: (i: number, f: keyof VaccinationEntry, v: string) => void
-  onRemove: (i: number) => void
-  disabled: boolean
 }) {
-  const slideAnim = useRef(new Animated.Value(0)).current
+  const slideAnim = useRef(new Animated.Value(30)).current
   const fadeAnim = useRef(new Animated.Value(0)).current
-  const [expanded, setExpanded] = useState(true)
+  const scaleAnim = useRef(new Animated.Value(1)).current
 
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 1, tension: 60, friction: 9, useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 340,
+        delay: 400 + index * 70,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 70,
+        friction: 10,
+        delay: 400 + index * 70,
+        useNativeDriver: true,
+      }),
     ]).start()
   }, [])
 
-  return (
-    <Animated.View
-      style={[
-        vaccStyles.card,
-        {
-          opacity: fadeAnim,
-          transform: [
-            {
-              translateX: slideAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [40, 0],
-              }),
-            },
-          ],
-        },
-      ]}
-    >
-      <View style={vaccStyles.header}>
-        <View style={vaccStyles.indexBadge}>
-          <Text style={vaccStyles.indexText}>{index + 1}</Text>
-        </View>
-        <Text style={vaccStyles.headerTitle} numberOfLines={1}>
-          {item.vaccineName || 'New vaccination'}
-        </Text>
-        <TouchableOpacity
-          onPress={() => !disabled && onRemove(index)}
-          style={vaccStyles.removeBtn}
-          disabled={disabled}
-        >
-          <Text style={vaccStyles.removeBtnText}>Remove</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Field label="Vaccine name *">
-        <TextInput
-          value={item.vaccineName}
-          onChangeText={v => onChange(index, 'vaccineName', v)}
-          placeholder="e.g. FVRCP, Rabies, FeLV"
-          editable={!disabled}
-        />
-      </Field>
-      <Field label="Date given *">
-        <TextInput
-          value={item.dateGiven}
-          onChangeText={v => onChange(index, 'dateGiven', v)}
-          placeholder="YYYY-MM-DD"
-          editable={!disabled}
-        />
-      </Field>
-      <View style={vaccStyles.row}>
-        <View style={vaccStyles.rowHalf}>
-          <Field label="Next due" optional>
-            <TextInput
-              value={item.nextDueDate}
-              onChangeText={v => onChange(index, 'nextDueDate', v)}
-              placeholder="YYYY-MM-DD"
-              editable={!disabled}
-            />
-          </Field>
-        </View>
-        <View style={vaccStyles.rowHalf}>
-          <Field label="Veterinarian" optional>
-            <TextInput
-              value={item.veterinarian}
-              onChangeText={v => onChange(index, 'veterinarian', v)}
-              placeholder="Dr. Smith"
-              editable={!disabled}
-            />
-          </Field>
-        </View>
-      </View>
-    </Animated.View>
-  )
-}
-
-const vaccStyles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.ivory,
-    borderRadius: Radius.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.warmWhite,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    gap: 2,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-    gap: Spacing.sm,
-  },
-  indexBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: Colors.greenDeep,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  indexText: { fontSize: Typography.xs, fontWeight: '700', color: Colors.cream },
-  headerTitle: {
-    flex: 1,
-    fontSize: Typography.base,
-    fontWeight: '600',
-    color: Colors.textBody,
-  },
-  removeBtn: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    backgroundColor: Colors.errorBg,
-    borderRadius: Radius.sm,
-  },
-  removeBtnText: { fontSize: Typography.xs, color: Colors.error, fontWeight: '600' },
-  row: { flexDirection: 'row', gap: Spacing.sm },
-  rowHalf: { flex: 1 },
-})
-
-// ── Photo thumbnail ───────────────────────────────────────────────────────────
-function PhotoThumbnail({
-  uri,
-  onRemove,
-  label,
-  isNew = false,
-  disabled,
-}: {
-  uri: string
-  onRemove: () => void
-  label?: string
-  isNew?: boolean
-  disabled: boolean
-}) {
-  const scaleAnim = useRef(new Animated.Value(0)).current
-
-  React.useEffect(() => {
+  const handlePressIn = () => {
     Animated.spring(scaleAnim, {
-      toValue: 1,
-      tension: 100,
-      friction: 8,
-      useNativeDriver: true,
-    }).start()
-  }, [])
-
-  return (
-    <Animated.View
-      style={[photoStyles.thumb, { transform: [{ scale: scaleAnim }] }]}
-    >
-      <Image source={{ uri }} style={photoStyles.image} resizeMode="cover" />
-      <TouchableOpacity
-        style={photoStyles.remove}
-        onPress={onRemove}
-        disabled={disabled}
-      >
-        <Text style={photoStyles.removeText}>×</Text>
-      </TouchableOpacity>
-      {label ? (
-        <View style={[photoStyles.label, isNew && photoStyles.labelNew]}>
-          <Text style={photoStyles.labelText}>{label}</Text>
-        </View>
-      ) : null}
-    </Animated.View>
-  )
-}
-
-const photoStyles = StyleSheet.create({
-  thumb: {
-    width: 88,
-    height: 88,
-    borderRadius: Radius.md,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: Colors.warmWhite,
-    flexShrink: 0,
-  },
-  image: { width: '100%', height: '100%' },
-  remove: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(26,58,42,0.80)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeText: { color: Colors.white, fontSize: 16, lineHeight: 20, fontWeight: '700' },
-  label: {
-    position: 'absolute',
-    bottom: 4,
-    left: 4,
-    backgroundColor: 'rgba(26,58,42,0.80)',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  labelNew: { backgroundColor: 'rgba(74,124,95,0.90)' },
-  labelText: { color: Colors.white, fontSize: 9, fontWeight: '700' },
-})
-
-// ── Main form screen ──────────────────────────────────────────────────────────
-export function CatFormScreen({ navigation, route }: any) {
-  const { mode, cat } = route.params as { mode: 'create' | 'edit'; cat?: CatProfile }
-  const isEditing = mode === 'edit' && !!cat
-
-  // ── State ─────────────────────────────────────────
-  const [name, setName] = useState(cat?.name ?? '')
-  const [gender, setGender] = useState<CatGender>(cat?.gender ?? 'UNKNOWN')
-  const [ageYears, setAgeYears] = useState(
-    cat?.ageYears != null ? String(cat.ageYears) : ''
-  )
-  const [ageMonths, setAgeMonths] = useState(
-    cat?.ageMonths != null ? String(cat.ageMonths) : ''
-  )
-  const [weightKg, setWeightKg] = useState(
-    cat?.weightKg != null ? String(cat.weightKg) : ''
-  )
-  const [breed, setBreed] = useState(cat?.breed ?? '')
-  const [color, setColor] = useState(cat?.color ?? '')
-  const [notes, setNotes] = useState(cat?.notes ?? '')
-
-  const [existingImageUrls, setExistingImageUrls] = useState<string[]>(
-    cat?.imageUrls ?? []
-  )
-  const [newImageUris, setNewImageUris] = useState<string[]>([])
-
-  const [vaccinations, setVaccinations] = useState<VaccinationEntry[]>(
-    cat?.vaccinations.map(v => ({
-      vaccineName: v.vaccineName,
-      dateGiven: v.dateGiven.substring(0, 10),
-      nextDueDate: v.nextDueDate?.substring(0, 10) ?? '',
-      veterinarian: v.veterinarian ?? '',
-      notes: v.notes ?? '',
-    })) ?? []
-  )
-
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const scrollRef = useRef<ScrollView>(null)
-
-  // ── Header animation ──────────────────────────────
-  const headerAnim = useRef(new Animated.Value(0)).current
-  React.useEffect(() => {
-    Animated.spring(headerAnim, {
-      toValue: 1,
-      tension: 60,
+      toValue: 0.97,
+      tension: 200,
       friction: 10,
       useNativeDriver: true,
     }).start()
-  }, [])
-
-  // ── Image picking ─────────────────────────────────
-  const pickImage = () => {
-    Alert.alert('Add photo', 'In production this opens your camera roll.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Use placeholder',
-        onPress: () => {
-          const url = `https://placekitten.com/400/${320 + newImageUris.length * 8}`
-          setNewImageUris(prev => [...prev, url])
-        },
-      },
-    ])
   }
 
-  // ── Vaccinations ──────────────────────────────────
-  const addVaccination = () => {
-    setVaccinations(prev => [
-      ...prev,
-      { vaccineName: '', dateGiven: '', nextDueDate: '', veterinarian: '', notes: '' },
-    ])
-    // Scroll down after a tick
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100)
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 200,
+      friction: 10,
+      useNativeDriver: true,
+    }).start()
   }
 
-  const updateVaccination = useCallback(
-    (i: number, f: keyof VaccinationEntry, v: string) => {
-      setVaccinations(prev => prev.map((item, idx) => (idx === i ? { ...item, [f]: v } : item)))
-    },
-    []
-  )
-
-  const removeVaccination = useCallback((i: number) => {
-    setVaccinations(prev => prev.filter((_, idx) => idx !== i))
-  }, [])
-
-  // ── Submit ────────────────────────────────────────
-  const handleSubmit = async () => {
-    if (!name.trim()) {
-      setError("Cat's name is required.")
-      scrollRef.current?.scrollTo({ y: 0, animated: true })
-      return
-    }
-    const validVaccinations = vaccinations.filter(
-      v => v.vaccineName.trim() && v.dateGiven.trim()
-    )
-    setError('')
-    setLoading(true)
-    try {
-      const payload = {
-        name: name.trim(),
-        gender,
-        ageYears: ageYears ? parseInt(ageYears) : undefined,
-        ageMonths: ageMonths ? parseInt(ageMonths) : undefined,
-        weightKg: weightKg ? parseFloat(weightKg) : undefined,
-        breed: breed.trim() || undefined,
-        color: color.trim() || undefined,
-        notes: notes.trim() || undefined,
-        vaccinations: validVaccinations,
-      }
-
-      if (isEditing && cat) {
-        await catProfileAPI.update(
-          cat.id,
-          { ...payload, existingImageUrls },
-          newImageUris.length > 0 ? newImageUris : undefined
-        )
-      } else {
-        await catProfileAPI.create(
-          payload,
-          newImageUris.length > 0 ? newImageUris : undefined
-        )
-      }
-      navigation.goBack()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save cat profile')
-      scrollRef.current?.scrollTo({ y: 0, animated: true })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const totalImages = existingImageUrls.length + newImageUris.length
+  const dateGiven = new Date(vaccination.dateGiven)
+  const nextDue = vaccination.nextDueDate ? new Date(vaccination.nextDueDate) : null
+  const isOverdue = nextDue && nextDue < new Date()
+  const isDueSoon =
+    nextDue &&
+    !isOverdue &&
+    nextDue.getTime() - Date.now() < 30 * 24 * 60 * 60 * 1000
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <Animated.View
+      style={{
+        opacity: fadeAnim,
+        transform: [{ translateX: slideAnim }, { scale: scaleAnim }],
+      }}
     >
-      <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
-
-      {/* Header */}
-      <Animated.View
-        style={[
-          styles.header,
-          {
-            opacity: headerAnim,
-            transform: [
-              {
-                translateY: headerAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [-16, 0],
-                }),
-              },
-            ],
-          },
-        ]}
+      <TouchableOpacity
+        style={vaccCardStyles.card}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
       >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.backBtnText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {isEditing ? `Edit ${cat!.name}` : 'Add new cat'}
-        </Text>
-        <Text style={styles.headerSubtitle}>
-          {isEditing
-            ? 'Update your cat's health profile'
-            : 'Fill in what you know — you can always add more later'}
-        </Text>
-      </Animated.View>
+        {/* Left accent bar colour-coded by status */}
+        <View
+          style={[
+            vaccCardStyles.accentBar,
+            {
+              backgroundColor: isOverdue
+                ? Colors.error
+                : isDueSoon
+                ? Colors.gold
+                : Colors.greenSage,
+            },
+          ]}
+        />
 
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {error ? (
-          <Animated.View>
-            <AlertBanner type="error" message={error} />
-          </Animated.View>
-        ) : null}
-
-        {/* ── Basic info ── */}
-        <FormCard delay={80}>
-          <SectionHeading title="About your cat" />
-
-          <Field label="Name *">
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="e.g. Luna, Mochi, Oliver"
-              editable={!loading}
-              autoFocus={!isEditing}
-            />
-          </Field>
-
-          <View style={styles.fieldLabel}>
-            <Text style={styles.labelText}>Gender</Text>
-          </View>
-          <View style={styles.genderRow}>
-            {([
-              { value: 'MALE', label: 'Male', emoji: '♂️' },
-              { value: 'FEMALE', label: 'Female', emoji: '♀️' },
-              { value: 'UNKNOWN', label: 'Unknown', emoji: '❓' },
-            ] as const).map(opt => (
-              <GenderOption
-                key={opt.value}
-                {...opt}
-                selected={gender === opt.value}
-                onSelect={setGender}
-                disabled={loading}
-              />
-            ))}
-          </View>
-
-          <Field label="Breed" optional>
-            <TextInput
-              value={breed}
-              onChangeText={setBreed}
-              placeholder="e.g. Persian, Siamese, Maine Coon"
-              editable={!loading}
-            />
-          </Field>
-
-          <Field label="Coat colour" optional>
-            <TextInput
-              value={color}
-              onChangeText={setColor}
-              placeholder="e.g. Orange tabby, Black & white"
-              editable={!loading}
-            />
-          </Field>
-        </FormCard>
-
-        {/* ── Age & weight ── */}
-        <FormCard delay={160}>
-          <SectionHeading title="Age & weight" />
-
-          <View style={styles.twoCol}>
-            <View style={styles.col}>
-              <Field label="Years" optional>
-                <TextInput
-                  value={ageYears}
-                  onChangeText={setAgeYears}
-                  placeholder="0"
-                  keyboardType="numeric"
-                  editable={!loading}
-                />
-              </Field>
-            </View>
-            <View style={styles.col}>
-              <Field label="Months" optional>
-                <TextInput
-                  value={ageMonths}
-                  onChangeText={setAgeMonths}
-                  placeholder="0"
-                  keyboardType="numeric"
-                  editable={!loading}
-                />
-              </Field>
+        <View style={vaccCardStyles.body}>
+          {/* Top row: name + date badge */}
+          <View style={vaccCardStyles.topRow}>
+            <Text style={vaccCardStyles.name} numberOfLines={1}>
+              {vaccination.vaccineName}
+            </Text>
+            <View style={vaccCardStyles.dateBadge}>
+              <Text style={vaccCardStyles.dateBadgeText}>
+                {dateGiven.toLocaleDateString('en-GB', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </Text>
             </View>
           </View>
 
-          <Field label="Weight (kg)" optional>
-            <TextInput
-              value={weightKg}
-              onChangeText={setWeightKg}
-              placeholder="e.g. 4.5"
-              keyboardType="decimal-pad"
-              editable={!loading}
-            />
-          </Field>
-        </FormCard>
-
-        {/* ── Photos ── */}
-        <FormCard delay={240}>
-          <SectionHeading title={`Photos ${totalImages > 0 ? `(${totalImages}/5)` : ''}`} />
-
-          {totalImages > 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.photoScroll}
-              contentContainerStyle={{ gap: Spacing.sm, paddingVertical: 4 }}
-            >
-              {existingImageUrls.map((url, idx) => (
-                <PhotoThumbnail
-                  key={`e-${idx}`}
-                  uri={url}
-                  label={idx === 0 ? 'Main' : undefined}
-                  onRemove={() =>
-                    setExistingImageUrls(prev => prev.filter(u => u !== url))
-                  }
-                  disabled={loading}
-                />
-              ))}
-              {newImageUris.map((uri, idx) => (
-                <PhotoThumbnail
-                  key={`n-${idx}`}
-                  uri={uri}
-                  label="New"
-                  isNew
-                  onRemove={() =>
-                    setNewImageUris(prev => prev.filter((_, i) => i !== idx))
-                  }
-                  disabled={loading}
-                />
-              ))}
-            </ScrollView>
+          {/* Next due */}
+          {nextDue && (
+            <View style={vaccCardStyles.nextDueRow}>
+              <Text
+                style={[
+                  vaccCardStyles.nextDueLabel,
+                  isOverdue && vaccCardStyles.nextDueLabelOverdue,
+                  isDueSoon && vaccCardStyles.nextDueLabelSoon,
+                ]}
+              >
+                {isOverdue ? '⚠ Overdue · ' : isDueSoon ? '⏰ Due soon · ' : '🗓 Next · '}
+                {nextDue.toLocaleDateString('en-GB', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </Text>
+            </View>
           )}
 
-          {totalImages < 5 ? (
-            <TouchableOpacity
-              style={styles.uploadZone}
-              onPress={pickImage}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.uploadZoneIcon}>📷</Text>
-              <Text style={styles.uploadZoneLabel}>
-                {totalImages === 0 ? 'Add photos of your cat' : 'Add more photos'}
-              </Text>
-              <Text style={styles.uploadZoneHint}>
-                Up to {5 - totalImages} more · PNG, JPG, HEIC
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.uploadFull}>
-              <Text style={styles.uploadFullText}>Maximum 5 photos reached</Text>
-            </View>
-          )}
-        </FormCard>
-
-        {/* ── Vaccinations ── */}
-        <FormCard delay={320}>
-          <SectionHeading
-            title={
-              vaccinations.length > 0
-                ? `Vaccination history (${vaccinations.length})`
-                : 'Vaccination history'
-            }
-          />
-
-          {vaccinations.length === 0 && (
-            <Text style={styles.emptyHint}>
-              No vaccinations recorded yet. Keep track of your cat's shots below.
+          {/* Vet */}
+          {vaccination.veterinarian && (
+            <Text style={vaccCardStyles.vet}>
+              Dr. {vaccination.veterinarian}
             </Text>
           )}
 
-          {vaccinations.map((v, idx) => (
-            <VaccinationRow
-              key={idx}
-              item={v}
-              index={idx}
-              onChange={updateVaccination}
-              onRemove={removeVaccination}
-              disabled={loading}
+          {/* Notes */}
+          {vaccination.notes && (
+            <Text style={vaccCardStyles.notes} numberOfLines={2}>
+              {vaccination.notes}
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  )
+}
+
+const vaccCardStyles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    backgroundColor: Colors.ivory,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.warmWhite,
+    overflow: 'hidden',
+    marginBottom: Spacing.sm,
+  },
+  accentBar: {
+    width: 4,
+    flexShrink: 0,
+  },
+  body: {
+    flex: 1,
+    padding: Spacing.md,
+    gap: 4,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  name: {
+    fontSize: Typography.base,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    flex: 1,
+  },
+  dateBadge: {
+    backgroundColor: Colors.greenPale,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    flexShrink: 0,
+  },
+  dateBadgeText: {
+    fontSize: Typography.xs,
+    color: Colors.greenForest,
+    fontWeight: '700',
+  },
+  nextDueRow: { flexDirection: 'row', alignItems: 'center' },
+  nextDueLabel: {
+    fontSize: Typography.sm,
+    color: Colors.textMuted,
+    fontWeight: '500',
+  },
+  nextDueLabelOverdue: { color: Colors.error },
+  nextDueLabelSoon: { color: '#b87a00' },
+  vet: {
+    fontSize: Typography.sm,
+    color: Colors.textLight,
+  },
+  notes: {
+    fontSize: Typography.sm,
+    color: Colors.textLight,
+    fontStyle: 'italic',
+    lineHeight: 18,
+  },
+})
+
+// ── Image gallery thumbnail ───────────────────────────────────────────────────
+function GalleryThumb({
+  uri,
+  active,
+  onPress,
+}: {
+  uri: string
+  active: boolean
+  onPress: () => void
+}) {
+  const borderAnim = useRef(new Animated.Value(active ? 1 : 0)).current
+
+  useEffect(() => {
+    Animated.spring(borderAnim, {
+      toValue: active ? 1 : 0,
+      tension: 150,
+      friction: 10,
+      useNativeDriver: false,
+    }).start()
+  }, [active])
+
+  const borderColor = borderAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [Colors.warmWhite, Colors.gold],
+  })
+  const borderWidth = borderAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1.5, 2.5],
+  })
+
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+      <Animated.View style={[galleryStyles.thumb, { borderColor, borderWidth }]}>
+        <Image source={{ uri }} style={galleryStyles.thumbImg} resizeMode="cover" />
+      </Animated.View>
+    </TouchableOpacity>
+  )
+}
+
+const galleryStyles = StyleSheet.create({
+  thumb: {
+    width: 56,
+    height: 56,
+    borderRadius: Radius.md,
+    overflow: 'hidden',
+    marginRight: Spacing.sm,
+  },
+  thumbImg: { width: '100%', height: '100%' },
+})
+
+// ── Gender badge ──────────────────────────────────────────────────────────────
+function GenderBadge({ gender }: { gender: string }) {
+  const cfg =
+    {
+      MALE: { label: '♂ Male', bg: 'rgba(26,82,138,0.12)', color: '#1a3a5e' },
+      FEMALE: { label: '♀ Female', bg: 'rgba(120,40,31,0.12)', color: '#6b1f1a' },
+      UNKNOWN: { label: '? Unknown', bg: 'rgba(255,255,255,0.15)', color: Colors.cream },
+    }[gender] ?? { label: gender, bg: 'rgba(255,255,255,0.15)', color: Colors.cream }
+
+  return (
+    <View style={[gbStyles.wrap, { backgroundColor: cfg.bg }]}>
+      <Text style={[gbStyles.text, { color: cfg.color }]}>{cfg.label}</Text>
+    </View>
+  )
+}
+
+const gbStyles = StyleSheet.create({
+  wrap: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+  },
+  text: { fontSize: Typography.sm, fontWeight: '700', letterSpacing: 0.2 },
+})
+
+// ── Loading skeleton ──────────────────────────────────────────────────────────
+function LoadingSkeleton() {
+  const opacity = useRef(new Animated.Value(0.3)).current
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+      ])
+    )
+    pulse.start()
+    return () => pulse.stop()
+  }, [])
+
+  return (
+    <View style={{ flex: 1, backgroundColor: Colors.cream }}>
+      <Animated.View
+        style={[skeleStyles.hero, { opacity }]}
+      />
+      <View style={skeleStyles.content}>
+        <Animated.View style={[skeleStyles.titleBlock, { opacity }]} />
+        <Animated.View style={[skeleStyles.card, { opacity }]} />
+        <Animated.View style={[skeleStyles.card, { opacity, height: 140 }]} />
+      </View>
+    </View>
+  )
+}
+
+const skeleStyles = StyleSheet.create({
+  hero: {
+    width: '100%',
+    height: HERO_HEIGHT,
+    backgroundColor: Colors.greenPale,
+  },
+  content: { padding: Spacing['2xl'], gap: Spacing.lg },
+  titleBlock: {
+    height: 32,
+    width: '50%',
+    borderRadius: Radius.md,
+    backgroundColor: Colors.warmWhite,
+  },
+  card: {
+    height: 100,
+    borderRadius: Radius.xl,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.warmWhite,
+  },
+})
+
+// ── Main screen ───────────────────────────────────────────────────────────────
+export function CatDetailScreen({ navigation, route }: any) {
+  const { catId } = route.params as { catId: string }
+  const [cat, setCat] = useState<CatProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [activeImageIdx, setActiveImageIdx] = useState(0)
+
+  // Animated values
+  const heroOpacity = useRef(new Animated.Value(0)).current
+  const heroScale = useRef(new Animated.Value(1.04)).current
+  const contentFade = useRef(new Animated.Value(0)).current
+  const actionBarAnim = useRef(new Animated.Value(0)).current
+  const scrollY = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    catProfileAPI
+      .getById(catId)
+      .then(data => {
+        setCat(data)
+        // Orchestrated entrance after data loads
+        Animated.sequence([
+          // 1. Hero fades + unscales
+          Animated.parallel([
+            Animated.timing(heroOpacity, {
+              toValue: 1,
+              duration: 380,
+              useNativeDriver: true,
+            }),
+            Animated.spring(heroScale, {
+              toValue: 1,
+              tension: 55,
+              friction: 10,
+              useNativeDriver: true,
+            }),
+          ]),
+          // 2. Content slides up after hero settles
+          Animated.parallel([
+            Animated.timing(contentFade, {
+              toValue: 1,
+              duration: 280,
+              useNativeDriver: true,
+            }),
+            Animated.timing(actionBarAnim, {
+              toValue: 1,
+              duration: 280,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]).start()
+      })
+      .catch(() =>
+        Alert.alert('Error', 'Failed to load cat profile.', [
+          { text: 'Go back', onPress: () => navigation.goBack() },
+        ])
+      )
+      .finally(() => setLoading(false))
+  }, [catId])
+
+  const handleDelete = useCallback(() => {
+    if (!cat) return
+    Alert.alert(
+      `Delete ${cat.name}?`,
+      'This will permanently remove this cat profile and all their health records. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await catProfileAPI.delete(cat.id)
+              navigation.goBack()
+            } catch {
+              Alert.alert('Error', 'Failed to delete. Please try again.')
+            }
+          },
+        },
+      ]
+    )
+  }, [cat, navigation])
+
+  if (loading) return <LoadingSkeleton />
+  if (!cat) return null
+
+  // Derived display values
+  const ageDisplay =
+    cat.ageYears != null
+      ? `${cat.ageYears} year${cat.ageYears !== 1 ? 's' : ''}${
+          cat.ageMonths ? ` ${cat.ageMonths} months` : ''
+        }`
+      : cat.ageMonths != null
+      ? `${cat.ageMonths} month${cat.ageMonths !== 1 ? 's' : ''}`
+      : null
+
+  const genderLabel =
+    { MALE: 'Male ♂', FEMALE: 'Female ♀', UNKNOWN: 'Unknown' }[cat.gender] ?? cat.gender
+
+  const hasVitals = ageDisplay || cat.weightKg != null || cat.color || cat.breed
+
+  // Parallax: hero image scrolls at 0.4× speed
+  const heroTranslate = scrollY.interpolate({
+    inputRange: [-HERO_HEIGHT, 0, HERO_HEIGHT],
+    outputRange: [-HERO_HEIGHT * 0.4, 0, HERO_HEIGHT * 0.4],
+    extrapolate: 'clamp',
+  })
+
+  return (
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+
+      {/* ── Hero (fixed, behind scroll) ── */}
+      <Animated.View
+        style={[
+          styles.heroWrap,
+          {
+            opacity: heroOpacity,
+            transform: [{ scale: heroScale }],
+          },
+        ]}
+      >
+        <Animated.View
+          style={[
+            styles.heroImageWrap,
+            { transform: [{ translateY: heroTranslate }] },
+          ]}
+        >
+          {cat.imageUrls.length > 0 ? (
+            <Image
+              source={{ uri: cat.imageUrls[activeImageIdx] }}
+              style={styles.heroImage}
+              resizeMode="cover"
             />
-          ))}
+          ) : (
+            <View style={styles.heroPlaceholder}>
+              <Text style={styles.heroPlaceholderEmoji}>🐱</Text>
+            </View>
+          )}
+        </Animated.View>
 
-          <TouchableOpacity
-            style={styles.addVaccineBtn}
-            onPress={addVaccination}
-            disabled={loading}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.addVaccineBtnText}>+ Add vaccination record</Text>
-          </TouchableOpacity>
-        </FormCard>
+        {/* Dark gradient overlay at bottom */}
+        <View style={styles.heroGradient} />
 
-        {/* ── Notes ── */}
-        <FormCard delay={400}>
-          <SectionHeading title="Notes" />
-          <Field label="Any other details" optional>
-            <TextInput
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Allergies, special diet, favourite toys, vet clinic…"
-              multiline
-              numberOfLines={4}
-              style={{ height: 100, textAlignVertical: 'top', paddingTop: Spacing.md }}
-              editable={!loading}
-            />
-          </Field>
-        </FormCard>
+        {/* Back button */}
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.8}
+        >
+          <View style={styles.backBtnInner}>
+            <Text style={styles.backBtnText}>← Back</Text>
+          </View>
+        </TouchableOpacity>
 
-        {/* ── Actions ── */}
+        {/* Hero name + badges */}
+        <View style={styles.heroContent}>
+          <Text style={styles.heroName}>{cat.name}</Text>
+          <View style={styles.heroBadgeRow}>
+            <GenderBadge gender={cat.gender} />
+            {cat.breed ? (
+              <View style={styles.heroBadge}>
+                <Text style={styles.heroBadgeText}>{cat.breed}</Text>
+              </View>
+            ) : null}
+            {cat.vaccinations.length > 0 && (
+              <View style={[styles.heroBadge, styles.heroBadgeGreen]}>
+                <Text style={styles.heroBadgeText}>
+                  💉 {cat.vaccinations.length}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Animated.View>
+
+      {/* ── Scrollable content ── */}
+      <Animated.ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingTop: HERO_HEIGHT - 20 },
+        ]}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+      >
+        {/* Pull-tab notch — gives scrollable feel */}
+        <View style={styles.notch}>
+          <View style={styles.notchPill} />
+        </View>
+
         <Animated.View
           style={{
-            opacity: headerAnim,
+            opacity: contentFade,
             transform: [
               {
-                translateY: headerAnim.interpolate({
+                translateY: contentFade.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [16, 0],
+                  outputRange: [12, 0],
                 }),
               },
             ],
-            gap: Spacing.md,
           }}
         >
-          <Button
-            label={isEditing ? 'Save changes' : 'Add cat'}
-            onPress={handleSubmit}
-            loading={loading}
-          />
-          <Button
-            label="Cancel"
-            onPress={() => navigation.goBack()}
-            variant="secondary"
-            disabled={loading}
-          />
+          {/* ── Gallery thumbnails ── */}
+          {cat.imageUrls.length > 1 && (
+            <SectionCard delay={50}>
+              <SectionHeading title="Photos" />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: Spacing.sm }}
+              >
+                {cat.imageUrls.map((url, idx) => (
+                  <GalleryThumb
+                    key={idx}
+                    uri={url}
+                    active={idx === activeImageIdx}
+                    onPress={() => setActiveImageIdx(idx)}
+                  />
+                ))}
+              </ScrollView>
+            </SectionCard>
+          )}
+
+          {/* ── Action bar ── */}
+          <Animated.View
+            style={[
+              styles.actionBar,
+              {
+                opacity: actionBarAnim,
+                transform: [
+                  {
+                    translateY: actionBarAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [8, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <Button
+              label="Edit profile"
+              onPress={() => navigation.navigate('CatForm', { mode: 'edit', cat })}
+              variant="secondary"
+              style={{ flex: 1 } as any}
+            />
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              onPress={handleDelete}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.deleteBtnText}>Delete</Text>
+            </TouchableOpacity>
+          </Animated.View>
+
+          {/* ── Vitals ── */}
+          {hasVitals && (
+            <SectionCard delay={100}>
+              <SectionHeading title="Profile" />
+              {ageDisplay ? <InfoRow label="Age" value={ageDisplay} /> : null}
+              {cat.weightKg != null ? (
+                <InfoRow label="Weight" value={`${cat.weightKg} kg`} />
+              ) : null}
+              {cat.gender !== 'UNKNOWN' ? (
+                <InfoRow label="Gender" value={genderLabel} />
+              ) : null}
+              {cat.color ? <InfoRow label="Coat colour" value={cat.color} /> : null}
+              {cat.breed ? <InfoRow label="Breed" value={cat.breed} /> : null}
+            </SectionCard>
+          )}
+
+          {/* ── Notes ── */}
+          {cat.notes ? (
+            <SectionCard delay={180}>
+              <SectionHeading title="Notes" />
+              <Text style={styles.notesText}>{cat.notes}</Text>
+            </SectionCard>
+          ) : null}
+
+          {/* ── Vaccinations ── */}
+          <SectionCard delay={260}>
+            <SectionHeading
+              title={
+                cat.vaccinations.length > 0
+                  ? `Vaccination history (${cat.vaccinations.length})`
+                  : 'Vaccination history'
+              }
+            />
+
+            {cat.vaccinations.length === 0 ? (
+              <View style={styles.noVaccinesWrap}>
+                <Text style={styles.noVaccinesEmoji}>💉</Text>
+                <Text style={styles.noVaccinesTitle}>No vaccinations recorded</Text>
+                <Text style={styles.noVaccinesDesc}>
+                  Edit this profile to add vaccination records and due dates.
+                </Text>
+              </View>
+            ) : (
+              <>
+                {/* Status legend */}
+                <View style={styles.vaccineLegend}>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: Colors.greenSage }]} />
+                    <Text style={styles.legendText}>Up to date</Text>
+                  </View>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: Colors.gold }]} />
+                    <Text style={styles.legendText}>Due soon</Text>
+                  </View>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: Colors.error }]} />
+                    <Text style={styles.legendText}>Overdue</Text>
+                  </View>
+                </View>
+
+                {cat.vaccinations.map((v, idx) => (
+                  <VaccinationCard key={v.id} vaccination={v} index={idx} />
+                ))}
+              </>
+            )}
+          </SectionCard>
+
+          {/* ── Added date footer ── */}
+          <Text style={styles.footerDate}>
+            Profile created{' '}
+            {new Date(cat.createdAt).toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </Text>
         </Animated.View>
 
-        <View style={{ height: Spacing['4xl'] }} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <View style={{ height: Spacing['4xl'] + Spacing['2xl'] }} />
+      </Animated.ScrollView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.cream },
 
-  // ── Header ────────────────────────────────────────
-  header: {
-    backgroundColor: Colors.greenDeep,
-    paddingHorizontal: Spacing['2xl'],
-    paddingTop: Platform.OS === 'ios' ? 56 : Spacing['3xl'],
-    paddingBottom: Spacing['2xl'],
+  // ── Hero ──────────────────────────────────────────
+  heroWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: HERO_HEIGHT,
+    zIndex: 0,
+    overflow: 'hidden',
   },
-  backBtn: { marginBottom: Spacing.sm, alignSelf: 'flex-start' },
+  heroImageWrap: {
+    position: 'absolute',
+    top: -HERO_HEIGHT * 0.2,
+    left: 0,
+    right: 0,
+    height: HERO_HEIGHT * 1.4,
+  },
+  heroImage: { width: '100%', height: '100%' },
+  heroPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: Colors.greenPale,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroPlaceholderEmoji: { fontSize: 80 },
+  heroGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: HERO_HEIGHT * 0.65,
+    backgroundColor: 'rgba(26,58,42,0.52)',
+  },
+
+  // Back button
+  backBtn: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 56 : Spacing['3xl'],
+    left: Spacing['2xl'],
+  },
+  backBtnInner: {
+    backgroundColor: 'rgba(26,58,42,0.45)',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+  },
   backBtnText: {
     fontSize: Typography.base,
-    color: 'rgba(245,240,232,0.70)',
-    fontWeight: '500',
-  },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: '700',
     color: Colors.cream,
-    letterSpacing: -0.5,
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: Typography.sm,
-    color: 'rgba(245,240,232,0.60)',
-    lineHeight: 20,
-  },
-
-  // ── Scroll ────────────────────────────────────────
-  scroll: {
-    padding: Spacing['2xl'],
-    gap: Spacing.lg,
-    paddingBottom: Spacing['4xl'],
-  },
-
-  // ── Fields ────────────────────────────────────────
-  fieldLabel: { marginBottom: Spacing.sm },
-  labelText: {
-    fontSize: Typography.sm,
     fontWeight: '600',
-    color: Colors.textMuted,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
   },
-  genderRow: {
+
+  // Hero name + badges
+  heroContent: {
+    position: 'absolute',
+    bottom: Spacing['2xl'],
+    left: Spacing['2xl'],
+    right: Spacing['2xl'],
+    gap: Spacing.sm,
+  },
+  heroName: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: Colors.cream,
+    letterSpacing: -0.8,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  heroBadgeRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
-    marginBottom: Spacing.lg,
+    flexWrap: 'wrap',
   },
-  twoCol: { flexDirection: 'row', gap: Spacing.md },
-  col: { flex: 1 },
+  heroBadge: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+  },
+  heroBadgeGreen: {
+    backgroundColor: 'rgba(74,124,95,0.35)',
+    borderColor: 'rgba(74,124,95,0.5)',
+  },
+  heroBadgeText: {
+    fontSize: Typography.sm,
+    color: Colors.cream,
+    fontWeight: '600',
+  },
 
-  // ── Photos ────────────────────────────────────────
-  photoScroll: { marginBottom: Spacing.md },
-  uploadZone: {
-    borderWidth: 1.5,
-    borderColor: Colors.warmWhite,
-    borderStyle: 'dashed',
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.xl,
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.ivory,
+  // ── Scroll content ────────────────────────────────
+  scroll: {
+    zIndex: 1,
+    paddingHorizontal: Spacing['2xl'],
+    gap: Spacing.lg,
   },
-  uploadZoneIcon: { fontSize: 28 },
-  uploadZoneLabel: {
+  notch: {
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+  },
+  notchPill: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.warmWhite,
+  },
+
+  // ── Action bar ────────────────────────────────────
+  actionBar: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  deleteBtn: {
+    backgroundColor: Colors.errorBg,
+    borderWidth: 1,
+    borderColor: 'rgba(192,58,43,0.18)',
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+  },
+  deleteBtnText: {
     fontSize: Typography.base,
     fontWeight: '600',
+    color: Colors.error,
+  },
+
+  // ── Vitals ────────────────────────────────────────
+  notesText: {
+    fontSize: Typography.base,
     color: Colors.textBody,
+    lineHeight: 24,
   },
-  uploadZoneHint: { fontSize: Typography.sm, color: Colors.textLight },
-  uploadFull: {
-    paddingVertical: Spacing.lg,
+
+  // ── Vaccination ───────────────────────────────────
+  noVaccinesWrap: {
     alignItems: 'center',
-    backgroundColor: Colors.ivory,
-    borderRadius: Radius.md,
+    paddingVertical: Spacing['2xl'],
+    gap: Spacing.sm,
   },
-  uploadFullText: {
+  noVaccinesEmoji: { fontSize: 40 },
+  noVaccinesTitle: {
+    fontSize: Typography.base,
+    fontWeight: '700',
+    color: Colors.textMuted,
+  },
+  noVaccinesDesc: {
     fontSize: Typography.sm,
     color: Colors.textLight,
-    fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 260,
+  },
+  vaccineLegend: {
+    flexDirection: 'row',
+    gap: Spacing.lg,
+    marginBottom: Spacing.md,
+    flexWrap: 'wrap',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    fontSize: Typography.xs,
+    color: Colors.textMuted,
+    fontWeight: '500',
   },
 
-  // ── Vaccinations ──────────────────────────────────
-  emptyHint: {
-    fontSize: Typography.base,
+  // ── Footer ────────────────────────────────────────
+  footerDate: {
+    fontSize: Typography.xs,
     color: Colors.textLight,
+    textAlign: 'center',
     fontStyle: 'italic',
-    marginBottom: Spacing.md,
-    lineHeight: 22,
-  },
-  addVaccineBtn: {
-    borderWidth: 1.5,
-    borderColor: Colors.greenPale,
-    borderStyle: 'dashed',
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    marginTop: Spacing.xs,
-    backgroundColor: 'rgba(232,240,235,0.4)',
-  },
-  addVaccineBtnText: {
-    fontSize: Typography.base,
-    color: Colors.greenForest,
-    fontWeight: '600',
+    marginTop: Spacing.sm,
   },
 })

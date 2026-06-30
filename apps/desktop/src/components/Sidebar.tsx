@@ -110,6 +110,17 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    to: '/verification',
+    label: 'Verification',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M9 2l.9 2.6 2.8.1-2.2 1.7.8 2.7L9 7.5l-2.3 1.6.8-2.7L5.3 4.7l2.8-.1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+        <path d="M4 10l1.5 1.5L9 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    vetOnly: true,
+  }
 ]
 
 export function Sidebar() {
@@ -142,6 +153,13 @@ export function Sidebar() {
             to={item.to}
             className={`nav-item${isActive(item.to) ? ' active' : ''}`}
           >
+            {item.icon}
+            {item.label}
+          </Link>
+        ))}
+
+        {NAV_ITEMS.filter(item => !item.vetOnly || user?.role === 'VET').map((item) => (
+          <Link key={item.to} to={item.to} className={`nav-item${isActive(item.to) ? ' active' : ''}`}>
             {item.icon}
             {item.label}
           </Link>

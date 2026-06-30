@@ -616,7 +616,7 @@ export function CatFormScreen({ navigation, route }: any) {
         </Text>
         <Text style={styles.headerSubtitle}>
           {isEditing
-            ? 'Update your cat's health profile'
+            ? "Update your cat's health profile"
             : 'Fill in what you know — you can always add more later'}
         </Text>
       </Animated.View>

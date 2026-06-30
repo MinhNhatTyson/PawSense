@@ -13,6 +13,8 @@ const medicineInclude = {
   diseaseMedicines: {
     include: { disease: true },
   },
+  createdBy: { select: { id: true, email: true, profile: { select: { fullName: true } } } },
+  approvedBy: { select: { id: true, email: true, profile: { select: { fullName: true } } } },
 }
 
 // ── CREATE ────────────────────────────────────────────────────────────────────
@@ -89,6 +91,7 @@ export async function createMedicine(req: AuthRequest, res: Response) {
       warnings: parsedWarnings,
       manufacturer: manufacturer || null,
       imageUrl: imageUrl ?? null,
+      createdById: req.userId ?? null,
     },
   })
 

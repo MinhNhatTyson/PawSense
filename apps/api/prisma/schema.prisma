@@ -16,6 +16,12 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   catProfiles    CatProfile[]
+  diseasesCreated    Disease[]     @relation("DiseaseCreatedBy")
+  diseasesApproved   Disease[]     @relation("DiseaseApprovedBy")
+  medicinesCreated   Medicine[]    @relation("MedicineCreatedBy")
+  medicinesApproved  Medicine[]    @relation("MedicineApprovedBy")
+  flagsRaised        ContentFlag[] @relation("FlagsRaised")
+  flagsResolved      ContentFlag[] @relation("FlagsResolved")
 }
 
 model Profile {
@@ -65,6 +71,13 @@ model Disease {
   diseaseTreatments   DiseaseTreatment[]
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
+  status        VerificationStatus @default(DRAFT)
+  createdById   String?
+  createdBy     User?    @relation("DiseaseCreatedBy", fields: [createdById], references: [id])
+  approvedById  String?
+  approvedBy    User?    @relation("DiseaseApprovedBy", fields: [approvedById], references: [id])
+  approvedAt    DateTime?
+  flags         ContentFlag[]
 }
 
 model Medicine {
@@ -80,6 +93,13 @@ model Medicine {
   diseaseMedicines  DiseaseMedicine[]
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
+  status        VerificationStatus @default(DRAFT)
+  createdById   String?
+  createdBy     User?    @relation("MedicineCreatedBy", fields: [createdById], references: [id])
+  approvedById  String?
+  approvedBy    User?    @relation("MedicineApprovedBy", fields: [approvedById], references: [id])
+  approvedAt    DateTime?
+  flags         ContentFlag[]
 }
 
 model DiseaseMedicine {
@@ -150,6 +170,24 @@ enum SymptomOnsetSpeed {
   ACUTE
   SUBACUTE
   CHRONIC
+}
+
+enum VerificationStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  FLAGGED
+}
+
+enum FlagContentType {
+  DISEASE
+  MEDICINE
+}
+
+enum FlagStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
 }
 
 model Treatment {
@@ -276,4 +314,22 @@ enum CatGender {
   MALE
   FEMALE
   UNKNOWN
+}
+
+model ContentFlag {
+  id             String          @id @default(uuid())
+  contentType    FlagContentType
+  contentId      String
+  reason         String
+  raisedById     String
+  raisedBy       User            @relation("FlagsRaised", fields: [raisedById], references: [id])
+  status         FlagStatus      @default(OPEN)
+  resolvedById   String?
+  resolvedBy     User?           @relation("FlagsResolved", fields: [resolvedById], references: [id])
+  resolverNote   String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  disease        Disease?        @relation(fields: [contentId], references: [id], map: "flag_disease")
+  medicine       Medicine?       @relation(fields: [contentId], references: [id], map: "flag_medicine")
 }

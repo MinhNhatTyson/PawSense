@@ -18,6 +18,7 @@ import { Sidebar } from './components/Sidebar'
 import { GoogleSelectRolePage } from './aurthenticationPages/GoogleSelectRolePage'
 import CatFoodManagement from './catFoodPages/CatFoodManagement'
 import DiagnosisManagement from './diagnosisPages/DiagnosisManagement'
+import VerificationManagement from './verificationPages/VerificationManagement'
 import './index.css'
 
 
@@ -738,6 +739,7 @@ function AppContent() {
       <Route path="/auth/callback" element={<GoogleCallbackPage />} />
       <Route path="/auth/select-role" element={<GoogleSelectRolePage />} /> 
       <Route path="/diagnosis" element={<ProtectedRoute><DiagnosisManagement /></ProtectedRoute>} />
+      <Route path="/verification" element={<ProtectedRoute requiredRole="VET"><VerificationManagement /></ProtectedRoute>} />
       <Route path="/" element={<Navigate to={token ? '/dashboard' : '/login'} />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
