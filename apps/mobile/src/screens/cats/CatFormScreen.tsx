@@ -513,7 +513,7 @@ export function CatFormScreen({ navigation, route }: any) {
     if (remaining <= 0) return
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsMultipleSelection: true,
       selectionLimit: remaining,
       quality: 0.8,

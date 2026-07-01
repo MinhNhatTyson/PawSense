@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Alert,
+  Platform,
 } from 'react-native'
 import { useAuth } from '../contexts/AuthContext'
 import { Card, DetailRow } from '../components/UI'

@@ -1,5 +1,31 @@
 import { storage } from '../utils/storage'
 
+// On web, expo-image-picker returns blob: URIs. The RN-style { uri, name, type }
+// FormData append is a native-only pattern — on web it serialises to a plain string.
+// This helper fetches the blob and appends a real File/Blob so multer receives actual data.
+async function appendImageToFormData(
+  formData: FormData,
+  uri: string,
+  index: number
+): Promise<void> {
+  if (uri.startsWith('blob:') || uri.startsWith('data:')) {
+    // Web path: fetch blob URI → real Blob → append as file
+    const response = await fetch(uri)
+    const blob = await response.blob()
+    const mimeType = blob.type || 'image/jpeg'
+    const ext = mimeType.split('/')[1] ?? 'jpg'
+    formData.append('images', blob, `cat-photo-${index}.${ext}`)
+  } else {
+    // Native path: use the RN FormData file object syntax
+    const ext = uri.split('.').pop() ?? 'jpg'
+    formData.append('images', {
+      uri,
+      name: `cat-photo-${index}.${ext}`,
+      type: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
+    } as any)
+  }
+}
+
 const API_URL = 'http://localhost:3000/api'
 
 export type CatGender = 'MALE' | 'FEMALE' | 'UNKNOWN'
@@ -87,14 +113,9 @@ export const catProfileAPI = {
     if (data.vaccinations) formData.append('vaccinations', JSON.stringify(data.vaccinations))
 
     if (imageUris) {
-      imageUris.forEach((uri, idx) => {
-        const ext = uri.split('.').pop() ?? 'jpg'
-        formData.append('images', {
-          uri,
-          name: `cat-photo-${idx}.${ext}`,
-          type: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
-        } as any)
-      })
+      for (let i = 0; i < imageUris.length; i++) {
+        await appendImageToFormData(formData, imageUris[i]!, i)
+      }
     }
 
     const res = await fetch(`${API_URL}/cat-profiles`, {
@@ -146,14 +167,9 @@ export const catProfileAPI = {
       formData.append('vaccinations', JSON.stringify(data.vaccinations))
 
     if (imageUris) {
-      imageUris.forEach((uri, idx) => {
-        const ext = uri.split('.').pop() ?? 'jpg'
-        formData.append('images', {
-          uri,
-          name: `cat-photo-${idx}.${ext}`,
-          type: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
-        } as any)
-      })
+      for (let i = 0; i < imageUris.length; i++) {
+        await appendImageToFormData(formData, imageUris[i]!, i)
+      }
     }
 
     const res = await fetch(`${API_URL}/cat-profiles/${id}`, {
