@@ -584,6 +584,7 @@ export function CatDetailScreen({ navigation, route }: any) {
             transform: [{ scale: heroScale }],
           },
         ]}
+        pointerEvents="box-none"
       >
         <Animated.View
           style={[
@@ -607,16 +608,7 @@ export function CatDetailScreen({ navigation, route }: any) {
         {/* Dark gradient overlay at bottom */}
         <View style={styles.heroGradient} />
 
-        {/* Back button */}
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.8}
-        >
-          <View style={styles.backBtnInner}>
-            <Text style={styles.backBtnText}>← Back</Text>
-          </View>
-        </TouchableOpacity>
+        
 
         {/* Hero name + badges */}
         <View style={styles.heroContent}>
@@ -803,6 +795,17 @@ export function CatDetailScreen({ navigation, route }: any) {
 
         <View style={{ height: Spacing['4xl'] + Spacing['2xl'] }} />
       </Animated.ScrollView>
+
+      {/* Back button — rendered last so it sits above the ScrollView's touch surface */}
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.8}
+      >
+        <View style={styles.backBtnInner}>
+          <Text style={styles.backBtnText}>← Back</Text>
+        </View>
+      </TouchableOpacity>
     </View>
   )
 }
