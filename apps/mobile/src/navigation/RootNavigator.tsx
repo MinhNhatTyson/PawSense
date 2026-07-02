@@ -14,6 +14,7 @@ import { CatFormScreen } from '../screens/cats/CatFormScreen'
 import { CatDetailScreen } from '../screens/cats/CatDetailScreen'
 import { MedicineListScreen } from '../screens/medicines/MedicineListScreen'
 import { MedicineDetailScreen } from '../screens/medicines/MedicineDetailScreen'
+import { BreedRecognitionScreen } from '../screens/cats/BreedRecognitionScreen' 
 
 import { Colors, Typography } from '../theme'
 
@@ -89,6 +90,11 @@ function AppStack() {
       <Stack.Screen
         name="CatDetail"
         component={CatDetailScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="BreedRecognition"
+        component={BreedRecognitionScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

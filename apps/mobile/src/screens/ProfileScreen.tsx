@@ -23,18 +23,69 @@ export function ProfileScreen({ navigation }: any) {
   ).toUpperCase()
 
   function handleLogout() {
-    // react-native-web maps Alert.alert → window.alert, which ignores the buttons
-    // array. Use window.confirm on web so the callback actually fires.
     if (Platform.OS === 'web') {
-      if (window.confirm('Sign out of PawSense?')) {
-        logout()
-      }
+      // Custom styled confirmation instead of bare window.confirm
+      const modal = document.createElement('div')
+      modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(26, 58, 42, 0.45);
+        backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center;
+        font-family: -apple-system, 'DM Sans', sans-serif;
+      `
+      modal.innerHTML = `
+        <div style="
+          background: #faf7f2;
+          border-radius: 20px;
+          padding: 32px 28px 24px;
+          width: 320px;
+          box-shadow: 0 24px 64px rgba(26,58,42,0.18);
+          text-align: center;
+        ">
+          <div style="
+            width: 52px; height: 52px; border-radius: 50%;
+            background: #fdf0ee;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 18px;
+            font-size: 22px;
+          ">🐾</div>
+          <h2 style="
+            margin: 0 0 8px;
+            font-size: 18px; font-weight: 700;
+            color: #1a1a18; letter-spacing: -0.3px;
+          ">Sign out of PawSense?</h2>
+          <p style="
+            margin: 0 0 28px;
+            font-size: 14px; color: #6b6b63; line-height: 1.5;
+          ">Your cats and health records will be waiting when you return.</p>
+          <div style="display: flex; gap: 10px;">
+            <button id="ps-cancel" style="
+              flex: 1; padding: 13px;
+              border-radius: 12px; border: 1.5px solid #ede8df;
+              background: #fff; font-size: 15px; font-weight: 600;
+              color: #3d3d38; cursor: pointer;
+            ">Cancel</button>
+            <button id="ps-confirm" style="
+              flex: 1; padding: 13px;
+              border-radius: 12px; border: none;
+              background: #c03a2b; font-size: 15px; font-weight: 600;
+              color: #fff; cursor: pointer;
+            ">Sign out</button>
+          </div>
+        </div>
+      `
+      document.body.appendChild(modal)
+
+      const cleanup = () => document.body.removeChild(modal)
+      document.getElementById('ps-cancel')!.onclick = cleanup
+      document.getElementById('ps-confirm')!.onclick = () => { cleanup(); logout() }
+      modal.onclick = (e) => { if (e.target === modal) cleanup() }
       return
     }
 
     Alert.alert(
-      'Sign out',
-      'Are you sure you want to sign out of PawSense?',
+      'Sign out of PawSense?',
+      'Your cats and health records will be waiting when you return.',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Sign out', style: 'destructive', onPress: logout },
