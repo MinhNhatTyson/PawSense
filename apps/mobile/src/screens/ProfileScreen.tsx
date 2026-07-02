@@ -154,6 +154,13 @@ export function ProfileScreen({ navigation }: any) {
         />
 
         <ActionRow
+          emoji="🩺"
+          title="AI Symptom Checker"
+          desc="Describe symptoms and get an AI-assisted risk assessment"
+          onPress={() => navigation.navigate('SymptomChecker')}
+        />
+
+        <ActionRow
           emoji="🔒"
           title="Change password"
           desc="Update your login credentials"

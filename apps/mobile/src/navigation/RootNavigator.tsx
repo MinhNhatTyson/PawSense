@@ -15,6 +15,7 @@ import { CatDetailScreen } from '../screens/cats/CatDetailScreen'
 import { MedicineListScreen } from '../screens/medicines/MedicineListScreen'
 import { MedicineDetailScreen } from '../screens/medicines/MedicineDetailScreen'
 import { BreedRecognitionScreen } from '../screens/cats/BreedRecognitionScreen' 
+import { SymptomCheckerScreen } from '../screens/diagnosis/SymptomCheckerScreen'
 
 import { Colors, Typography } from '../theme'
 
@@ -105,6 +106,11 @@ function AppStack() {
       <Stack.Screen
         name="MedicineDetail"
         component={MedicineDetailScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SymptomChecker"
+        component={SymptomCheckerScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
