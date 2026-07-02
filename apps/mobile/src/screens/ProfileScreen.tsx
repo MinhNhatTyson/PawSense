@@ -22,22 +22,22 @@ export function ProfileScreen({ navigation }: any) {
     '?'
   ).toUpperCase()
 
-  // ── Sign out ──────────────────────────────────────
-  // logout() clears the token in AuthContext, which causes RootNavigator
-  // to swap from AppStack → AuthStack automatically. No manual navigate needed.
   function handleLogout() {
+    // react-native-web maps Alert.alert → window.alert, which ignores the buttons
+    // array. Use window.confirm on web so the callback actually fires.
+    if (Platform.OS === 'web') {
+      if (window.confirm('Sign out of PawSense?')) {
+        logout()
+      }
+      return
+    }
+
     Alert.alert(
       'Sign out',
       'Are you sure you want to sign out of PawSense?',
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign out',
-          style: 'destructive',
-          onPress: () => {
-            logout()
-          },
-        },
+        { text: 'Sign out', style: 'destructive', onPress: logout },
       ]
     )
   }
