@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useFocusEffect } from '@react-navigation/native'
 import {
   View,
   Text,
@@ -471,6 +472,7 @@ export function CatDetailScreen({ navigation, route }: any) {
   const [cat, setCat] = useState<CatProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeImageIdx, setActiveImageIdx] = useState(0)
+  const hasLoaded = useRef(false)
 
   // Animated values
   const heroOpacity = useRef(new Animated.Value(0)).current
@@ -484,6 +486,7 @@ export function CatDetailScreen({ navigation, route }: any) {
       .getById(catId)
       .then(data => {
         setCat(data)
+        hasLoaded.current = true
         // Orchestrated entrance after data loads
         Animated.sequence([
           // 1. Hero fades + unscales
@@ -522,6 +525,13 @@ export function CatDetailScreen({ navigation, route }: any) {
       )
       .finally(() => setLoading(false))
   }, [catId])
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasLoaded.current) return  // skip — initial useEffect hasn't finished yet
+      catProfileAPI.getById(catId).then(setCat).catch(() => {})
+    }, [catId])
+  )
 
   const handleDelete = useCallback(() => {
     if (!cat) return
