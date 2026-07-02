@@ -577,13 +577,22 @@ export function CatListScreen({ navigation }: any) {
           >
             <Text style={styles.backBtnText}>← Back</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.addBtn}
-            onPress={() => navigation.navigate('CatForm', { mode: 'create' })}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.addBtnText}>+ New cat</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              style={styles.identifyBtn}
+              onPress={() => navigation.navigate('BreedRecognition')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.identifyBtnText}>🐾 Identify breed</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.addBtn}
+              onPress={() => navigation.navigate('CatForm', { mode: 'create' })}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.addBtnText}>+ New cat</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Title row */}
@@ -699,6 +708,21 @@ const styles = StyleSheet.create({
     fontSize: Typography.sm,
     fontWeight: '700',
     color: Colors.white,
+    letterSpacing: 0.2,
+  },
+  identifyBtn: {
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    flexShrink: 0,
+  },
+  identifyBtnText: {
+    fontSize: Typography.sm,
+    fontWeight: '600',
+    color: Colors.cream,
     letterSpacing: 0.2,
   },
   scroll: {
