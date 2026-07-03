@@ -14,6 +14,7 @@ import { catProfileRouter } from './routes/catProfile.route.js'
 import { verificationRouter } from './routes/verification.route.js'
 import { breedRecognitionRouter } from './routes/breedRecognition.route.js'
 import { symptomDiagnosisRouter } from './routes/symptomDiagnosis.route.js'
+import { imageDiagnosisRouter } from './routes/imageDiagnosis.route.js'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -35,6 +36,7 @@ app.use('/api/cat-profiles', catProfileRouter)
 app.use('/api/verification', verificationRouter)
 app.use('/api/breed-recognition', breedRecognitionRouter) 
 app.use('/api/symptom-diagnosis', symptomDiagnosisRouter)
+app.use('/api/image-diagnosis', imageDiagnosisRouter)
 
 // Health check
 app.get('/health', (_req, res) => {
