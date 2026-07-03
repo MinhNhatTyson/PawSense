@@ -19,10 +19,16 @@ import {
   type DiagnosisResult,
   type RiskLevel,
 } from '../../api/symptomDiagnosisAPI'
+import {
+  imageDiagnosisAPI,
+  type ImageDiagnosisResult,
+  type BodyArea,
+} from '../../api/imageDiagnosisAPI'
 import { Button, Field } from '../../components/UI'
 import { TextInput } from '../../components/TextInput'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
 
+type Mode = 'symptoms' | 'photo'
 type Stage = 'form' | 'loading' | 'result'
 
 const COMMON_SYMPTOMS = [
@@ -32,6 +38,12 @@ const COMMON_SYMPTOMS = [
   'Ocular discharge', 'Weight loss', 'Bad breath',
 ]
 
+const BODY_AREA_OPTIONS: { value: BodyArea; label: string; icon: string }[] = [
+  { value: 'SKIN', label: 'Skin & Coat', icon: '🐾' },
+  { value: 'EYE', label: 'Eyes', icon: '👁' },
+  { value: 'EAR', label: 'Ears', icon: '👂' },
+]
+
 const RISK_STYLE: Record<RiskLevel, { bg: string; color: string; label: string }> = {
   LOW: { bg: '#edf7f1', color: '#2d7a4f', label: 'Low risk' },
   MEDIUM: { bg: '#fdf7ed', color: '#8b6340', label: 'Medium risk' },
@@ -39,7 +51,57 @@ const RISK_STYLE: Record<RiskLevel, { bg: string; color: string; label: string }
   CRITICAL: { bg: '#fce8e6', color: '#922b21', label: 'Critical risk' },
 }
 
-// ── Symptom chip ───────────────────────────────────────────────────────────────
+// ── Mode tab switcher ─────────────────────────────────────────────────────────
+function ModeTabs({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
+  return (
+    <View style={tabStyles.wrap}>
+      <TouchableOpacity
+        style={[tabStyles.tab, mode === 'symptoms' && tabStyles.tabActive]}
+        onPress={() => onChange('symptoms')}
+        activeOpacity={0.8}
+      >
+        <Text style={[tabStyles.tabText, mode === 'symptoms' && tabStyles.tabTextActive]}>
+          🩺 Symptoms
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[tabStyles.tab, mode === 'photo' && tabStyles.tabActive]}
+        onPress={() => onChange('photo')}
+        activeOpacity={0.8}
+      >
+        <Text style={[tabStyles.tabText, mode === 'photo' && tabStyles.tabTextActive]}>
+          📷 Photo Scan
+        </Text>
+      </TouchableOpacity>
+    </View>
+  )
+}
+
+const tabStyles = StyleSheet.create({
+  wrap: {
+    flexDirection: 'row',
+    backgroundColor: Colors.ivory,
+    borderRadius: Radius.full,
+    padding: 4,
+    marginBottom: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.warmWhite,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: Spacing.sm + 2,
+    alignItems: 'center',
+    borderRadius: Radius.full,
+  },
+  tabActive: {
+    backgroundColor: Colors.greenDeep,
+    ...Shadow.sm,
+  },
+  tabText: { fontSize: Typography.sm, fontWeight: '600', color: Colors.textMuted },
+  tabTextActive: { color: Colors.cream },
+})
+
+// ── Symptom chip (also reused for body-area / cat selection) ───────────────────
 function SymptomChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
   return (
     <TouchableOpacity
@@ -66,6 +128,45 @@ const chipStyles = StyleSheet.create({
   chipSelected: { borderColor: Colors.greenSage, backgroundColor: Colors.greenPale },
   text: { fontSize: Typography.sm, fontWeight: '500', color: Colors.textBody },
   textSelected: { color: Colors.greenForest, fontWeight: '700' },
+})
+
+// ── Body area card (bigger tappable card, since it's a required single choice) ─
+function BodyAreaCard({
+  icon, label, selected, onPress,
+}: { icon: string; label: string; selected: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      style={[areaStyles.card, selected && areaStyles.cardSelected]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <Text style={areaStyles.icon}>{icon}</Text>
+      <Text style={[areaStyles.label, selected && areaStyles.labelSelected]}>{label}</Text>
+      {selected && <View style={areaStyles.checkDot} />}
+    </TouchableOpacity>
+  )
+}
+
+const areaStyles = StyleSheet.create({
+  card: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: Colors.warmWhite,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.ivory,
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+    gap: 6,
+    position: 'relative',
+  },
+  cardSelected: { borderColor: Colors.greenSage, backgroundColor: Colors.greenPale },
+  icon: { fontSize: 26 },
+  label: { fontSize: Typography.sm, fontWeight: '600', color: Colors.textMuted },
+  labelSelected: { color: Colors.greenForest, fontWeight: '700' },
+  checkDot: {
+    position: 'absolute', top: 8, right: 8,
+    width: 7, height: 7, borderRadius: 3.5, backgroundColor: Colors.greenForest,
+  },
 })
 
 // ── Section card ───────────────────────────────────────────────────────────────
@@ -116,7 +217,7 @@ const headingStyles = StyleSheet.create({
   line: { flex: 1, height: 1, backgroundColor: Colors.warmWhite },
 })
 
-// ── Result: likelihood bar ────────────────────────────────────────────────────
+// ── Result: likelihood / confidence bar ─────────────────────────────────────────
 function LikelihoodBar({ value }: { value: number }) {
   const widthAnim = useRef(new Animated.Value(0)).current
   useEffect(() => {
@@ -141,26 +242,37 @@ const barStyles = StyleSheet.create({
 
 // ── Main screen ────────────────────────────────────────────────────────────────
 export function SymptomCheckerScreen({ navigation }: any) {
-  const [stage, setStage] = useState<Stage>('form')
+  const [mode, setMode] = useState<Mode>('symptoms')
 
-  // Form state
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([])
-  const [otherSymptoms, setOtherSymptoms] = useState('')
-  const [behaviorChanges, setBehaviorChanges] = useState('')
-  const [imageUris, setImageUris] = useState<string[]>([])
+  // Shared
   const [cats, setCats] = useState<CatProfile[]>([])
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null)
 
-  const [error, setError] = useState('')
+  // ── Symptom-mode state ──────────────────────────
+  const [symptomStage, setSymptomStage] = useState<Stage>('form')
+  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([])
+  const [otherSymptoms, setOtherSymptoms] = useState('')
+  const [behaviorChanges, setBehaviorChanges] = useState('')
+  const [symptomImageUris, setSymptomImageUris] = useState<string[]>([])
+  const [symptomError, setSymptomError] = useState('')
   const [result, setResult] = useState<DiagnosisResult | null>(null)
+
+  // ── Photo-scan-mode state ───────────────────────
+  const [photoStage, setPhotoStage] = useState<Stage>('form')
+  const [bodyArea, setBodyArea] = useState<BodyArea | null>(null)
+  const [photoImageUris, setPhotoImageUris] = useState<string[]>([])
+  const [photoError, setPhotoError] = useState('')
+  const [imageResult, setImageResult] = useState<ImageDiagnosisResult | null>(null)
+
   const pulseAnim = useRef(new Animated.Value(0.4)).current
 
   useEffect(() => {
     catProfileAPI.list().then(setCats).catch(() => {})
   }, [])
 
+  const activeStage = mode === 'symptoms' ? symptomStage : photoStage
   useEffect(() => {
-    if (stage !== 'loading') return
+    if (activeStage !== 'loading') return
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
@@ -169,19 +281,32 @@ export function SymptomCheckerScreen({ navigation }: any) {
     )
     loop.start()
     return () => loop.stop()
-  }, [stage])
+  }, [activeStage])
 
+  function getCatContext() {
+    const selectedCat = cats.find(c => c.id === selectedCatId)
+    return selectedCat
+      ? {
+          breed: selectedCat.breed ?? undefined,
+          gender: selectedCat.gender,
+          ageYears: selectedCat.ageYears ?? undefined,
+          ageMonths: selectedCat.ageMonths ?? undefined,
+        }
+      : undefined
+  }
+
+  // ── Symptom-mode handlers ───────────────────────
   const toggleSymptom = (s: string) => {
     setSelectedSymptoms(prev => (prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]))
   }
 
-  async function pickImage() {
+  async function pickSymptomImage() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'PawSense needs access to your photos to attach an image of the affected area.')
       return
     }
-    const remaining = 3 - imageUris.length
+    const remaining = 3 - symptomImageUris.length
     if (remaining <= 0) return
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -190,54 +315,96 @@ export function SymptomCheckerScreen({ navigation }: any) {
       quality: 0.8,
     })
     if (result.canceled) return
-    setImageUris(prev => [...prev, ...result.assets.map(a => a.uri)].slice(0, 3))
+    setSymptomImageUris(prev => [...prev, ...result.assets.map(a => a.uri)].slice(0, 3))
   }
 
-  function removeImage(idx: number) {
-    setImageUris(prev => prev.filter((_, i) => i !== idx))
+  function removeSymptomImage(idx: number) {
+    setSymptomImageUris(prev => prev.filter((_, i) => i !== idx))
   }
 
-  async function handleSubmit() {
+  async function handleSymptomSubmit() {
     const freeText = otherSymptoms.trim() ? [otherSymptoms.trim()] : []
     const allSymptoms = [...selectedSymptoms, ...freeText]
 
     if (allSymptoms.length === 0 && !behaviorChanges.trim()) {
-      setError('Please select at least one symptom, or describe a behavior change.')
+      setSymptomError('Please select at least one symptom, or describe a behavior change.')
       return
     }
-    setError('')
-
-    const selectedCat = cats.find(c => c.id === selectedCatId)
-    const catContext = selectedCat
-      ? {
-          breed: selectedCat.breed ?? undefined,
-          gender: selectedCat.gender,
-          ageYears: selectedCat.ageYears ?? undefined,
-          ageMonths: selectedCat.ageMonths ?? undefined,
-        }
-      : undefined
-
-    setStage('loading')
+    setSymptomError('')
+    setSymptomStage('loading')
     try {
-      const res = await symptomDiagnosisAPI.analyze(allSymptoms, behaviorChanges, imageUris, catContext)
+      const res = await symptomDiagnosisAPI.analyze(allSymptoms, behaviorChanges, symptomImageUris, getCatContext())
       setResult(res)
-      setStage('result')
+      setSymptomStage('result')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to analyze symptoms')
-      setStage('form')
+      setSymptomError(err instanceof Error ? err.message : 'Failed to analyze symptoms')
+      setSymptomStage('form')
     }
   }
 
-  function reset() {
+  function resetSymptom() {
     setSelectedSymptoms([])
     setOtherSymptoms('')
     setBehaviorChanges('')
-    setImageUris([])
-    setSelectedCatId(null)
+    setSymptomImageUris([])
     setResult(null)
-    setError('')
-    setStage('form')
+    setSymptomError('')
+    setSymptomStage('form')
   }
+
+  // ── Photo-scan-mode handlers ────────────────────
+  async function pickPhotoScanImage() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'PawSense needs access to your photos to scan the affected area.')
+      return
+    }
+    const remaining = 5 - photoImageUris.length
+    if (remaining <= 0) return
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      selectionLimit: remaining,
+      quality: 0.85,
+    })
+    if (result.canceled) return
+    setPhotoImageUris(prev => [...prev, ...result.assets.map(a => a.uri)].slice(0, 5))
+  }
+
+  function removePhotoImage(idx: number) {
+    setPhotoImageUris(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  async function handlePhotoSubmit() {
+    if (!bodyArea) {
+      setPhotoError('Please choose which body area you are scanning.')
+      return
+    }
+    if (photoImageUris.length === 0) {
+      setPhotoError('Please add at least one photo to analyze.')
+      return
+    }
+    setPhotoError('')
+    setPhotoStage('loading')
+    try {
+      const res = await imageDiagnosisAPI.analyze(bodyArea, photoImageUris, getCatContext())
+      setImageResult(res)
+      setPhotoStage('result')
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : 'Failed to analyze image')
+      setPhotoStage('form')
+    }
+  }
+
+  function resetPhoto() {
+    setBodyArea(null)
+    setPhotoImageUris([])
+    setImageResult(null)
+    setPhotoError('')
+    setPhotoStage('form')
+  }
+
+  const error = mode === 'symptoms' ? symptomError : photoError
 
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -247,21 +414,23 @@ export function SymptomCheckerScreen({ navigation }: any) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backBtnText}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI Symptom Checker</Text>
+        <Text style={styles.headerTitle}>AI Health Check</Text>
         <Text style={styles.headerSubtitle}>
-          Describe what you're noticing and get an AI-assisted risk assessment
+          Describe symptoms or scan a photo for an AI-assisted risk assessment
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ModeTabs mode={mode} onChange={setMode} />
+
         {error ? (
           <View style={styles.errorBanner}>
             <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : null}
 
-        {/* ── Form stage ── */}
-        {stage === 'form' && (
+        {/* ═══════════════════════ SYMPTOM MODE ═══════════════════════ */}
+        {mode === 'symptoms' && symptomStage === 'form' && (
           <>
             <FormCard delay={40}>
               <SectionHeading title="Symptoms" />
@@ -306,29 +475,29 @@ export function SymptomCheckerScreen({ navigation }: any) {
             )}
 
             <FormCard delay={220}>
-              <SectionHeading title={`Photos ${imageUris.length > 0 ? `(${imageUris.length}/3)` : '(optional)'}`} />
-              {imageUris.length > 0 && (
+              <SectionHeading title={`Photos ${symptomImageUris.length > 0 ? `(${symptomImageUris.length}/3)` : '(optional)'}`} />
+              {symptomImageUris.length > 0 && (
                 <View style={styles.photoRow}>
-                  {imageUris.map((uri, idx) => (
+                  {symptomImageUris.map((uri, idx) => (
                     <View key={idx} style={styles.photoThumb}>
                       <Image source={{ uri }} style={styles.photoImg} />
-                      <TouchableOpacity style={styles.photoRemove} onPress={() => removeImage(idx)}>
+                      <TouchableOpacity style={styles.photoRemove} onPress={() => removeSymptomImage(idx)}>
                         <Text style={styles.photoRemoveText}>×</Text>
                       </TouchableOpacity>
                     </View>
                   ))}
                 </View>
               )}
-              {imageUris.length < 3 && (
-                <TouchableOpacity style={styles.uploadZone} onPress={pickImage} activeOpacity={0.8}>
+              {symptomImageUris.length < 3 && (
+                <TouchableOpacity style={styles.uploadZone} onPress={pickSymptomImage} activeOpacity={0.8}>
                   <Text style={styles.uploadZoneIcon}>📷</Text>
                   <Text style={styles.uploadZoneLabel}>Add a photo of the affected area</Text>
-                  <Text style={styles.uploadZoneHint}>Up to {3 - imageUris.length} more</Text>
+                  <Text style={styles.uploadZoneHint}>Up to {3 - symptomImageUris.length} more</Text>
                 </TouchableOpacity>
               )}
             </FormCard>
 
-            <Button label="Analyze symptoms" onPress={handleSubmit} style={{ marginTop: Spacing.sm } as any} />
+            <Button label="Analyze symptoms" onPress={handleSymptomSubmit} style={{ marginTop: Spacing.sm } as any} />
 
             <View style={styles.disclaimer}>
               <Text style={styles.disclaimerText}>
@@ -338,8 +507,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
           </>
         )}
 
-        {/* ── Loading stage ── */}
-        {stage === 'loading' && (
+        {mode === 'symptoms' && symptomStage === 'loading' && (
           <Animated.View style={[styles.loadingCard, { opacity: pulseAnim }]}>
             <Text style={styles.loadingIcon}>🩺</Text>
             <Text style={styles.loadingTitle}>Analyzing symptoms…</Text>
@@ -347,8 +515,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
           </Animated.View>
         )}
 
-        {/* ── Result stage ── */}
-        {stage === 'result' && result && (
+        {mode === 'symptoms' && symptomStage === 'result' && result && (
           <>
             <View style={[styles.riskBanner, { backgroundColor: RISK_STYLE[result.riskLevel].bg }]}>
               <Text style={[styles.riskLabel, { color: RISK_STYLE[result.riskLevel].color }]}>
@@ -418,7 +585,140 @@ export function SymptomCheckerScreen({ navigation }: any) {
               </Text>
             </View>
 
-            <Button label="Check different symptoms" onPress={reset} style={{ marginTop: Spacing.md } as any} />
+            <Button label="Check different symptoms" onPress={resetSymptom} style={{ marginTop: Spacing.md } as any} />
+          </>
+        )}
+
+        {/* ═══════════════════════ PHOTO SCAN MODE ═══════════════════════ */}
+        {mode === 'photo' && photoStage === 'form' && (
+          <>
+            <FormCard delay={40}>
+              <SectionHeading title="Which area are you scanning?" />
+              <View style={styles.areaRow}>
+                {BODY_AREA_OPTIONS.map(opt => (
+                  <BodyAreaCard
+                    key={opt.value}
+                    icon={opt.icon}
+                    label={opt.label}
+                    selected={bodyArea === opt.value}
+                    onPress={() => setBodyArea(opt.value)}
+                  />
+                ))}
+              </View>
+            </FormCard>
+
+            <FormCard delay={100}>
+              <SectionHeading title={`Photos ${photoImageUris.length > 0 ? `(${photoImageUris.length}/5)` : '(required)'}`} />
+              {photoImageUris.length > 0 && (
+                <View style={styles.photoRow}>
+                  {photoImageUris.map((uri, idx) => (
+                    <View key={idx} style={styles.photoThumb}>
+                      <Image source={{ uri }} style={styles.photoImg} />
+                      <TouchableOpacity style={styles.photoRemove} onPress={() => removePhotoImage(idx)}>
+                        <Text style={styles.photoRemoveText}>×</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+              {photoImageUris.length < 5 && (
+                <TouchableOpacity style={styles.uploadZone} onPress={pickPhotoScanImage} activeOpacity={0.8}>
+                  <Text style={styles.uploadZoneIcon}>📷</Text>
+                  <Text style={styles.uploadZoneLabel}>
+                    {bodyArea
+                      ? `Add clear, well-lit photo(s) of the ${BODY_AREA_OPTIONS.find(o => o.value === bodyArea)!.label.toLowerCase()}`
+                      : 'Add clear, well-lit photo(s) of the affected area'}
+                  </Text>
+                  <Text style={styles.uploadZoneHint}>Up to {5 - photoImageUris.length} more</Text>
+                </TouchableOpacity>
+              )}
+            </FormCard>
+
+            {cats.length > 0 && (
+              <FormCard delay={160}>
+                <SectionHeading title="Which cat? (optional)" />
+                <View style={styles.chipsWrap}>
+                  <SymptomChip label="Not specified" selected={selectedCatId === null} onPress={() => setSelectedCatId(null)} />
+                  {cats.map(c => (
+                    <SymptomChip key={c.id} label={c.name} selected={selectedCatId === c.id} onPress={() => setSelectedCatId(c.id)} />
+                  ))}
+                </View>
+              </FormCard>
+            )}
+
+            <Button label="Scan photo" onPress={handlePhotoSubmit} style={{ marginTop: Spacing.sm } as any} />
+
+            <View style={styles.disclaimer}>
+              <Text style={styles.disclaimerText}>
+                This tool estimates from visible signs only and is not a diagnosis. Always consult a licensed veterinarian for medical concerns.
+              </Text>
+            </View>
+          </>
+        )}
+
+        {mode === 'photo' && photoStage === 'loading' && (
+          <Animated.View style={[styles.loadingCard, { opacity: pulseAnim }]}>
+            <Text style={styles.loadingIcon}>🔍</Text>
+            <Text style={styles.loadingTitle}>Scanning photo…</Text>
+            <Text style={styles.loadingHint}>Looking for visible signs and cross-checking the knowledge base</Text>
+          </Animated.View>
+        )}
+
+        {mode === 'photo' && photoStage === 'result' && imageResult && (
+          <>
+            <View style={[styles.riskBanner, { backgroundColor: RISK_STYLE[imageResult.riskLevel].bg }]}>
+              <Text style={[styles.riskLabel, { color: RISK_STYLE[imageResult.riskLevel].color }]}>
+                {RISK_STYLE[imageResult.riskLevel].label}
+              </Text>
+            </View>
+
+            {imageResult.urgentWarning && (
+              <View style={styles.urgentBanner}>
+                <Text style={styles.urgentIcon}>⚠</Text>
+                <Text style={styles.urgentText}>{imageResult.urgentWarning}</Text>
+              </View>
+            )}
+
+            <FormCard delay={40}>
+              <SectionHeading title={`Possible conditions (${imageResult.possibleDiseases.length})`} />
+              {imageResult.possibleDiseases.map((pd, i) => (
+                <View key={i} style={styles.diseaseRow}>
+                  <View style={styles.diseaseTopRow}>
+                    <Text style={styles.diseaseName}>{pd.name}</Text>
+                    <Text style={styles.diseaseLikelihood}>{pd.confidence}%</Text>
+                  </View>
+                  <LikelihoodBar value={pd.confidence} />
+                  <Text style={styles.diseaseReasoning}>{pd.reasoning}</Text>
+                  {pd.matched && (
+                    <View style={styles.matchedPill}>
+                      <Text style={styles.matchedPillText}>
+                        ✓ In library · {pd.matched.severity} severity
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </FormCard>
+
+            <FormCard delay={100}>
+              <SectionHeading title="Recommended next steps" />
+              <View style={{ gap: Spacing.sm }}>
+                {imageResult.recommendedNextSteps.map((step, i) => (
+                  <View key={i} style={styles.actionRow}>
+                    <View style={styles.actionDot} />
+                    <Text style={styles.actionText}>{step}</Text>
+                  </View>
+                ))}
+              </View>
+            </FormCard>
+
+            <View style={styles.disclaimer}>
+              <Text style={styles.disclaimerText}>
+                This is an AI-generated visual estimate for educational purposes only — a licensed veterinarian should confirm any diagnosis in person.
+              </Text>
+            </View>
+
+            <Button label="Scan a different photo" onPress={resetPhoto} style={{ marginTop: Spacing.md } as any} />
           </>
         )}
 
@@ -455,6 +755,7 @@ const styles = StyleSheet.create({
   errorText: { color: Colors.error, fontSize: Typography.base },
 
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap' },
+  areaRow: { flexDirection: 'row', gap: Spacing.sm },
 
   // Photos
   photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.md },
@@ -470,7 +771,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xl, alignItems: 'center', gap: 4, backgroundColor: Colors.ivory,
   },
   uploadZoneIcon: { fontSize: 24 },
-  uploadZoneLabel: { fontSize: Typography.base, fontWeight: '600', color: Colors.textBody },
+  uploadZoneLabel: { fontSize: Typography.base, fontWeight: '600', color: Colors.textBody, textAlign: 'center', paddingHorizontal: Spacing.lg },
   uploadZoneHint: { fontSize: Typography.sm, color: Colors.textLight },
 
   // Disclaimer
