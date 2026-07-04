@@ -161,6 +161,13 @@ export function ProfileScreen({ navigation }: any) {
         />
 
         <ActionRow
+          emoji="🍽"
+          title="Food Recommendations"
+          desc="Get AI-powered diet suggestions by breed, age, weight & health"
+          onPress={() => navigation.navigate('FoodRecommendation')}
+        />
+
+        <ActionRow
           emoji="🔒"
           title="Change password"
           desc="Update your login credentials"

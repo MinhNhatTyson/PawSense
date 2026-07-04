@@ -10,10 +10,10 @@ cloudinary.config({
 })
 
 const foodInclude = {
-  foodTreatments: {
+  diseaseFoods: {
     include: {
-      treatment: {
-        select: { id: true, name: true, estimatedDuration: true, successRate: true },
+      disease: {
+        select: { id: true, name: true, severity: true },
       },
     },
   },
@@ -25,7 +25,7 @@ export async function createCatFood(req: AuthRequest, res: Response) {
     name, brand, category, foodType, description,
     ingredients, protein, fat, fiber, moisture, calories,
     ageMinMonths, ageMaxMonths, weightRange,
-    allergens, prescriptionRequired, vetNotes, treatmentIds,
+    allergens, prescriptionRequired, vetNotes, diseaseIds,
   } = req.body as {
     name: string
     brand: string
@@ -44,7 +44,7 @@ export async function createCatFood(req: AuthRequest, res: Response) {
     allergens?: string | string[]
     prescriptionRequired?: string
     vetNotes?: string
-    treatmentIds?: string | string[]
+    diseaseIds?: string | string[]
   }
 
   if (!name || !brand || !category || !foodType || !description) {
@@ -77,9 +77,9 @@ export async function createCatFood(req: AuthRequest, res: Response) {
     ? allergens
     : allergens ? JSON.parse(allergens) : []
 
-  const parsedTreatmentIds: string[] = Array.isArray(treatmentIds)
-    ? treatmentIds
-    : treatmentIds ? JSON.parse(treatmentIds) : []
+  const parsedDiseaseIds: string[] = Array.isArray(diseaseIds)
+    ? diseaseIds
+    : diseaseIds ? JSON.parse(diseaseIds) : []
 
   const food = await prisma.catFood.create({
     data: {
@@ -104,10 +104,10 @@ export async function createCatFood(req: AuthRequest, res: Response) {
     },
   })
 
-  if (parsedTreatmentIds.length > 0) {
+  if (parsedDiseaseIds.length > 0) {
     await Promise.all(
-      parsedTreatmentIds.map((treatmentId) =>
-        prisma.foodTreatment.create({ data: { foodId: food.id, treatmentId } })
+      parsedDiseaseIds.map((diseaseId) =>
+        prisma.diseaseFood.create({ data: { foodId: food.id, diseaseId } })
       )
     )
   }
@@ -185,7 +185,7 @@ export async function updateCatFood(req: AuthRequest, res: Response) {
     name, brand, category, foodType, description,
     ingredients, protein, fat, fiber, moisture, calories,
     ageMinMonths, ageMaxMonths, weightRange,
-    allergens, prescriptionRequired, vetNotes, treatmentIds,
+    allergens, prescriptionRequired, vetNotes, diseaseIds,
   } = req.body as Record<string, string | string[] | undefined>
 
   const food = await prisma.catFood.findUnique({ where: { id } })
@@ -246,12 +246,12 @@ export async function updateCatFood(req: AuthRequest, res: Response) {
     },
   })
 
-  if (treatmentIds !== undefined) {
-    const parsed: string[] = Array.isArray(treatmentIds) ? treatmentIds : JSON.parse(treatmentIds as string)
-    await prisma.foodTreatment.deleteMany({ where: { foodId: id } })
+  if (diseaseIds !== undefined) {
+    const parsed: string[] = Array.isArray(diseaseIds) ? diseaseIds : JSON.parse(diseaseIds as string)
+    await prisma.diseaseFood.deleteMany({ where: { foodId: id } })
     if (parsed.length > 0) {
-      await Promise.all(parsed.map((treatmentId) =>
-        prisma.foodTreatment.create({ data: { foodId: id, treatmentId } })
+      await Promise.all(parsed.map((diseaseId) =>
+        prisma.diseaseFood.create({ data: { foodId: id, diseaseId } })
       ))
     }
   }

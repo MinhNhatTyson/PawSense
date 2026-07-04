@@ -18,6 +18,7 @@ import { Button, AlertBanner, Field } from '../../components/UI'
 import { TextInput } from '../../components/TextInput'
 import * as ImagePicker from 'expo-image-picker'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
+import { catBreedAPI, type CatBreedSummary } from '../../api/catBreedAPI'
 
 // ── Animated form card ────────────────────────────────────────────────────────
 function FormCard({
@@ -464,7 +465,9 @@ export function CatFormScreen({ navigation, route }: any) {
   const [weightKg, setWeightKg] = useState(
     cat?.weightKg != null ? String(cat.weightKg) : ''
   )
-  const [breed, setBreed] = useState(cat?.breed ?? '')
+  const [breedId, setBreedId] = useState<string | null>(cat?.breedId ?? null)
+  const [allBreeds, setAllBreeds] = useState<CatBreedSummary[]>([])
+  const [breedSearch, setBreedSearch] = useState('')
   const [color, setColor] = useState(cat?.color ?? '')
   const [notes, setNotes] = useState(cat?.notes ?? '')
 
@@ -565,7 +568,7 @@ export function CatFormScreen({ navigation, route }: any) {
         ageYears: ageYears ? parseInt(ageYears) : undefined,
         ageMonths: ageMonths ? parseInt(ageMonths) : undefined,
         weightKg: weightKg ? parseFloat(weightKg) : undefined,
-        breed: breed.trim() || undefined,
+        breedId: breedId || undefined,
         color: color.trim() || undefined,
         notes: notes.trim() || undefined,
         vaccinations: validVaccinations,
@@ -593,7 +596,9 @@ export function CatFormScreen({ navigation, route }: any) {
   }
 
   const totalImages = existingImageUrls.length + newImageUris.length
-
+  useEffect(() => {
+    catBreedAPI.list().then(setAllBreeds).catch(() => {})
+  }, [])
   return (
     <KeyboardAvoidingView
       style={styles.root}
@@ -680,14 +685,44 @@ export function CatFormScreen({ navigation, route }: any) {
             ))}
           </View>
 
-          <Field label="Breed" optional>
-            <TextInput
-              value={breed}
-              onChangeText={setBreed}
-              placeholder="e.g. Persian, Siamese, Maine Coon"
-              editable={!loading}
-            />
-          </Field>
+          <View style={styles.fieldLabel}>
+            <Text style={styles.labelText}>Breed</Text>
+          </View>
+          <TextInput
+            value={breedSearch}
+            onChangeText={setBreedSearch}
+            placeholder="Search breeds…"
+            editable={!loading}
+          />
+          <View style={[styles.genderRow, { flexWrap: 'wrap', marginTop: Spacing.sm }]}>
+            {allBreeds
+              .filter(b => b.name.toLowerCase().includes(breedSearch.toLowerCase()))
+              .slice(0, 20)
+              .map(b => (
+                <TouchableOpacity
+                  key={b.id}
+                  onPress={() => !loading && setBreedId(prev => (prev === b.id ? null : b.id))}
+                  style={{
+                    paddingHorizontal: Spacing.md,
+                    paddingVertical: Spacing.sm,
+                    borderRadius: Radius.full,
+                    borderWidth: 1.5,
+                    borderColor: breedId === b.id ? Colors.greenSage : Colors.warmWhite,
+                    backgroundColor: breedId === b.id ? Colors.greenPale : Colors.ivory,
+                    marginRight: Spacing.sm,
+                    marginBottom: Spacing.sm,
+                  }}
+                >
+                  <Text style={{
+                    fontSize: Typography.sm,
+                    fontWeight: breedId === b.id ? '700' : '500',
+                    color: breedId === b.id ? Colors.greenForest : Colors.textBody,
+                  }}>
+                    {b.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+          </View>
 
           <Field label="Coat colour" optional>
             <TextInput

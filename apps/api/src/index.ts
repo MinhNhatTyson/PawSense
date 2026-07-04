@@ -15,6 +15,8 @@ import { verificationRouter } from './routes/verification.route.js'
 import { breedRecognitionRouter } from './routes/breedRecognition.route.js'
 import { symptomDiagnosisRouter } from './routes/symptomDiagnosis.route.js'
 import { imageDiagnosisRouter } from './routes/imageDiagnosis.route.js'
+import { foodRecommendationRouter } from './routes/foodRecommendation.route.js'
+import { catDiagnosisRouter } from './routes/catDiagnosis.route.js'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -37,6 +39,8 @@ app.use('/api/verification', verificationRouter)
 app.use('/api/breed-recognition', breedRecognitionRouter) 
 app.use('/api/symptom-diagnosis', symptomDiagnosisRouter)
 app.use('/api/image-diagnosis', imageDiagnosisRouter)
+app.use('/api/food-recommendation', foodRecommendationRouter)
+app.use('/api/cat-diagnoses', catDiagnosisRouter)
 
 // Health check
 app.get('/health', (_req, res) => {

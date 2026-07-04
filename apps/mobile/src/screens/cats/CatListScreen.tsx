@@ -234,7 +234,7 @@ function CatCard({
               <View style={cardStyles.metaItem}>
                 <Text style={cardStyles.metaLabel}>Breed</Text>
                 <Text style={cardStyles.metaValue} numberOfLines={1}>
-                  {cat.breed}
+                  {cat.breed.name}
                 </Text>
               </View>
             ) : null}

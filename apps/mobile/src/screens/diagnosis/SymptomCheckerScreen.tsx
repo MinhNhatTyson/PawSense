@@ -287,7 +287,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
     const selectedCat = cats.find(c => c.id === selectedCatId)
     return selectedCat
       ? {
-          breed: selectedCat.breed ?? undefined,
+          breed: selectedCat.breed?.name ?? undefined,
           gender: selectedCat.gender,
           ageYears: selectedCat.ageYears ?? undefined,
           ageMonths: selectedCat.ageMonths ?? undefined,
