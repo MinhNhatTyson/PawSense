@@ -1,0 +1,136 @@
+/* ─── Vet Onboarding Modal — PawSense ── */
+
+.vo-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 58, 42, 0.28);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.25s ease both;
+}
+
+.vo-modal {
+  width: 100%;
+  max-width: 460px;
+  background: var(--cream);
+  border: 1px solid var(--warm-white);
+  border-radius: var(--radius-xl);
+  padding: 40px 40px 32px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: scaleIn 0.3s var(--ease-out) both;
+}
+
+.vo-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.vo-kicker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.vo-skip {
+  background: none;
+  border: none;
+  padding: 4px 2px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--green-sage);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.vo-skip:hover {
+  color: var(--green-deep);
+  text-decoration: underline;
+}
+
+.vo-icon-wrap {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background: var(--ivory);
+  border: 1px solid var(--warm-white);
+  color: var(--green-forest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+  flex-shrink: 0;
+}
+
+.vo-icon-wrap svg {
+  width: 56px;
+  height: 56px;
+}
+
+.vo-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+.vo-desc {
+  font-size: 14.5px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  max-width: 360px;
+  margin-bottom: 32px;
+}
+
+.vo-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.vo-dots {
+  display: flex;
+  gap: 7px;
+}
+
+.vo-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--warm-white);
+  transition: background 0.25s, transform 0.25s;
+}
+
+.vo-dot.active {
+  background: var(--green-sage);
+  transform: scale(1.3);
+}
+
+.vo-next-btn {
+  width: auto;
+  padding: 11px 28px;
+}
+
+@media (max-width: 520px) {
+  .vo-modal { padding: 32px 24px 24px; }
+  .vo-title { font-size: 24px; }
+}
