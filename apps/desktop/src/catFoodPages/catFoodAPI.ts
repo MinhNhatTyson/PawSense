@@ -34,19 +34,19 @@ export interface CatFood {
   prescriptionRequired: boolean
   vetNotes: string | null
   imageUrl: string | null
-  foodTreatments?: {
+  diseaseFoods?: {
     id: string
+    diseaseId: string
     foodId: string
-    treatmentId: string
-    treatment: {
+    disease: {
       id: string
       name: string
-      estimatedDuration?: string
-      successRate?: number
+      severity: string
     }
   }[]
   createdAt: string
   updatedAt: string
+  
 }
 
 export interface CatFoodListResponse {
@@ -72,7 +72,7 @@ export type CatFoodInput = {
   allergens?: string[]
   prescriptionRequired?: boolean
   vetNotes?: string
-  treatmentIds?: string[]
+  diseaseIds?: string[]
 }
 
 const buildFormData = (data: Partial<CatFoodInput>, imageFile?: File): FormData => {
@@ -101,7 +101,7 @@ const buildFormData = (data: Partial<CatFoodInput>, imageFile?: File): FormData 
   if (data.prescriptionRequired !== undefined)
     fd.append('prescriptionRequired', String(data.prescriptionRequired))
   appendIfDefined('vetNotes', data.vetNotes)
-  appendIfDefined('treatmentIds', data.treatmentIds)
+  appendIfDefined('diseaseIds', data.diseaseIds)
   if (imageFile) fd.append('image', imageFile)
   return fd
 }

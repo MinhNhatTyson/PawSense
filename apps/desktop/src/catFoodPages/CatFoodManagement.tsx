@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { catFoodAPI, type CatFood, type FoodCategory, type FoodType } from './catFoodAPI'
-import { treatmentAPI, type Treatment } from '../treatmentPages/treatmentAPI'
+import { diseaseAPI, type Disease } from '../diseasePages/diseaseAPI'
 import { Sidebar } from '../components/Sidebar'
 import CatFoodList, { CATEGORY_CONFIG, FOOD_TYPE_LABELS } from './CatFoodList'
 import CatFoodDetail from './CatFoodDetail'
@@ -20,7 +20,7 @@ const CATEGORY_COLORS: Record<FoodCategory, string> = {
 export default function CatFoodManagement() {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [foods, setFoods] = useState<CatFood[]>([])
-  const [allTreatments, setAllTreatments] = useState<Treatment[]>([])
+  const [allDiseases, setAllDiseases] = useState<Disease[]>([])
   const [selectedFood, setSelectedFood] = useState<CatFood | null>(null)
   const [editingFood, setEditingFood] = useState<CatFood | null>(null)
   const [loading, setLoading] = useState(false)
@@ -33,7 +33,7 @@ export default function CatFoodManagement() {
   const itemsPerPage = 12
 
   useEffect(() => { loadFoods() }, [currentPage, search, categoryFilter, foodTypeFilter])
-  useEffect(() => { loadAllTreatments() }, [])
+  useEffect(() => { loadAllDiseases() }, [])
 
   const loadFoods = async () => {
     setLoading(true)
@@ -56,10 +56,10 @@ export default function CatFoodManagement() {
     }
   }
 
-  const loadAllTreatments = async () => {
+  const loadAllDiseases = async () => {
     try {
-      const res = await treatmentAPI.list(0, 200)
-      setAllTreatments(res.data.data)
+      const res = await diseaseAPI.list(0, 200)
+      setAllDiseases(res.data.data)
     } catch { /* non-critical */ }
   }
 
@@ -295,7 +295,7 @@ export default function CatFoodManagement() {
         {/* Create form */}
         {viewMode === 'create' && (
           <CatFoodForm
-            allTreatments={allTreatments}
+            allDiseases={allDiseases}
             onSubmit={handleCreate}
             loading={loading}
             onCancel={() => setViewMode('list')}
@@ -306,7 +306,7 @@ export default function CatFoodManagement() {
         {viewMode === 'edit' && editingFood && (
           <CatFoodForm
             food={editingFood}
-            allTreatments={allTreatments}
+            allDiseases={allDiseases}
             onSubmit={handleUpdate}
             loading={loading}
             onCancel={() => { setViewMode('list'); setEditingFood(null) }}
