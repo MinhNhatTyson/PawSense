@@ -19,6 +19,7 @@ import { GoogleSelectRolePage } from './aurthenticationPages/GoogleSelectRolePag
 import CatFoodManagement from './catFoodPages/CatFoodManagement'
 import DiagnosisManagement from './diagnosisPages/DiagnosisManagement'
 import VerificationManagement from './verificationPages/VerificationManagement'
+import { VetOnboarding } from './onboardingPages/VetOnboarding'
 import './index.css'
 
 
@@ -253,9 +254,11 @@ function DashboardPage() {
   const firstName = user?.profile?.fullName?.split(' ')[0] || 'Doctor'
 
   return (
-    <div className="app-shell">
-      {/* ── Sidebar ── */}
-      <Sidebar />
+    <>
+    <VetOnboarding />
+      <div className="app-shell">
+        {/* Sidebar */}
+        <Sidebar />
 
       {/* ── Main ── */}
       <main className="main-content">
@@ -689,6 +692,7 @@ function DashboardPage() {
         </div>
       </main>
     </div>
+    </>
   )
 }
 
