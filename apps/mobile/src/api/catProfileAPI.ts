@@ -95,19 +95,23 @@ export const catProfileAPI = {
     return res.json()
   },
 
-  async update(
-    id: string,
+  async create(
     data: {
-      name?: string
-      gender?: CatGender
+      name: string
+      gender: CatGender
       ageYears?: number
       ageMonths?: number
       weightKg?: number
       breedId?: string
       color?: string
       notes?: string
-      existingImageUrls?: string[]
-      vaccinations?: Array<{ /* unchanged */ }>
+      vaccinations?: Array<{
+        vaccineName: string
+        dateGiven: string
+        nextDueDate?: string
+        veterinarian?: string
+        notes?: string
+      }>
     },
     imageUris?: string[]
   ): Promise<CatProfile> {

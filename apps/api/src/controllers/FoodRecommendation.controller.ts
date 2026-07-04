@@ -78,7 +78,7 @@ export async function analyzeFoodRecommendation(req: AuthRequest, res: Response)
     resolvedAgeYears = catProfile.ageYears ?? undefined
     resolvedAgeMonths = catProfile.ageMonths ?? undefined
     resolvedWeightKg = catProfile.weightKg ?? undefined
-    diagnosedDiseaseIds = catProfile.diagnoses.map((d) => d.diseaseId)
+    diagnosedDiseaseIds = catProfile.diagnoses.map((d: { diseaseId: string }) => d.diseaseId)
     catName = catProfile.name
   }
 
@@ -106,7 +106,7 @@ export async function analyzeFoodRecommendation(req: AuthRequest, res: Response)
     resolvedBreedId ? prisma.catBreed.findUnique({ where: { id: resolvedBreedId } }) : Promise.resolve(null),
     mergedDiseaseIds.length > 0
       ? prisma.disease.findMany({ where: { id: { in: mergedDiseaseIds } }, select: { id: true, name: true } })
-      : Promise.resolve([]),
+      : Promise.resolve([] as { id: string; name: string }[]),
   ])
 
   const totalAgeMonths =
@@ -122,15 +122,90 @@ export async function analyzeFoodRecommendation(req: AuthRequest, res: Response)
   }
   if (resolvedWeightKg != null) contextLines.push(`Weight: ${resolvedWeightKg} kg`)
   if (selectedDiseases.length > 0) {
-    contextLines.push(`Diagnosed/suspected health conditions: ${selectedDiseases.map((d) => d.name).join(', ')}`)
+    contextLines.push(`Diagnosed/suspected health conditions: ${selectedDiseases.map((d: { name: string }) => d.name).join(', ')}`)
   }
   if (healthConditionNotes?.trim()) {
     contextLines.push(`Additional notes from owner: ${healthConditionNotes.trim()}`)
   }
 
+  const normalizeAi = (raw: any): AiFoodResult => {
+    const toStrArray = (v: any): string[] => {
+      if (Array.isArray(v)) return v.map((x) => String(x)).filter(Boolean)
+      return []
+    }
+
+    const allowed = new Set(['KITTEN', 'ADULT', 'SENIOR', 'PRESCRIPTION'])
+    const cat =
+      typeof raw?.recommendedCategory === 'string' && allowed.has(raw.recommendedCategory)
+        ? (raw.recommendedCategory as AiFoodResult['recommendedCategory'])
+        : 'ADULT'
+
+    const urgent = raw?.urgentWarning
+    const urgentWarning = urgent == null || urgent === '' ? null : String(urgent)
+
+    return {
+      dietaryProfile: typeof raw?.dietaryProfile === 'string' ? raw.dietaryProfile : '',
+      recommendedCategory: cat,
+      keyNutrientFocus: toStrArray(raw?.keyNutrientFocus).slice(0, 6),
+      avoidIngredients: toStrArray(raw?.avoidIngredients).slice(0, 5),
+      generalGuidance: toStrArray(raw?.generalGuidance).slice(0, 6),
+      urgentWarning,
+    }
+  }
+
+  const extractFirstJsonObject = (text: string): string | null => {
+    const start = text.indexOf('{')
+    if (start === -1) return null
+
+    let depth = 0
+    for (let i = start; i < text.length; i++) {
+      const ch = text[i]
+      if (ch === '{') depth++
+      if (ch === '}') {
+        depth--
+        if (depth === 0) return text.slice(start, i + 1)
+      }
+    }
+    return null
+  }
+
+  const fallbackByCategory = async (): Promise<AiFoodResult> => {
+    const safeCategory = (() => {
+      if (totalAgeMonths == null) return 'ADULT' as const
+      if (totalAgeMonths < 12) return 'KITTEN' as const
+      if (totalAgeMonths >= 84) return 'SENIOR' as const
+      return 'ADULT' as const
+    })()
+
+    return {
+      dietaryProfile:
+        safeCategory === 'KITTEN'
+          ? 'A complete, balanced kitten diet formulated for growth with appropriate energy and protein.'
+          : safeCategory === 'SENIOR'
+            ? 'A complete, balanced senior diet designed to support mobility and healthy digestion.'
+            : 'A complete, balanced adult diet designed to meet daily nutrient needs.',
+      recommendedCategory: safeCategory,
+      keyNutrientFocus:
+        safeCategory === 'KITTEN'
+          ? ['high-quality protein', 'appropriate calories for growth', 'DHA/omega-3 (if included)']
+          : safeCategory === 'SENIOR'
+            ? ['joint-support nutrients', 'high digestibility', 'controlled calories']
+            : ['balanced protein', 'essential fatty acids', 'digestive support'],
+      avoidIngredients: ['excessive fillers', 'unknown ingredients'],
+      generalGuidance: [
+        'Feed the recommended amount based on the product label and your cat\'s body condition.',
+        'Transition to any new diet gradually over 7–10 days to avoid GI upset.',
+        'Ensure constant fresh water; wet diets can increase hydration.',
+        'Monitor stool consistency and appetite during the transition.',
+      ],
+      urgentWarning: null,
+    }
+  }
+
   let aiResult: AiFoodResult
 
   try {
+
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1200,
@@ -169,15 +244,17 @@ export async function analyzeFoodRecommendation(req: AuthRequest, res: Response)
 
     for (const df of diseaseFoods) {
       const existing = conditionFoodMap.get(df.food.id) ?? new Set<string>()
-      existing.add(df.disease.name)
+      existing.add((df.disease as { name: string }).name)
       conditionFoodMap.set(df.food.id, existing)
     }
+
   }
+
 
   const conditionFoodIds = Array.from(conditionFoodMap.keys())
   const conditionFoods = conditionFoodIds.length > 0
     ? await prisma.catFood.findMany({ where: { id: { in: conditionFoodIds } } })
-    : []
+    : ([] as Awaited<ReturnType<typeof prisma.catFood.findMany>>)
 
   // ── Fallback / supplementary: general age-category match ────────────────────
   const generalWhere: Record<string, unknown> = {
@@ -202,9 +279,10 @@ export async function analyzeFoodRecommendation(req: AuthRequest, res: Response)
   })
 
   const matchedFoods = [
-    ...conditionFoods.map((f) => ({ food: f, matchedConditions: Array.from(conditionFoodMap.get(f.id) ?? []) })),
-    ...generalFoods.map((f) => ({ food: f, matchedConditions: [] as string[] })),
+    ...conditionFoods.map((f: any) => ({ food: f, matchedConditions: Array.from(conditionFoodMap.get(f.id) ?? []) })),
+    ...generalFoods.map((f: any) => ({ food: f, matchedConditions: [] as string[] })),
   ].slice(0, 12)
+
 
   res.json({
     dietaryProfile: aiResult.dietaryProfile ?? '',
@@ -213,7 +291,8 @@ export async function analyzeFoodRecommendation(req: AuthRequest, res: Response)
     avoidIngredients: (aiResult.avoidIngredients ?? []).slice(0, 5),
     generalGuidance: (aiResult.generalGuidance ?? []).slice(0, 6),
     urgentWarning: aiResult.urgentWarning ?? null,
-    diagnosedConditions: selectedDiseases.map((d) => d.name),
+    diagnosedConditions: selectedDiseases.map((d: { name: string }) => d.name),
+
     matchedFoods: matchedFoods.map(({ food, matchedConditions }) => ({
       id: food.id,
       name: food.name,

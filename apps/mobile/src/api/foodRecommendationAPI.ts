@@ -32,13 +32,13 @@ export interface FoodRecommendationResult {
   avoidIngredients: string[]
   generalGuidance: string[]
   urgentWarning: string | null
-  diagnosedConditions: string[]     // ← ADD
+  diagnosedConditions: string[]
   matchedFoods: MatchedFood[]
 }
 
 export interface FoodRecommendationInput {
-  catProfileId?: string             // ← ADD
-  breedId?: string                  // ← REPLACES breed?: string
+  catProfileId?: string
+  breedId?: string
   ageYears?: number
   ageMonths?: number
   weightKg?: number
