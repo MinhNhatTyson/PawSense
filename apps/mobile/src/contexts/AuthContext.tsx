@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { storage } from '../utils/storage'
+import { API_URL } from '../config'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -43,8 +44,6 @@ export interface AuthContextType {
 // ── Context ───────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-const API_URL = 'http://localhost:3000/api'
 const TOKEN_KEY = 'auth_token'
 
 // ── Provider ──────────────────────────────────────────────────────────────────

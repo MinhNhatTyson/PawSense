@@ -1,0 +1,235 @@
+/* ─── Mobile Connect Card — PawSense Dashboard widget ── */
+
+.mc-card {
+  background: #fff;
+  border: 1.5px solid var(--warm-white);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.mc-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.mc-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--green-pale);
+  color: var(--green-forest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mc-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.mc-subtitle {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.mc-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.mc-qr-wrap {
+  width: 112px;
+  height: 112px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream);
+  border: 1.5px solid var(--warm-white);
+}
+
+.mc-qr-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.mc-qr-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-light);
+  text-align: center;
+  padding: 10px;
+}
+
+.mc-qr-placeholder span {
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.mc-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mc-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.mc-input-row .form-input {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.mc-copy-btn {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ivory);
+  border: 1.5px solid var(--warm-white);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.mc-copy-btn:hover:not(:disabled) {
+  border-color: var(--green-sage);
+  color: var(--green-forest);
+  background: var(--green-pale);
+}
+
+.mc-copy-btn:focus-visible {
+  outline: 2px solid var(--green-sage);
+  outline-offset: 2px;
+}
+
+.mc-copy-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mc-hint {
+  font-size: 11.5px;
+  color: var(--text-light);
+  line-height: 1.6;
+  margin-top: 2px;
+}
+
+.mc-hint code {
+  background: var(--ivory);
+  border: 1px solid var(--warm-white);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 11px;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  color: var(--text-body);
+}
+
+.mc-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(196, 149, 106, 0.1);
+  border: 1px solid rgba(196, 149, 106, 0.25);
+  border-radius: var(--radius-md);
+  color: var(--gold-deep);
+}
+
+.mc-tip svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.mc-tip-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mc-tip-content > span {
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+.mc-tip code {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(196, 149, 106, 0.3);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 11px;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  color: var(--gold-deep);
+}
+
+.mc-tip-line-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mc-tip-line {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 4px 8px;
+}
+
+.mc-tip-copy {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid rgba(196, 149, 106, 0.35);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--gold-deep);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mc-tip-copy:hover {
+  background: rgba(196, 149, 106, 0.15);
+}
+
+.mc-tip-copy:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .mc-body {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+}

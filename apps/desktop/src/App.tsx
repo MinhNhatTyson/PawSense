@@ -20,6 +20,7 @@ import CatFoodManagement from './catFoodPages/CatFoodManagement'
 import DiagnosisManagement from './diagnosisPages/DiagnosisManagement'
 import VerificationManagement from './verificationPages/VerificationManagement'
 import { VetOnboarding } from './onboardingPages/VetOnboarding'
+import { MobileConnectCard } from './components/MobileConnectCard'
 import './index.css'
 
 
@@ -403,6 +404,11 @@ function DashboardPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ── Mobile connect (Expo Go QR) ── */}
+        <div className="animate-in" style={{ animationDelay: '0.35s', maxWidth: 720, marginBottom: 'var(--space-xl)' }}>
+          <MobileConnectCard />
         </div>
 
         {/* ── Quick actions ── */}

@@ -1,6 +1,5 @@
 import { storage } from '../utils/storage'
-
-const API_URL = 'http://localhost:3000/api'
+import { API_URL } from '../config'
 
 export interface MedicineDisease {
   id: string
