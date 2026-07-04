@@ -1,5 +1,5 @@
 import { storage } from '../utils/storage'
-
+import { API_URL } from '../config'
 // On web, expo-image-picker returns blob: URIs. The RN-style { uri, name, type }
 // FormData append is a native-only pattern — on web it serialises to a plain string.
 // This helper fetches the blob and appends a real File/Blob so multer receives actual data.
@@ -26,7 +26,6 @@ async function appendImageToFormData(
   }
 }
 
-const API_URL = 'http://localhost:3000/api'
 
 export type CatGender = 'MALE' | 'FEMALE' | 'UNKNOWN'
 
