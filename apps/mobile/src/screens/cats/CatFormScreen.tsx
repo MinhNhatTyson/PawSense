@@ -596,7 +596,7 @@ export function CatFormScreen({ navigation, route }: any) {
   }
 
   const totalImages = existingImageUrls.length + newImageUris.length
-  useEffect(() => {
+  React.useEffect(() => {
     catBreedAPI.list().then(setAllBreeds).catch(() => {})
   }, [])
   return (
