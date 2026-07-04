@@ -22,6 +22,7 @@ model User {
   medicinesApproved  Medicine[]    @relation("MedicineApprovedBy")
   flagsRaised        ContentFlag[] @relation("FlagsRaised")
   flagsResolved      ContentFlag[] @relation("FlagsResolved")
+  diagnosesCreated   CatDiagnosis[] @relation("DiagnosisCreatedBy")
 }
 
 model Profile {
@@ -49,6 +50,7 @@ model CatBreed {
   temperament        String[]
   personality        String
   imageUrls          String[]
+  catProfiles        CatProfile[]
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
@@ -78,6 +80,8 @@ model Disease {
   approvedBy    User?    @relation("DiseaseApprovedBy", fields: [approvedById], references: [id])
   approvedAt    DateTime?
   flags         ContentFlag[]
+  diseaseFoods        DiseaseFood[]      
+  catDiagnoses        CatDiagnosis[] 
 }
 
 model Medicine {
@@ -202,7 +206,6 @@ model Treatment {
   imageUrl           String?
   steps              TreatmentStep[]
   diseaseTreatments  DiseaseTreatment[]
-  foodTreatments     FoodTreatment[]      // ← ADD THIS LINE
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 }
@@ -249,20 +252,20 @@ model CatFood {
   prescriptionRequired Boolean         @default(false)
   vetNotes             String?
   imageUrl             String?
-  foodTreatments       FoodTreatment[]
+  diseaseFoods         DiseaseFood[] 
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
 }
 
-model FoodTreatment {
-  id          String    @id @default(uuid())
-  foodId      String
-  treatmentId String
-  food        CatFood   @relation(fields: [foodId], references: [id], onDelete: Cascade)
-  treatment   Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
+model DiseaseFood {
+  id        String   @id @default(uuid())
+  diseaseId String
+  foodId    String
+  disease   Disease  @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+  food      CatFood  @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
-  @@unique([foodId, treatmentId])
+  @@unique([diseaseId, foodId])
 }
 
 enum FoodCategory {
@@ -289,11 +292,13 @@ model CatProfile {
   ageYears           Int?
   ageMonths          Int?
   weightKg           Float?
-  breed              String?
+  breedId            String?             // ← REPLACES breed String?
+  breed              CatBreed?           @relation(fields: [breedId], references: [id])  // ← ADD
   color              String?
   notes              String?
   imageUrls          String[]
   vaccinations       Vaccination[]
+  diagnoses          CatDiagnosis[]      // ← ADD
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -308,6 +313,21 @@ model Vaccination {
   veterinarian String?
   notes        String?
   createdAt    DateTime    @default(now())
+}
+
+model CatDiagnosis {
+  id            String     @id @default(uuid())
+  catProfileId  String
+  catProfile    CatProfile @relation(fields: [catProfileId], references: [id], onDelete: Cascade)
+  diseaseId     String
+  disease       Disease    @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+  diagnosedById String
+  diagnosedBy   User       @relation("DiagnosisCreatedBy", fields: [diagnosedById], references: [id])
+  diagnosedAt   DateTime   @default(now())
+  notes         String?
+  createdAt     DateTime   @default(now())
+
+  @@unique([catProfileId, diseaseId])
 }
 
 enum CatGender {

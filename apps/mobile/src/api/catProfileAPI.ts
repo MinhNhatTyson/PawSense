@@ -41,6 +41,20 @@ export interface Vaccination {
   createdAt: string
 }
 
+export interface CatBreedRef {
+  id: string
+  name: string
+  origin: string
+}
+
+export interface CatDiagnosisSummary {
+  id: string
+  diseaseId: string
+  diagnosedAt: string
+  notes?: string | null
+  disease: { id: string; name: string; severity: string }
+}
+
 export interface CatProfile {
   id: string
   ownerId: string
@@ -50,11 +64,13 @@ export interface CatProfile {
   ageYears?: number | null
   ageMonths?: number | null
   weightKg?: number | null
-  breed?: string | null
+  breedId?: string | null
+  breed?: CatBreedRef | null
   color?: string | null
   notes?: string | null
   imageUrls: string[]
   vaccinations: Vaccination[]
+  diagnoses: CatDiagnosisSummary[]
   createdAt: string
   updatedAt: string
 }
@@ -79,23 +95,19 @@ export const catProfileAPI = {
     return res.json()
   },
 
-  async create(
+  async update(
+    id: string,
     data: {
-      name: string
-      gender: CatGender
+      name?: string
+      gender?: CatGender
       ageYears?: number
       ageMonths?: number
       weightKg?: number
-      breed?: string
+      breedId?: string
       color?: string
       notes?: string
-      vaccinations?: Array<{
-        vaccineName: string
-        dateGiven: string
-        nextDueDate?: string
-        veterinarian?: string
-        notes?: string
-      }>
+      existingImageUrls?: string[]
+      vaccinations?: Array<{ /* unchanged */ }>
     },
     imageUris?: string[]
   ): Promise<CatProfile> {
@@ -107,7 +119,7 @@ export const catProfileAPI = {
     if (data.ageYears !== undefined) formData.append('ageYears', String(data.ageYears))
     if (data.ageMonths !== undefined) formData.append('ageMonths', String(data.ageMonths))
     if (data.weightKg !== undefined) formData.append('weightKg', String(data.weightKg))
-    if (data.breed) formData.append('breed', data.breed)
+    if (data.breedId !== undefined) formData.append('breedId', data.breedId)
     if (data.color) formData.append('color', data.color)
     if (data.notes) formData.append('notes', data.notes)
     if (data.vaccinations) formData.append('vaccinations', JSON.stringify(data.vaccinations))

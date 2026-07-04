@@ -627,7 +627,7 @@ export function CatDetailScreen({ navigation, route }: any) {
             <GenderBadge gender={cat.gender} />
             {cat.breed ? (
               <View style={styles.heroBadge}>
-                <Text style={styles.heroBadgeText}>{cat.breed}</Text>
+                <Text style={styles.heroBadgeText}>{cat.breed.name}</Text>
               </View>
             ) : null}
             {cat.vaccinations.length > 0 && (
@@ -737,7 +737,7 @@ export function CatDetailScreen({ navigation, route }: any) {
                 <InfoRow label="Gender" value={genderLabel} />
               ) : null}
               {cat.color ? <InfoRow label="Coat colour" value={cat.color} /> : null}
-              {cat.breed ? <InfoRow label="Breed" value={cat.breed} /> : null}
+              {cat.breed ? <InfoRow label="Breed" value={cat.breed.name} /> : null}
             </SectionCard>
           )}
 

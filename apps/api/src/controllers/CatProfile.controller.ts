@@ -11,6 +11,11 @@ cloudinary.config({
 
 const profileInclude = {
   vaccinations: { orderBy: { dateGiven: 'desc' as const } },
+  breed: { select: { id: true, name: true, origin: true } },
+  diagnoses: {
+    include: { disease: { select: { id: true, name: true, severity: true } } },
+    orderBy: { diagnosedAt: 'desc' as const },
+  },
 }
 
 // ── CREATE ────────────────────────────────────────────────────────────────────
@@ -18,7 +23,7 @@ export async function createCatProfile(req: AuthRequest, res: Response) {
   const ownerId = req.userId!
   const {
     name, gender, birthDate, ageYears, ageMonths,
-    weightKg, breed, color, notes, vaccinations,
+    weightKg, breedId, color, notes, vaccinations,
   } = req.body as {
     name: string
     gender?: string
@@ -26,7 +31,7 @@ export async function createCatProfile(req: AuthRequest, res: Response) {
     ageYears?: string
     ageMonths?: string
     weightKg?: string
-    breed?: string
+    breedId?: string
     color?: string
     notes?: string
     vaccinations?: string
@@ -68,7 +73,7 @@ export async function createCatProfile(req: AuthRequest, res: Response) {
       ageYears: ageYears ? parseInt(ageYears) : null,
       ageMonths: ageMonths ? parseInt(ageMonths) : null,
       weightKg: weightKg ? parseFloat(weightKg) : null,
-      breed: breed || null,
+      breedId: breedId || null,
       color: color || null,
       notes: notes || null,
       imageUrls,
@@ -144,7 +149,7 @@ export async function updateCatProfile(req: AuthRequest, res: Response) {
 
   const {
     name, gender, birthDate, ageYears, ageMonths,
-    weightKg, breed, color, notes, vaccinations, existingImageUrls,
+    weightKg, breedId, color, notes, vaccinations, existingImageUrls,
   } = req.body as Record<string, string | undefined>
 
   // Handle new image uploads
@@ -184,7 +189,7 @@ export async function updateCatProfile(req: AuthRequest, res: Response) {
       weightKg: weightKg !== undefined
         ? (weightKg ? parseFloat(weightKg) : null)
         : existing.weightKg,
-      breed: breed !== undefined ? (breed || null) : existing.breed,
+      breedId: breedId !== undefined ? (breedId || null) : existing.breedId,
       color: color !== undefined ? (color || null) : existing.color,
       notes: notes !== undefined ? (notes || null) : existing.notes,
       imageUrls: finalImageUrls,
