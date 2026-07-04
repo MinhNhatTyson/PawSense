@@ -27,7 +27,7 @@ function formatAge(minMonths: number | null, maxMonths: number | null): string {
 
 export default function CatFoodDetail({ food, onEdit, onDelete, onBack }: Props) {
   const cat = CATEGORY_CONFIG[food.category]
-  const linkedTreatments = food.foodTreatments || []
+  const linkedDiseases = food.diseaseFoods || []
   const hasNutrition = [food.protein, food.fat, food.fiber, food.moisture, food.calories].some(v => v !== null)
 
   return (
@@ -187,21 +187,18 @@ export default function CatFoodDetail({ food, onEdit, onDelete, onBack }: Props)
           </Section>
         )}
 
-        {/* Linked treatments */}
-        <Section title={`Linked treatments (${linkedTreatments.length})`} full>
-          {linkedTreatments.length === 0
-            ? <p className="cf-empty-section">This food is not linked to any treatment protocol yet.</p>
+        {/* Linked diseases */}
+        <Section title={`Linked diseases (${linkedDiseases.length})`} full>
+          {linkedDiseases.length === 0
+            ? <p className="cf-empty-section">This food is not linked to any disease yet.</p>
             : (
               <div className="cf-linked-treatments-grid">
-                {linkedTreatments.map((ft) => (
-                  <div key={ft.id} className="cf-linked-treatment-card">
-                    <span className="cf-linked-treatment-name">{ft.treatment.name}</span>
-                    {ft.treatment.estimatedDuration && (
-                      <span className="cf-linked-treatment-meta">{ft.treatment.estimatedDuration}</span>
-                    )}
-                    {ft.treatment.successRate != null && (
-                      <span className="cf-linked-treatment-meta">{ft.treatment.successRate}% success rate</span>
-                    )}
+                {linkedDiseases.map((df) => (
+                  <div key={df.id} className="cf-linked-treatment-card">
+                    <span className="cf-linked-treatment-name">{df.disease.name}</span>
+                    <span className={`sev-badge sev-${df.disease.severity.toLowerCase()}`}>
+                      {df.disease.severity}
+                    </span>
                   </div>
                 ))}
               </div>

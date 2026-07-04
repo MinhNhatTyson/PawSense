@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import type { CatFood, CatFoodInput, FoodCategory, FoodType } from './catFoodAPI'
-import type { Treatment } from '../treatmentPages/treatmentAPI'
 
 interface CatFoodFormProps {
   food?: CatFood
-  allTreatments: Treatment[]
+  allDiseases: { id: string; name: string; severity: string }[]
   onSubmit: (data: CatFoodInput, imageFile?: File) => void
   loading: boolean
   onCancel: () => void
@@ -37,7 +36,7 @@ const COMMON_ALLERGENS = [
   'Soy', 'Eggs', 'Lamb', 'Duck', 'Pork', 'Gluten',
 ]
 
-export default function CatFoodForm({ food, allTreatments, onSubmit, loading, onCancel }: CatFoodFormProps) {
+export default function CatFoodForm({ food, allDiseases, onSubmit, loading, onCancel }: CatFoodFormProps) {
   const [name, setName] = useState(food?.name || '')
   const [brand, setBrand] = useState(food?.brand || '')
   const [customBrand, setCustomBrand] = useState('')
@@ -56,10 +55,10 @@ export default function CatFoodForm({ food, allTreatments, onSubmit, loading, on
   const [allergens, setAllergens] = useState<string[]>(food?.allergens || [])
   const [prescriptionRequired, setPrescriptionRequired] = useState(food?.prescriptionRequired || false)
   const [vetNotes, setVetNotes] = useState(food?.vetNotes || '')
-  const [treatmentIds, setTreatmentIds] = useState<string[]>(
-    food?.foodTreatments?.map(ft => ft.treatmentId) || []
+  const [diseaseIds, setDiseaseIds] = useState<string[]>(
+    food?.diseaseFoods?.map(df => df.diseaseId) || []
   )
-  const [treatmentSearch, setTreatmentSearch] = useState('')
+  const [diseaseSearch, setDiseaseSearch] = useState('')
   const [imageFile, setImageFile] = useState<File | undefined>()
   const [imagePreview, setImagePreview] = useState<string | undefined>(food?.imageUrl || undefined)
 
@@ -80,13 +79,12 @@ export default function CatFoodForm({ food, allTreatments, onSubmit, loading, on
     setAllergens(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a])
   }
 
-  const toggleTreatment = (id: string) => {
-    setTreatmentIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  const toggleDisease = (id: string) => {
+    setDiseaseIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
   }
 
-  const filteredTreatments = allTreatments.filter(t =>
-    t.name.toLowerCase().includes(treatmentSearch.toLowerCase()) ||
-    t.description.toLowerCase().includes(treatmentSearch.toLowerCase())
+  const filteredDiseases = allDiseases.filter(d =>
+    d.name.toLowerCase().includes(diseaseSearch.toLowerCase())
   )
 
   const parseLines = (s: string) => s.split('\n').map(l => l.trim()).filter(Boolean)
@@ -113,7 +111,7 @@ export default function CatFoodForm({ food, allTreatments, onSubmit, loading, on
       allergens,
       prescriptionRequired,
       vetNotes: vetNotes || undefined,
-      treatmentIds,
+      diseaseIds,
     }, imageFile)
   }
 
@@ -436,17 +434,17 @@ export default function CatFoodForm({ food, allTreatments, onSubmit, loading, on
           )}
         </div>
 
-        {/* Card 8 — Link treatments */}
-        {allTreatments.length > 0 && (
+        {/* Card 8 — Link diseases */}
+        {allDiseases.length > 0 && (
           <div className="cf-form-card">
             <div className="cf-form-section-title">
-              Link to treatment protocols
-              {treatmentIds.length > 0 && (
-                <span className="cf-link-count">{treatmentIds.length} selected</span>
+              Link to diseases
+              {diseaseIds.length > 0 && (
+                <span className="cf-link-count">{diseaseIds.length} selected</span>
               )}
             </div>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 14 }}>
-              Associate this food with treatment protocols it supports (e.g. renal diet for CKD management).
+              Associate this food with diseases it helps manage (e.g. a renal diet for kidney disease).
             </p>
 
             <div className="cf-treatment-search-wrap">
@@ -457,20 +455,20 @@ export default function CatFoodForm({ food, allTreatments, onSubmit, loading, on
               <input
                 type="text"
                 className="cf-treatment-search"
-                placeholder="Filter treatments…"
-                value={treatmentSearch}
-                onChange={e => setTreatmentSearch(e.target.value)}
+                placeholder="Filter diseases…"
+                value={diseaseSearch}
+                onChange={e => setDiseaseSearch(e.target.value)}
               />
             </div>
 
             <div className="cf-treatment-grid">
-              {filteredTreatments.map(t => {
-                const checked = treatmentIds.includes(t.id)
+              {filteredDiseases.map(d => {
+                const checked = diseaseIds.includes(d.id)
                 return (
                   <label
-                    key={t.id}
+                    key={d.id}
                     className={`cf-treatment-option${checked ? ' checked' : ''}`}
-                    onClick={() => toggleTreatment(t.id)}
+                    onClick={() => toggleDisease(d.id)}
                   >
                     <span className="cf-checkmark">
                       {checked && (
@@ -479,18 +477,16 @@ export default function CatFoodForm({ food, allTreatments, onSubmit, loading, on
                         </svg>
                       )}
                     </span>
-                    <span className="cf-treatment-option-name">{t.name}</span>
-                    {t.steps.length > 0 && (
-                      <span style={{ fontSize: 10, padding: '2px 6px', background: 'var(--green-pale)', color: 'var(--green-forest)', borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>
-                        {t.steps.length} step{t.steps.length !== 1 ? 's' : ''}
-                      </span>
-                    )}
+                    <span className="cf-treatment-option-name">{d.name}</span>
+                    <span className={`sev-badge sev-${d.severity.toLowerCase()}`} style={{ fontSize: 10, padding: '2px 7px' }}>
+                      {d.severity}
+                    </span>
                   </label>
                 )
               })}
-              {filteredTreatments.length === 0 && (
+              {filteredDiseases.length === 0 && (
                 <p style={{ fontSize: 13, color: 'var(--text-light)', fontStyle: 'italic', gridColumn: '1/-1', padding: '8px 0' }}>
-                  No treatments match your search.
+                  No diseases match your search.
                 </p>
               )}
             </div>
