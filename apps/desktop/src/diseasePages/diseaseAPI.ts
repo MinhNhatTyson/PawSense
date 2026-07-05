@@ -65,6 +65,17 @@ export interface Disease {
       steps: { id: string; stepOrder: number; title: string; durationMinutes?: number }[]
     }
   }[]
+  diseaseFoods?: {
+    id: string
+    diseaseId: string
+    foodId: string
+    food: {
+      id: string
+      name: string
+      brand: string
+      category: string
+    }
+  }[]
   createdAt: string
   updatedAt: string
   status?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'FLAGGED'
