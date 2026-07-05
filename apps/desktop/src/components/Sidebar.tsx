@@ -91,6 +91,16 @@ const NAV_ITEMS = [
     ),
   },
   {
+    to: '/emergency-guidance',
+    label: 'Emergency Guidance',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1.5L1 14h14L8 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M8 6.5V10M8 12h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
     to: '/profile',
     label: 'My Profile',
     icon: (

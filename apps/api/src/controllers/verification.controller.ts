@@ -64,10 +64,33 @@ export async function approveMedicine(req: AuthRequest, res: Response) {
   res.json(updated)
 }
 
+export async function approveEmergencyGuide(req: AuthRequest, res: Response) {
+  const { id } = req.params
+  const approverId = req.userId!
+
+  const guide = await prisma.emergencyGuide.findUnique({ where: { id } })
+  if (!guide) { res.status(404).json({ error: 'Emergency guide not found' }); return }
+  if (guide.createdById === approverId) {
+    res.status(403).json({ error: 'You cannot approve a record you created or edited' })
+    return
+  }
+  if (guide.status === 'APPROVED') {
+    res.status(400).json({ error: 'Record is already approved' })
+    return
+  }
+
+  const updated = await prisma.emergencyGuide.update({
+    where: { id },
+    data: { status: 'APPROVED', approvedById: approverId, approvedAt: new Date() },
+  })
+
+  res.json(updated)
+}
+
 // ── RAISE FLAG ────────────────────────────────────────────────────────────────
 export async function raiseFlag(req: AuthRequest, res: Response) {
   const { contentType, contentId, reason } = req.body as {
-    contentType: 'DISEASE' | 'MEDICINE'
+    contentType: 'DISEASE' | 'MEDICINE' | 'EMERGENCY_GUIDE'   
     contentId: string
     reason: string
   }
@@ -78,16 +101,17 @@ export async function raiseFlag(req: AuthRequest, res: Response) {
     return
   }
 
-  // Verify the content exists
   if (contentType === 'DISEASE') {
     const disease = await prisma.disease.findUnique({ where: { id: contentId } })
     if (!disease) { res.status(404).json({ error: 'Disease not found' }); return }
-  } else {
+  } else if (contentType === 'MEDICINE') {
     const medicine = await prisma.medicine.findUnique({ where: { id: contentId } })
     if (!medicine) { res.status(404).json({ error: 'Medicine not found' }); return }
+  } else {
+    const guide = await prisma.emergencyGuide.findUnique({ where: { id: contentId } })
+    if (!guide) { res.status(404).json({ error: 'Emergency guide not found' }); return }
   }
 
-  // Check for existing open flag from same user
   const existing = await prisma.contentFlag.findFirst({
     where: { contentType, contentId, raisedById, status: 'OPEN' },
   })
@@ -96,11 +120,13 @@ export async function raiseFlag(req: AuthRequest, res: Response) {
     return
   }
 
-  // Mark content as FLAGGED
+  
   if (contentType === 'DISEASE') {
     await prisma.disease.update({ where: { id: contentId }, data: { status: 'FLAGGED' } })
-  } else {
+  } else if (contentType === 'MEDICINE') {
     await prisma.medicine.update({ where: { id: contentId }, data: { status: 'FLAGGED' } })
+  } else {
+    await prisma.emergencyGuide.update({ where: { id: contentId }, data: { status: 'FLAGGED' } })
   }
 
   const flag = await prisma.contentFlag.create({
@@ -154,8 +180,10 @@ export async function resolveFlag(req: AuthRequest, res: Response) {
   if (remainingFlags === 0) {
     if (flag.contentType === 'DISEASE') {
       await prisma.disease.update({ where: { id: flag.contentId }, data: { status: 'DRAFT' } })
-    } else {
+    } else if (flag.contentType === 'MEDICINE') {
       await prisma.medicine.update({ where: { id: flag.contentId }, data: { status: 'DRAFT' } })
+    } else {
+      await prisma.emergencyGuide.update({ where: { id: flag.contentId }, data: { status: 'DRAFT' } })
     }
   }
 
@@ -186,8 +214,10 @@ export async function dismissFlag(req: AuthRequest, res: Response) {
   if (remainingFlags === 0) {
     if (flag.contentType === 'DISEASE') {
       await prisma.disease.update({ where: { id: flag.contentId }, data: { status: 'DRAFT' } })
-    } else {
+    } else if (flag.contentType === 'MEDICINE') {
       await prisma.medicine.update({ where: { id: flag.contentId }, data: { status: 'DRAFT' } })
+    } else {
+      await prisma.emergencyGuide.update({ where: { id: flag.contentId }, data: { status: 'DRAFT' } })
     }
   }
 
@@ -196,7 +226,7 @@ export async function dismissFlag(req: AuthRequest, res: Response) {
 
 // ── LIST PENDING ──────────────────────────────────────────────────────────────
 export async function listPendingContent(req: AuthRequest, res: Response) {
-  const [diseases, medicines] = await Promise.all([
+  const [diseases, medicines, emergencyGuides] = await Promise.all([
     prisma.disease.findMany({
       where: { status: { in: ['DRAFT', 'FLAGGED'] } },
       select: {
@@ -213,7 +243,15 @@ export async function listPendingContent(req: AuthRequest, res: Response) {
       },
       orderBy: { createdAt: 'desc' },
     }),
+    prisma.emergencyGuide.findMany({          
+      where: { status: { in: ['DRAFT', 'FLAGGED'] } },
+      select: {
+        id: true, title: true, urgency: true, status: true, createdAt: true,
+        createdBy: { select: { id: true, email: true, profile: { select: { fullName: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
   ])
 
-  res.json({ diseases, medicines })
+  res.json({ diseases, medicines, emergencyGuides })
 }
