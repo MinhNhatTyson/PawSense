@@ -608,6 +608,27 @@ export default function DiseaseDetail({ disease, onEdit, onDelete, onBack, onSta
           )
         })()}
 
+        {/* Linked Cat Foods */}
+        {(() => {
+          const linkedFoods = (disease as any).diseaseFoods || []
+          return (
+            <Section title={`Linked cat foods (${linkedFoods.length})`} full>
+              {linkedFoods.length === 0 ? (
+                <p className="dm-empty-section">No cat foods from the library are linked to this disease yet.</p>
+              ) : (
+                <div className="dm-medicines-grid">
+                  {linkedFoods.map((df: any) => (
+                    <div key={df.id} className="dm-medicine-card">
+                      <div className="dm-medicine-name">{df.food.name}</div>
+                      <div className="dm-medicine-dosage">{df.food.brand}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Section>
+          )
+        })()}
+
         {/* Verification info — show approver when approved */}
         {disease.status === 'APPROVED' && disease.approvedBy && (
           <Section title="Verification" full>

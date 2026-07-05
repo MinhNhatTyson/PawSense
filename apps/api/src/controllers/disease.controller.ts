@@ -10,14 +10,15 @@ cloudinary.config({
 })
 
 const diseaseInclude = {
-  relatedDiseasesFrom: { include: { diseaseTo: true } },
-  relatedDiseasesTo: { include: { diseaseFrom: true } },
-  diseaseMedicines: { include: { medicine: true } },
-  diseaseSymptoms: { include: { symptom: true } },
-  diseaseTreatments: { include: { treatment: { include: { steps: { orderBy: { stepOrder: 'asc' as const } } } } } },
-  createdBy: { select: { id: true, email: true, profile: { select: { fullName: true } } } },
-  approvedBy: { select: { id: true, email: true, profile: { select: { fullName: true } } } },
-}
+   relatedDiseasesFrom: { include: { diseaseTo: true } },
+   relatedDiseasesTo: { include: { diseaseFrom: true } },
+   diseaseMedicines: { include: { medicine: true } },
+   diseaseSymptoms: { include: { symptom: true } },
+   diseaseTreatments: { include: { treatment: { include: { steps: { orderBy: { stepOrder: 'asc' as const } } } } } },
+   diseaseFoods: { include: { food: true } },
+   createdBy: { select: { id: true, email: true, profile: { select: { fullName: true } } } },
+   approvedBy: { select: { id: true, email: true, profile: { select: { fullName: true } } } },
+ }
 
 export async function createDisease(req: AuthRequest, res: Response) {
   const {
@@ -32,6 +33,7 @@ export async function createDisease(req: AuthRequest, res: Response) {
     relatedDiseaseIds,
     symptomIds,
     treatmentIds,
+    medicineIds,
   } = req.body as {
     name: string
     description: string
@@ -44,6 +46,7 @@ export async function createDisease(req: AuthRequest, res: Response) {
     relatedDiseaseIds?: string[]
     symptomIds?: string[]
     treatmentIds?: string[]
+    medicineIds?: string[]
   }
 
   if (!name || !description) {
@@ -84,6 +87,9 @@ export async function createDisease(req: AuthRequest, res: Response) {
     ? treatmentIds
     : treatmentIds ? JSON.parse(treatmentIds) : []
 
+  const parsedMedicineIds: string[] = Array.isArray(medicineIds)
+    ? medicineIds
+    : medicineIds ? JSON.parse(medicineIds) : []
   const disease = await prisma.disease.create({
     data: {
       name,
@@ -124,6 +130,16 @@ export async function createDisease(req: AuthRequest, res: Response) {
       parsedTreatmentIds.map((treatmentId: string) =>
         prisma.diseaseTreatment.create({
           data: { diseaseId: disease.id, treatmentId },
+        })
+      )
+    )
+  }
+
+  if (parsedMedicineIds.length > 0) {
+    await Promise.all(
+      parsedMedicineIds.map((medicineId: string) =>
+        prisma.diseaseMedicine.create({
+          data: { diseaseId: disease.id, medicineId },
         })
       )
     )
@@ -232,6 +248,7 @@ export async function updateDisease(req: AuthRequest, res: Response) {
     relatedDiseaseIds,
     symptomIds,
     treatmentIds,
+    medicineIds,
   } = req.body as {
     name?: string
     description?: string
@@ -244,6 +261,7 @@ export async function updateDisease(req: AuthRequest, res: Response) {
     relatedDiseaseIds?: string[]
     symptomIds?: string[]
     treatmentIds?: string[]
+    medicineIds?: string[]
   }
 
   const disease = await prisma.disease.findUnique({ where: { id } })
@@ -347,6 +365,22 @@ export async function updateDisease(req: AuthRequest, res: Response) {
         parsed.map((treatmentId: string) =>
           prisma.diseaseTreatment.create({
             data: { diseaseId: id, treatmentId },
+          })
+        )
+      )
+    }
+  }
+
+  if (medicineIds !== undefined) {
+    const parsed: string[] = Array.isArray(medicineIds)
+      ? medicineIds
+      : JSON.parse(medicineIds)
+    await prisma.diseaseMedicine.deleteMany({ where: { diseaseId: id } })
+    if (parsed.length > 0) {
+      await Promise.all(
+        parsed.map((medicineId: string) =>
+          prisma.diseaseMedicine.create({
+            data: { diseaseId: id, medicineId },
           })
         )
       )

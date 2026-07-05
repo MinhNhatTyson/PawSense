@@ -283,7 +283,7 @@ export function RegisterPage() {
 </div>
 
 
-<a href={`${import.meta.env.VITE_API_URL}/api/auth/google`}
+<a href={`${import.meta.env.VITE_API_URL}/auth/google`}
   className="btn btn-secondary"
   style={{
     display: 'flex',
