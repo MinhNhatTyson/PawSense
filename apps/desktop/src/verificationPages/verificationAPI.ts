@@ -11,7 +11,7 @@ apiClient.interceptors.request.use((config) => {
 })
 
 export type FlagStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED'
-export type FlagContentType = 'DISEASE' | 'MEDICINE'
+export type FlagContentType = 'DISEASE' | 'MEDICINE' | 'EMERGENCY_GUIDE'
 
 export interface ContentFlag {
   id: string
@@ -48,6 +48,9 @@ export const verificationAPI = {
 
   approveMedicine: (id: string) =>
     apiClient.patch(`/verification/medicines/${id}/approve`),
+
+  approveEmergencyGuide: (id: string) =>                            
+    apiClient.patch(`/verification/emergency-guides/${id}/approve`),
 
   raiseFlag: (data: { contentType: FlagContentType; contentId: string; reason: string }) =>
     apiClient.post<ContentFlag>('/verification/flags', data),

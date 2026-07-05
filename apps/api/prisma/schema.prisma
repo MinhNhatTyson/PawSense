@@ -23,6 +23,8 @@ model User {
   flagsRaised        ContentFlag[] @relation("FlagsRaised")
   flagsResolved      ContentFlag[] @relation("FlagsResolved")
   diagnosesCreated   CatDiagnosis[] @relation("DiagnosisCreatedBy")
+  emergencyGuidesCreated  EmergencyGuide[] @relation("EmergencyGuideCreatedBy")
+  emergencyGuidesApproved EmergencyGuide[] @relation("EmergencyGuideApprovedBy")
 }
 
 model Profile {
@@ -186,12 +188,42 @@ enum VerificationStatus {
 enum FlagContentType {
   DISEASE
   MEDICINE
+  EMERGENCY_GUIDE
 }
 
 enum FlagStatus {
   OPEN
   RESOLVED
   DISMISSED
+}
+
+enum EmergencyUrgency {
+  CRITICAL
+  URGENT
+}
+
+model EmergencyGuide {
+  id                 String             @id @default(uuid())
+  title              String             @unique
+  category           String
+  urgency            EmergencyUrgency   @default(URGENT)
+  summary            String
+  emergencySymptoms  String[]
+  firstAidSteps      String[]
+  doNots             String[]
+  whenToSeekVet      String
+  imageUrl           String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  status        VerificationStatus @default(DRAFT)
+  createdById   String?
+  createdBy     User?     @relation("EmergencyGuideCreatedBy", fields: [createdById], references: [id])
+  approvedById  String?
+  approvedBy    User?     @relation("EmergencyGuideApprovedBy", fields: [approvedById], references: [id])
+  approvedAt    DateTime?
+
+  flags         ContentFlag[]
 }
 
 model Treatment {
@@ -349,7 +381,7 @@ model ContentFlag {
   resolverNote   String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-
+  emergencyGuide EmergencyGuide? @relation(fields: [contentId], references: [id], map: "flag_emergency_guide")
   disease        Disease?        @relation(fields: [contentId], references: [id], map: "flag_disease")
   medicine       Medicine?       @relation(fields: [contentId], references: [id], map: "flag_medicine")
 }

@@ -17,6 +17,7 @@ import { symptomDiagnosisRouter } from './routes/symptomDiagnosis.route.js'
 import { imageDiagnosisRouter } from './routes/imageDiagnosis.route.js'
 import { foodRecommendationRouter } from './routes/foodRecommendation.route.js'
 import { catDiagnosisRouter } from './routes/catDiagnosis.route.js'
+import { emergencyGuideRouter } from './routes/emergencyGuide.route.js'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -41,6 +42,7 @@ app.use('/api/symptom-diagnosis', symptomDiagnosisRouter)
 app.use('/api/image-diagnosis', imageDiagnosisRouter)
 app.use('/api/food-recommendation', foodRecommendationRouter)
 app.use('/api/cat-diagnoses', catDiagnosisRouter)
+app.use('/api/emergency-guides', emergencyGuideRouter)
 
 // Health check
 app.get('/health', (_req, res) => {

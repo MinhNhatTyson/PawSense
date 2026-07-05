@@ -21,6 +21,7 @@ import DiagnosisManagement from './diagnosisPages/DiagnosisManagement'
 import VerificationManagement from './verificationPages/VerificationManagement'
 import { VetOnboarding } from './onboardingPages/VetOnboarding'
 import { MobileConnectCard } from './components/MobileConnectCard'
+import EmergencyGuidance from './emergencyPages/EmergencyGuidance'
 import './index.css'
 
 
@@ -750,6 +751,7 @@ function AppContent() {
       <Route path="/auth/select-role" element={<GoogleSelectRolePage />} /> 
       <Route path="/diagnosis" element={<ProtectedRoute><DiagnosisManagement /></ProtectedRoute>} />
       <Route path="/verification" element={<ProtectedRoute requiredRole="VET"><VerificationManagement /></ProtectedRoute>} />
+      <Route path="/emergency-guidance" element={<ProtectedRoute><EmergencyGuidance /></ProtectedRoute>} />
       <Route path="/" element={<Navigate to={token ? '/dashboard' : '/login'} />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
