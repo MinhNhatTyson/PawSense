@@ -17,6 +17,9 @@ import { MedicineDetailScreen } from '../screens/medicines/MedicineDetailScreen'
 import { BreedRecognitionScreen } from '../screens/cats/BreedRecognitionScreen' 
 import { SymptomCheckerScreen } from '../screens/diagnosis/SymptomCheckerScreen'
 import { FoodRecommendationScreen } from '../screens/nutrition/FoodRecommendationScreen'
+import { EmergencyGuideListScreen } from '../screens/emergency/EmergencyGuideListScreen'
+import { EmergencyGuideDetailScreen } from '../screens/emergency/EmergencyGuideDetailScreen'
+import { HealthTrackingScreen } from '../screens/cats/HealthTrackingScreen'
 
 import { Colors, Typography } from '../theme'
 
@@ -75,6 +78,16 @@ function AppStack() {
         options={{ headerShown: false, title: 'Edit Profile' }}
       />
       <Stack.Screen
+        name="EmergencyGuideList"
+        component={EmergencyGuideListScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EmergencyGuideDetail"
+        component={EmergencyGuideDetailScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="ChangePassword"
         component={ChangePasswordScreen}
         options={{ headerShown: false, title: 'Change Password' }}
@@ -92,6 +105,11 @@ function AppStack() {
       <Stack.Screen
         name="CatDetail"
         component={CatDetailScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="HealthTracking"
+        component={HealthTrackingScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

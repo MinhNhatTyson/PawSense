@@ -25,6 +25,7 @@ model User {
   diagnosesCreated   CatDiagnosis[] @relation("DiagnosisCreatedBy")
   emergencyGuidesCreated  EmergencyGuide[] @relation("EmergencyGuideCreatedBy")
   emergencyGuidesApproved EmergencyGuide[] @relation("EmergencyGuideApprovedBy")
+  treatmentRecordsCreated CatTreatmentRecord[] @relation("TreatmentRecordCreatedBy")
 }
 
 model Profile {
@@ -238,6 +239,7 @@ model Treatment {
   imageUrl           String?
   steps              TreatmentStep[]
   diseaseTreatments  DiseaseTreatment[]
+  catTreatmentRecords CatTreatmentRecord[]
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 }
@@ -331,6 +333,8 @@ model CatProfile {
   imageUrls          String[]
   vaccinations       Vaccination[]
   diagnoses          CatDiagnosis[]      // ← ADD
+  healthNotes         HealthNote[]
+  catTreatmentRecords CatTreatmentRecord[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -384,4 +388,28 @@ model ContentFlag {
   emergencyGuide EmergencyGuide? @relation(fields: [contentId], references: [id], map: "flag_emergency_guide")
   disease        Disease?        @relation(fields: [contentId], references: [id], map: "flag_disease")
   medicine       Medicine?       @relation(fields: [contentId], references: [id], map: "flag_medicine")
+}
+
+model HealthNote {
+  id           String     @id @default(uuid())
+  catProfileId String
+  catProfile   CatProfile @relation(fields: [catProfileId], references: [id], onDelete: Cascade)
+  title        String?
+  content      String
+  noteDate     DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model CatTreatmentRecord {
+  id               String     @id @default(uuid())
+  catProfileId     String
+  catProfile       CatProfile @relation(fields: [catProfileId], references: [id], onDelete: Cascade)
+  treatmentId      String
+  treatment        Treatment  @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+  administeredById String
+  administeredBy   User       @relation("TreatmentRecordCreatedBy", fields: [administeredById], references: [id])
+  administeredAt   DateTime   @default(now())
+  notes            String?
+  createdAt        DateTime   @default(now())
 }

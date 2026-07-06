@@ -711,6 +711,11 @@ export function CatDetailScreen({ navigation, route }: any) {
             ]}
           >
             <Button
+              label="Health tracking"
+              onPress={() => navigation.navigate('HealthTracking', { catId: cat.id })}
+              style={{ flex: 1.3 } as any}
+            />
+            <Button
               label="Edit profile"
               onPress={() => navigation.navigate('CatForm', { mode: 'edit', cat })}
               variant="secondary"

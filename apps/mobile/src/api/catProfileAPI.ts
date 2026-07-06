@@ -54,6 +54,26 @@ export interface CatDiagnosisSummary {
   disease: { id: string; name: string; severity: string }
 }
 
+export interface HealthNote {
+  id: string
+  catProfileId: string
+  title?: string | null
+  content: string
+  noteDate: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CatTreatmentRecordSummary {
+  id: string
+  catProfileId: string
+  treatmentId: string
+  administeredAt: string
+  notes?: string | null
+  treatment: { id: string; name: string; estimatedDuration?: string | null }
+  administeredBy: { id: string; email: string; profile?: { fullName?: string | null } | null }
+}
+
 export interface CatProfile {
   id: string
   ownerId: string
@@ -70,6 +90,8 @@ export interface CatProfile {
   imageUrls: string[]
   vaccinations: Vaccination[]
   diagnoses: CatDiagnosisSummary[]
+  healthNotes: HealthNote[]
+  catTreatmentRecords: CatTreatmentRecordSummary[]
   createdAt: string
   updatedAt: string
 }
@@ -204,5 +226,52 @@ export const catProfileAPI = {
       headers,
     })
     if (!res.ok) throw new Error('Failed to delete cat profile')
+  },
+
+  async listHealthNotes(catId: string): Promise<HealthNote[]> {
+    const headers = await getHeaders()
+    const res = await fetch(`${API_URL}/cat-profiles/${catId}/health-notes`, { headers })
+    if (!res.ok) throw new Error('Failed to load health notes')
+    return res.json()
+  },
+
+  async createHealthNote(
+    catId: string,
+    data: { title?: string; content: string; noteDate?: string }
+  ): Promise<HealthNote> {
+    const headers = await getHeaders()
+    const res = await fetch(`${API_URL}/cat-profiles/${catId}/health-notes`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (!res.ok) throw new Error(json.error || 'Failed to add health note')
+    return json
+  },
+
+  async updateHealthNote(
+    catId: string,
+    noteId: string,
+    data: { title?: string; content?: string; noteDate?: string }
+  ): Promise<HealthNote> {
+    const headers = await getHeaders()
+    const res = await fetch(`${API_URL}/cat-profiles/${catId}/health-notes/${noteId}`, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (!res.ok) throw new Error(json.error || 'Failed to update health note')
+    return json
+  },
+
+  async deleteHealthNote(catId: string, noteId: string): Promise<void> {
+    const headers = await getHeaders()
+    const res = await fetch(`${API_URL}/cat-profiles/${catId}/health-notes/${noteId}`, {
+      method: 'DELETE',
+      headers,
+    })
+    if (!res.ok) throw new Error('Failed to delete health note')
   },
 }

@@ -1609,6 +1609,212 @@ const CAT_BREEDS = [
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
+// EMERGENCY GUIDES
+// ─────────────────────────────────────────────────────────────────────────────
+const EMERGENCY_GUIDES = [
+  {
+    title: 'Suspected Poisoning',
+    category: 'Poisoning',
+    urgency: 'CRITICAL' as const,
+    summary: 'Ingestion or exposure to a toxic substance (household chemicals, human medications, plants, or foods toxic to cats/dogs). Time-critical — many toxins cause irreversible organ damage within hours.',
+    emergencySymptoms: ['Vomiting or retching', 'Drooling or foaming at the mouth', 'Disorientation or stumbling', 'Tremors or seizures', 'Diarrhoea', 'Pale or bluish gums', 'Sudden collapse'],
+    firstAidSteps: [
+      'Move the animal away from the source of the toxin immediately.',
+      'Identify the substance if possible — keep the packaging, plant, or container to show the vet.',
+      'Call an emergency vet or animal poison control hotline right away and describe what was ingested, how much, and when.',
+      'If instructed by a professional, follow their guidance exactly — do not act on your own.',
+      'Keep the animal calm and warm during transport to the clinic.',
+    ],
+    doNots: [
+      'Do not induce vomiting unless specifically instructed by a vet or poison control — some toxins cause more damage coming back up.',
+      'Do not give water, milk, food, or any home remedy without professional guidance.',
+      'Do not wait to see if symptoms appear before seeking help.',
+    ],
+    whenToSeekVet: 'Any known or suspected poisoning is an emergency — contact an emergency vet or poison control immediately, even if the animal seems fine.',
+  },
+  {
+    title: 'Seizure Episode',
+    category: 'Seizures',
+    urgency: 'URGENT' as const,
+    summary: 'Uncontrolled electrical activity in the brain causing convulsions, muscle rigidity, paddling, or loss of consciousness. Most seizures are brief but require prompt veterinary evaluation, especially if repeated or prolonged.',
+    emergencySymptoms: ['Sudden collapse and stiffening', 'Paddling or jerking limbs', 'Loss of consciousness', 'Drooling or chomping', 'Loss of bladder/bowel control', 'Confusion or disorientation afterward'],
+    firstAidSteps: [
+      'Stay calm and note the start time of the seizure.',
+      'Clear the area of furniture, stairs, or objects that could cause injury.',
+      'Dim lights and reduce noise to avoid over-stimulation.',
+      'Keep hands away from the mouth — the animal cannot swallow its tongue and may bite unintentionally.',
+      'Time the seizure; if it lasts longer than 5 minutes or repeats within a short period, treat as an emergency.',
+      'Once the seizure ends, keep the animal warm and quiet, and monitor breathing.',
+    ],
+    doNots: [
+      "Do not put your hands or objects in the animal's mouth.",
+      "Do not restrain the animal's movements during the seizure.",
+      'Do not give food or water until fully alert and coordinated.',
+    ],
+    whenToSeekVet: "Seek emergency care immediately if a seizure lasts more than 5 minutes, if there are multiple seizures in a row (cluster seizures), or if this is the animal's first-ever seizure.",
+  },
+  {
+    title: 'Difficulty Breathing (Respiratory Distress)',
+    category: 'Breathing Difficulties',
+    urgency: 'CRITICAL' as const,
+    summary: 'Laboured, rapid, or open-mouth breathing indicates the animal is struggling to get enough oxygen. This can escalate to respiratory failure within minutes and is always an emergency.',
+    emergencySymptoms: ['Open-mouth breathing (especially in cats)', 'Rapid or laboured breathing', 'Extended neck with elbows out', 'Blue or grey gums/tongue', 'Loud wheezing, gagging, or raspy sounds', 'Collapse or extreme lethargy'],
+    firstAidSteps: [
+      'Keep the animal as calm and still as possible — stress worsens oxygen demand.',
+      'Loosen any tight collar or harness.',
+      'Move to a cool, well-ventilated area.',
+      'Transport to the nearest emergency vet immediately; call ahead so they can prepare oxygen support.',
+      'Keep the animal in a carrier or supported position that does not restrict the chest.',
+    ],
+    doNots: [
+      'Do not force the animal to walk or exert itself.',
+      'Do not delay travel to try home remedies.',
+      'Do not restrain tightly or cover the face.',
+    ],
+    whenToSeekVet: 'Any visible difficulty breathing is a life-threatening emergency — go to the nearest emergency veterinary facility immediately.',
+  },
+  {
+    title: 'Heatstroke (Heat Exhaustion)',
+    category: 'Heatstroke',
+    urgency: 'CRITICAL' as const,
+    summary: 'Dangerous elevation in body temperature from heat exposure, often in hot vehicles, direct sun, or over-exertion in warm weather. Can cause organ failure within a short time if not cooled promptly.',
+    emergencySymptoms: ['Heavy panting or drooling', 'Bright red or purple gums', 'Weakness or collapse', 'Vomiting or diarrhoea', 'Rapid heart rate', 'Disorientation or seizures'],
+    firstAidSteps: [
+      'Move the animal to a cool, shaded, or air-conditioned area immediately.',
+      'Apply cool (not ice-cold) water to the body, especially the belly, paws, and ears.',
+      'Use a fan to increase evaporative cooling.',
+      'Offer small amounts of cool water to drink if alert and able to swallow.',
+      'Check rectal temperature if possible — stop active cooling once it drops to around 39.4°C (103°F) to avoid overcooling.',
+      'Transport to a vet immediately even if the animal seems to recover.',
+    ],
+    doNots: [
+      'Do not use ice or ice-cold water — this can cause blood vessels to constrict and trap heat internally.',
+      'Do not leave the animal unattended, even briefly, in a parked vehicle.',
+      'Do not force water into the mouth of a disoriented or unconscious animal.',
+    ],
+    whenToSeekVet: 'Heatstroke is always an emergency — seek veterinary care immediately, even after initial cooling, as internal organ damage may not be immediately visible.',
+  },
+  {
+    title: 'Choking / Airway Obstruction',
+    category: 'Choking',
+    urgency: 'CRITICAL' as const,
+    summary: 'A foreign object (toy, bone, food) lodged in the throat blocking the airway. Complete obstruction can cause suffocation within minutes.',
+    emergencySymptoms: ['Frantic pawing at the mouth', 'Gagging or retching without producing anything', 'Difficulty breathing or silent panic', 'Blue-tinged gums or tongue', 'Collapse'],
+    firstAidSteps: [
+      'Carefully look inside the mouth for a visible object — only attempt removal if you can see and safely reach it with your fingers.',
+      'If visible and reachable, gently try to remove the object without pushing it further down.',
+      'If the object cannot be removed, perform a modified Heimlich: for dogs, place hands below the ribcage and give firm upward thrusts; for cats, gently but firmly compress the chest.',
+      'If the animal loses consciousness, continue emergency measures while transporting immediately to a vet.',
+      'Call ahead to the emergency vet so they are ready on arrival.',
+    ],
+    doNots: [
+      'Do not blindly reach into the mouth if you cannot see the object — this can push it further in.',
+      'Do not delay seeking help to keep trying home removal techniques repeatedly.',
+    ],
+    whenToSeekVet: 'Go to an emergency vet immediately if the obstruction cannot be cleared within a minute, or if the animal has lost consciousness at any point.',
+  },
+  {
+    title: 'Severe Bleeding or Trauma',
+    category: 'Severe Bleeding / Trauma',
+    urgency: 'CRITICAL' as const,
+    summary: 'Significant blood loss or injury from an accident, fight, or fall. Uncontrolled bleeding can lead to shock and death within a short time.',
+    emergencySymptoms: ['Visible heavy bleeding', 'Pale gums', 'Rapid, weak pulse', 'Cold extremities', 'Weakness or collapse', 'Visible wounds, fractures, or deformity'],
+    firstAidSteps: [
+      'Apply firm, direct pressure to the wound with a clean cloth or gauze.',
+      'If bleeding continues through the cloth, add more layers rather than removing the original one.',
+      'Elevate the injured area above heart level if possible and safe to do so.',
+      'For a limb wound with uncontrolled bleeding, apply a pressure bandage; only use a tourniquet as an absolute last resort.',
+      'Keep the animal warm and as still as possible to reduce shock.',
+      'Transport to the nearest emergency vet immediately while maintaining pressure on the wound.',
+    ],
+    doNots: [
+      'Do not remove embedded objects (e.g. glass, sticks) from a wound — stabilize around them instead.',
+      'Do not apply a tourniquet unless absolutely necessary, and never leave one on for an extended period.',
+      'Do not use hydrogen peroxide or alcohol directly on open wounds.',
+    ],
+    whenToSeekVet: 'Any uncontrolled bleeding, suspected fracture, or major trauma requires immediate emergency veterinary care.',
+  },
+  {
+    title: 'Bloat (Gastric Dilatation-Volvulus)',
+    category: 'Bloat (GDV)',
+    urgency: 'CRITICAL' as const,
+    summary: 'A life-threatening condition, most common in large and deep-chested dogs, where the stomach fills with gas and twists on itself, cutting off blood supply. Can be fatal within hours without emergency surgery.',
+    emergencySymptoms: ['Visibly swollen or distended abdomen', 'Unproductive retching (trying to vomit with nothing coming up)', 'Restlessness and pacing', 'Excessive drooling', 'Rapid breathing', 'Weakness or collapse'],
+    firstAidSteps: [
+      'Do not attempt any home treatment — this condition requires immediate surgery.',
+      'Call the emergency vet immediately and explain the symptoms so they can prepare.',
+      'Transport the animal to the emergency vet as quickly and calmly as possible.',
+      'Avoid unnecessary handling of the abdomen during transport.',
+    ],
+    doNots: [
+      'Do not give food or water.',
+      'Do not attempt to induce vomiting or apply pressure to the abdomen.',
+      'Do not wait to see if symptoms resolve on their own — bloat progresses rapidly.',
+    ],
+    whenToSeekVet: 'Bloat is a surgical emergency — go to the nearest emergency vet immediately; every minute of delay reduces survival chances.',
+  },
+  {
+    title: 'Allergic Reaction / Anaphylaxis',
+    category: 'Allergic Reaction',
+    urgency: 'URGENT' as const,
+    summary: 'A hypersensitivity reaction to an insect sting, medication, food, or vaccine. Mild reactions cause swelling and itching; severe reactions (anaphylaxis) can compromise breathing and are life-threatening.',
+    emergencySymptoms: ['Facial swelling, especially around the muzzle and eyes', 'Hives or raised bumps on the skin', 'Intense itching', 'Vomiting or diarrhoea', 'Difficulty breathing or collapse (severe cases)'],
+    firstAidSteps: [
+      'Identify and remove the source of the reaction if known (e.g. remove a stinger).',
+      'Monitor breathing and gum colour closely.',
+      'Keep the animal calm and cool.',
+      'Contact your vet immediately to discuss symptoms — they may advise an antihistamine dose or ask you to come in.',
+      'If breathing difficulty, rapidly worsening facial swelling, or collapse occurs, treat as a critical emergency and go to the vet immediately.',
+    ],
+    doNots: [
+      'Do not give any medication, including antihistamines, without veterinary guidance on dose.',
+      'Do not assume mild symptoms will stay mild — monitor closely for escalation.',
+    ],
+    whenToSeekVet: 'Seek immediate emergency care if there is any difficulty breathing, rapidly worsening facial swelling, vomiting combined with weakness, or collapse. Mild, stable swelling still warrants a same-day vet call.',
+  },
+  {
+    title: 'Eye Injury or Trauma',
+    category: 'Eye Injury',
+    urgency: 'URGENT' as const,
+    summary: 'Scratches, foreign objects, or blunt trauma to the eye. The eye is extremely delicate, and untreated injuries can lead to permanent vision loss within a short time.',
+    emergencySymptoms: ['Squinting or holding the eye closed', 'Redness or visible cloudiness', 'Discharge (clear, or pus-like)', 'Visible scratch, cut, or bulging of the eye', 'Pawing at the eye or face'],
+    firstAidSteps: [
+      'Prevent the animal from rubbing or scratching the eye — use a towel or an e-collar if available.',
+      'If a foreign object is visible and loose (e.g. a grass seed), you may gently flush the eye with sterile saline solution.',
+      'Do not attempt to remove anything embedded in the eye.',
+      'Keep the animal in a calm, dimly lit environment to reduce discomfort from light sensitivity.',
+      'Seek veterinary attention promptly, even if the injury looks minor.',
+    ],
+    doNots: [
+      'Do not apply any ointment, medication, or home remedy without veterinary guidance.',
+      'Do not attempt to remove an embedded object yourself.',
+      'Do not let the animal continue rubbing the eye.',
+    ],
+    whenToSeekVet: 'Any eye injury — including a bulging eye, visible wound, or sudden vision changes — should be seen by a vet the same day; a bulging or protruding eye is a same-hour emergency.',
+  },
+  {
+    title: 'Sudden Collapse or Loss of Consciousness',
+    category: 'Collapse / Loss of Consciousness',
+    urgency: 'CRITICAL' as const,
+    summary: 'A sudden inability to stand or a loss of consciousness can indicate a wide range of life-threatening conditions, including cardiac events, internal bleeding, poisoning, or severe pain. Always treat as an emergency.',
+    emergencySymptoms: ['Sudden inability to stand or walk', 'Unresponsiveness to voice or touch', 'Pale or blue gums', 'Weak or absent pulse', 'Laboured or absent breathing', 'Cold extremities'],
+    firstAidSteps: [
+      'Check for breathing and a pulse (feel the inside of the hind leg or chest).',
+      'If not breathing, begin rescue breaths and chest compressions (pet CPR) if trained, while someone else calls the emergency vet.',
+      'Keep the animal on a firm, flat surface, ideally on its side.',
+      'Keep the airway clear and the head level with the body.',
+      'Transport to the nearest emergency vet immediately, having someone call ahead.',
+    ],
+    doNots: [
+      'Do not give food, water, or medication to an unconscious animal.',
+      'Do not waste time trying to "wait and see" if the animal will recover on its own.',
+      'Do not elevate the head above the body, which can restrict airflow.',
+    ],
+    whenToSeekVet: 'Sudden collapse or loss of consciousness is always a critical emergency — go to the nearest emergency veterinary facility immediately, performing CPR en route if trained and necessary.',
+  },
+]
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SEED FUNCTION
 // ─────────────────────────────────────────────────────────────────────────────
 async function main() {
@@ -1739,13 +1945,33 @@ async function main() {
     }
   }
 
+  // ── 6. Upsert Emergency Guides ────────────────────────────────────────────
+  console.log(`\n🚨 Seeding ${EMERGENCY_GUIDES.length} emergency guides...`)
+
+  for (const g of EMERGENCY_GUIDES) {
+    const existing = await prisma.emergencyGuide.findUnique({ where: { title: g.title } })
+    if (existing) {
+      await prisma.emergencyGuide.update({
+        where: { id: existing.id },
+        data: { ...g, status: 'APPROVED', approvedAt: existing.approvedAt ?? new Date() },
+      })
+      process.stdout.write(`  ↺ ${g.title}\n`)
+    } else {
+      await prisma.emergencyGuide.create({
+        data: { ...g, status: 'APPROVED', approvedAt: new Date() },
+      })
+      process.stdout.write(`  ✓ ${g.title}\n`)
+    }
+  }
+
   // ── Summary ───────────────────────────────────────────────────────────────
-  const [sc, tc, dc, mc, bc] = await Promise.all([
+  const [sc, tc, dc, mc, bc, egc] = await Promise.all([
     prisma.symptom.count(),
     prisma.treatment.count(),
     prisma.disease.count(),
     prisma.medicine.count(),
     prisma.catBreed.count(),
+    prisma.emergencyGuide.count(),
   ])
 
   console.log('\n✅ Seed complete!')
@@ -1754,6 +1980,7 @@ async function main() {
   console.log(`   Diseases:   ${dc}`)
   console.log(`   Medicines:  ${mc}`)
   console.log(`   Cat Breeds: ${bc}`)
+  console.log(`   Emergency Guides: ${egc}`)
 }
 
 main()
