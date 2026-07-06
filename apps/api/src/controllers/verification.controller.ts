@@ -21,6 +21,11 @@ export async function approveDisease(req: AuthRequest, res: Response) {
     return
   }
 
+  await prisma.contentFlag.updateMany({
+    where: { contentType: 'DISEASE', contentId: id, status: 'OPEN' },
+    data: { status: 'RESOLVED', resolvedById: approverId, resolverNote: 'Auto-resolved on approval' },
+  })
+
   const updated = await prisma.disease.update({
     where: { id },
     data: {
@@ -51,6 +56,11 @@ export async function approveMedicine(req: AuthRequest, res: Response) {
     res.status(400).json({ error: 'Record is already approved' })
     return
   }
+
+  await prisma.contentFlag.updateMany({
+    where: { contentType: 'MEDICINE', contentId: id, status: 'OPEN' },
+    data: { status: 'RESOLVED', resolvedById: approverId, resolverNote: 'Auto-resolved on approval' },
+  })
 
   const updated = await prisma.medicine.update({
     where: { id },

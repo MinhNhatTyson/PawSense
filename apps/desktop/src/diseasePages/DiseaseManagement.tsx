@@ -27,6 +27,7 @@ export default function DiseaseManagement() {
 
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [diseases, setDiseases] = useState<Disease[]>([])
+  const [allDiseasesFull, setAllDiseasesFull] = useState<Disease[]>([])
   const [allSymptoms, setAllSymptoms] = useState<Symptom[]>([])
   const [allTreatments, setAllTreatments] = useState<Treatment[]>([])
   const [allMedicines, setAllMedicines] = useState<Medicine[]>([])
@@ -41,6 +42,7 @@ export default function DiseaseManagement() {
   const itemsPerPage = 12
 
   useEffect(() => { loadDiseases() }, [currentPage, search, severity])
+  useEffect(() => { loadAllDiseasesFull() }, [])
   useEffect(() => { loadAllSymptoms() }, [])
   useEffect(() => { loadAllTreatments() }, [])
   useEffect(() => { loadAllMedicines() }, [])
@@ -68,6 +70,15 @@ export default function DiseaseManagement() {
       setError(err.response?.data?.error || 'Failed to load diseases')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadAllDiseasesFull = async () => {
+    try {
+      const res = await diseaseAPI.list(0, 200)
+      setAllDiseasesFull(res.data.data)
+    } catch {
+      // non-critical
     }
   }
 
@@ -99,7 +110,7 @@ export default function DiseaseManagement() {
     setLoading(true); setError(null)
     try {
       await diseaseAPI.create(formData, imageFile)
-      setViewMode('list'); loadDiseases()
+      setViewMode('list'); loadDiseases(); loadAllDiseasesFull()
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create disease')
     } finally { setLoading(false) }
@@ -116,7 +127,7 @@ export default function DiseaseManagement() {
     setLoading(true); setError(null)
     try {
       await diseaseAPI.update(editingDisease.id, formData, imageFile)
-      setViewMode('list'); setEditingDisease(null); loadDiseases()
+      setViewMode('list'); setEditingDisease(null); loadDiseases(); loadAllDiseasesFull()
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to update disease')
     } finally { setLoading(false) }
@@ -294,7 +305,7 @@ export default function DiseaseManagement() {
 
         {viewMode === 'create' && (
           <DiseaseForm
-            allDiseases={diseases}
+            allDiseases={allDiseasesFull}
             allSymptoms={allSymptoms}
             allTreatments={allTreatments}
             allMedicines={allMedicines}
@@ -307,7 +318,7 @@ export default function DiseaseManagement() {
         {viewMode === 'edit' && editingDisease && (
           <DiseaseForm
             disease={editingDisease}
-            allDiseases={diseases}
+            allDiseases={allDiseasesFull}
             allSymptoms={allSymptoms}
             allTreatments={allTreatments}
             allMedicines={allMedicines}
