@@ -26,6 +26,7 @@ model User {
   emergencyGuidesCreated  EmergencyGuide[] @relation("EmergencyGuideCreatedBy")
   emergencyGuidesApproved EmergencyGuide[] @relation("EmergencyGuideApprovedBy")
   treatmentRecordsCreated CatTreatmentRecord[] @relation("TreatmentRecordCreatedBy")
+  notifications Notification[] @relation("UserNotifications")
 }
 
 model Profile {
@@ -412,4 +413,24 @@ model CatTreatmentRecord {
   administeredAt   DateTime   @default(now())
   notes            String?
   createdAt        DateTime   @default(now())
+}
+
+model Notification {
+  id          String            @id @default(uuid())
+  userId      String
+  user        User              @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  title       String
+  message     String
+  contentType FlagContentType?
+  contentId   String?
+  read        Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+
+  @@index([userId, read])
+}
+
+enum NotificationType {
+  CONTENT_APPROVED
+  CONTENT_FLAGGED
 }

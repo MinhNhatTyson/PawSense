@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { PawLogo } from './PawLogo'
+import { NotificationBell } from './NotificationBell'
 
 const NAV_ITEMS = [
   {
@@ -154,6 +155,13 @@ export function Sidebar() {
       <div className="sidebar-brand">
         <PawLogo size={28} />
         <span className="sidebar-brand-name">Paw<span>Sense</span></span>
+      </div>
+      <div className="sidebar-brand" style={{ justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+          <PawLogo size={28} />
+          <span className="sidebar-brand-name">Paw<span>Sense</span></span>
+        </div>
+        <NotificationBell />
       </div>
 
       <nav className="sidebar-nav">        

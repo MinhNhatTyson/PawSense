@@ -2,6 +2,26 @@ import type { Response } from 'express'
 import { prisma } from '../lib/prisma.js'
 import type { AuthRequest } from '../middleware/auth.middleware.js'
 
+async function notifyApproval(
+  userId: string | null | undefined,
+  contentType: 'DISEASE' | 'MEDICINE' | 'EMERGENCY_GUIDE',
+  contentId: string,
+  contentName: string
+) {
+  if (!userId) return
+  const label = contentType === 'EMERGENCY_GUIDE' ? 'emergency guide' : contentType.toLowerCase()
+  await prisma.notification.create({
+    data: {
+      userId,
+      type: 'CONTENT_APPROVED',
+      title: 'Record approved',
+      message: `Your ${label} "${contentName}" has been approved and is now verified.`,
+      contentType,
+      contentId,
+    },
+  })
+}
+
 // ── APPROVE DISEASE ───────────────────────────────────────────────────────────
 export async function approveDisease(req: AuthRequest, res: Response) {
   const { id } = req.params
@@ -34,6 +54,8 @@ export async function approveDisease(req: AuthRequest, res: Response) {
       approvedAt: new Date(),
     },
   })
+
+  await notifyApproval(updated.createdById, 'DISEASE', updated.id, updated.name)
 
   res.json(updated)
 }
