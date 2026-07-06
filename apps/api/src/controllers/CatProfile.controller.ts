@@ -16,6 +16,14 @@ const profileInclude = {
     include: { disease: { select: { id: true, name: true, severity: true } } },
     orderBy: { diagnosedAt: 'desc' as const },
   },
+  healthNotes: { orderBy: { noteDate: 'desc' as const } },
+  catTreatmentRecords: {
+    include: {
+      treatment: { select: { id: true, name: true, estimatedDuration: true } },
+      administeredBy: { select: { id: true, email: true, profile: { select: { fullName: true } } } },
+    },
+    orderBy: { administeredAt: 'desc' as const },
+  },
 }
 
 // ── CREATE ────────────────────────────────────────────────────────────────────

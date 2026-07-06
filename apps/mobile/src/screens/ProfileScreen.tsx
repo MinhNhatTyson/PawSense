@@ -168,6 +168,13 @@ export function ProfileScreen({ navigation }: any) {
         />
 
         <ActionRow
+          emoji="🚨"
+          title="Emergency Guidance"
+          desc="First-aid steps and urgent care recommendations"
+          onPress={() => navigation.navigate('EmergencyGuideList')}
+        />
+
+        <ActionRow
           emoji="🔒"
           title="Change password"
           desc="Update your login credentials"

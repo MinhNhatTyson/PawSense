@@ -156,17 +156,7 @@ export function Sidebar() {
         <span className="sidebar-brand-name">Paw<span>Sense</span></span>
       </div>
 
-      <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            className={`nav-item${isActive(item.to) ? ' active' : ''}`}
-          >
-            {item.icon}
-            {item.label}
-          </Link>
-        ))}
+      <nav className="sidebar-nav">        
 
         {NAV_ITEMS.filter(item => !item.vetOnly || user?.role === 'VET').map((item) => (
           <Link key={item.to} to={item.to} className={`nav-item${isActive(item.to) ? ' active' : ''}`}>
