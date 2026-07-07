@@ -132,7 +132,7 @@ export async function getMedicine(req: AuthRequest, res: Response) {
 
 // ── LIST ──────────────────────────────────────────────────────────────────────
 export async function listMedicines(req: AuthRequest, res: Response) {
-  const { search, skip = '0', take = '12' } = req.query
+  const { search, diseaseId, skip = '0', take = '12' } = req.query
 
   const skipInt = parseInt(skip as string, 10)
   const takeInt = parseInt(take as string, 10)
@@ -145,6 +145,10 @@ export async function listMedicines(req: AuthRequest, res: Response) {
       { description: { contains: search as string, mode: 'insensitive' } },
       { manufacturer: { contains: search as string, mode: 'insensitive' } },
     ]
+  }
+
+  if (diseaseId) {
+    where.diseaseMedicines = { some: { diseaseId: diseaseId as string } }
   }
 
   const [medicines, total] = await Promise.all([
@@ -171,7 +175,7 @@ export async function listMedicines(req: AuthRequest, res: Response) {
 
 // ── SEARCH ────────────────────────────────────────────────────────────────────
 export async function searchMedicines(req: AuthRequest, res: Response) {
-  const { q } = req.query
+  const { q, diseaseId } = req.query
 
   if (!q || typeof q !== 'string') {
     res.status(400).json({ error: 'Search query is required' })
@@ -185,6 +189,7 @@ export async function searchMedicines(req: AuthRequest, res: Response) {
         { description: { contains: q, mode: 'insensitive' } },
         { manufacturer: { contains: q, mode: 'insensitive' } },
       ],
+      ...(diseaseId ? { diseaseMedicines: { some: { diseaseId: diseaseId as string } } } : {}),
     },
     include: medicineInclude,
     take: 20,

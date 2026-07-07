@@ -15,6 +15,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { medicineAPI, type Medicine } from '../../api/medicineAPI'
 import { Button } from '../../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
+import { diseaseAPI, type DiseaseSummary } from '../../api/diseaseAPI'
 
 // ── Severity colour map ───────────────────────────────────────────────────────
 
@@ -249,31 +250,21 @@ export function MedicineListScreen({ navigation }: any) {
   const [search, setSearch] = useState('')
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
-  const [allDiseaseNames, setAllDiseaseNames] = useState<string[]>([])
-  const [selectedDisease, setSelectedDisease] = useState<string | null>(null)
+  const [diseaseOptions, setDiseaseOptions] = useState<DiseaseSummary[]>([])
+  const [selectedDiseaseId, setSelectedDiseaseId] = useState<string | null>(null)
 
   const PER_PAGE = 20
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const loadMedicines = useCallback(async (searchQ = '', pg = 0) => {
+  const loadMedicines = useCallback(async (searchQ = '', pg = 0, diseaseId?: string) => {
     try {
       setError('')
-      const res = await medicineAPI.list(pg * PER_PAGE, PER_PAGE, searchQ || undefined)
+      const res = await medicineAPI.list(pg * PER_PAGE, PER_PAGE, searchQ || undefined, diseaseId)
       const data = res.data
 
       setMedicines(pg === 0 ? data : prev => [...prev, ...data])
       setTotal(res.pagination.total)
       setPage(pg)
-
-      // Build disease filter list from first full load only
-      if (pg === 0 && !searchQ) {
-        const names = Array.from(
-          new Set(
-            data.flatMap(m => m.diseaseMedicines?.map(dm => dm.disease.name) ?? [])
-          )
-        ).sort()
-        setAllDiseaseNames(names)
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load medicines')
     } finally {
@@ -286,40 +277,45 @@ export function MedicineListScreen({ navigation }: any) {
     useCallback(() => {
       setLoading(true)
       setSearch('')
-      setSelectedDisease(null)
+      setSelectedDiseaseId(null)
       loadMedicines('', 0)
+      // Independent of the medicines page — a stable, complete list for filter chips
+      diseaseAPI.list(30).then(setDiseaseOptions).catch(() => {})
     }, [loadMedicines])
   )
 
   const handleSearch = (text: string) => {
     setSearch(text)
-    setSelectedDisease(null)
     if (searchTimer.current) clearTimeout(searchTimer.current)
     searchTimer.current = setTimeout(() => {
       setLoading(true)
-      loadMedicines(text, 0)
+      loadMedicines(text, 0, selectedDiseaseId ?? undefined)
     }, 400)
   }
 
   const handleClearSearch = () => {
     setSearch('')
-    setSelectedDisease(null)
     setLoading(true)
-    loadMedicines('', 0)
+    loadMedicines('', 0, selectedDiseaseId ?? undefined)
   }
 
-  const handleDiseaseFilter = (name: string) => {
-    setSelectedDisease(prev => (prev === name ? null : name))
+  const handleDiseaseFilter = (id: string) => {
+    const next = selectedDiseaseId === id ? null : id
+    setSelectedDiseaseId(next)
+    setLoading(true)
+    loadMedicines(search, 0, next ?? undefined)
   }
 
-  // Disease filter applied client-side from the loaded set
-  const displayed = selectedDisease
-    ? medicines.filter(m =>
-        m.diseaseMedicines?.some(dm => dm.disease.name === selectedDisease)
-      )
-    : medicines
+  const clearDiseaseFilter = () => {
+    setSelectedDiseaseId(null)
+    setLoading(true)
+    loadMedicines(search, 0, undefined)
+  }
 
-  const hasMore = medicines.length < total && !selectedDisease
+  const selectedDiseaseName = diseaseOptions.find(d => d.id === selectedDiseaseId)?.name
+
+  const hasMore = medicines.length < total
+
 
   return (
     <View style={styles.root}>
@@ -380,37 +376,33 @@ export function MedicineListScreen({ navigation }: any) {
           )}
         </View>
 
-        {/* Disease filter chips — only shown when not searching */}
-        {allDiseaseNames.length > 0 && !search && (
+        {/* Disease filter chips — now composes with the text search server-side */}
+        {diseaseOptions.length > 0 && (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.chipsScroll}
             contentContainerStyle={styles.chipsContent}
           >
-            <FilterChip
-              label="All"
-              selected={selectedDisease === null}
-              onPress={() => setSelectedDisease(null)}
-            />
-            {allDiseaseNames.map(name => (
+            <FilterChip label="All" selected={selectedDiseaseId === null} onPress={clearDiseaseFilter} />
+            {diseaseOptions.map(d => (
               <FilterChip
-                key={name}
-                label={name}
-                selected={selectedDisease === name}
-                onPress={() => handleDiseaseFilter(name)}
+                key={d.id}
+                label={d.name}
+                selected={selectedDiseaseId === d.id}
+                onPress={() => handleDiseaseFilter(d.id)}
               />
             ))}
           </ScrollView>
         )}
 
         {/* Active filter label */}
-        {selectedDisease && (
+        {selectedDiseaseId && (
           <View style={styles.activeFilterRow}>
             <Text style={styles.activeFilterText}>
-              Filtered by: <Text style={styles.activeFilterName}>{selectedDisease}</Text>
+              Filtered by: <Text style={styles.activeFilterName}>{selectedDiseaseName}</Text>
             </Text>
-            <TouchableOpacity onPress={() => setSelectedDisease(null)}>
+            <TouchableOpacity onPress={clearDiseaseFilter}>
               <Text style={styles.activeFilterClear}>Clear</Text>
             </TouchableOpacity>
           </View>
@@ -429,26 +421,26 @@ export function MedicineListScreen({ navigation }: any) {
             <Text style={styles.stateDesc}>{error}</Text>
             <Button
               label="Try again"
-              onPress={() => { setLoading(true); loadMedicines('', 0) }}
+              onPress={() => { setLoading(true); loadMedicines(search, 0, selectedDiseaseId ?? undefined) }}
               variant="secondary"
               style={{ marginTop: Spacing.lg }}
             />
           </View>
-        ) : displayed.length === 0 ? (
+        ) : medicines.length === 0 ? (
           <View style={styles.centred}>
             <Text style={styles.stateIcon}>💊</Text>
             <Text style={styles.stateTitle}>No medicines found</Text>
             <Text style={styles.stateDesc}>
               {search
                 ? `No results for "${search}". Try a different search term.`
-                : selectedDisease
-                ? `No medicines linked to ${selectedDisease}.`
+                : selectedDiseaseId
+                ? `No medicines linked to ${selectedDiseaseName}.`
                 : 'The medicine database appears to be empty.'}
             </Text>
           </View>
         ) : (
           <>
-            {displayed.map(med => (
+            {medicines.map(med => (
               <MedicineCard
                 key={med.id}
                 med={med}
@@ -461,7 +453,7 @@ export function MedicineListScreen({ navigation }: any) {
             {hasMore && (
               <Button
                 label="Load more"
-                onPress={() => loadMedicines(search, page + 1)}
+                onPress={() => loadMedicines(search, page + 1, selectedDiseaseId ?? undefined)}
                 variant="secondary"
                 style={{ marginTop: Spacing.sm }}
               />
