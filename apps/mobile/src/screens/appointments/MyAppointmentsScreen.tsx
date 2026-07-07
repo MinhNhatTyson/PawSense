@@ -2,6 +2,12 @@ import React, { useState, useCallback } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, Alert, Platform } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import { appointmentAPI, type Appointment } from '../../api/appointmentAPI'
+import {
+  requestNotificationPermissions,
+  hasNotificationPermission,
+  scheduleAppointmentReminder,
+  cancelAppointmentReminder,
+} from '../../utils/notifications'
 import { Button } from '../../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
 
@@ -59,12 +65,29 @@ export function MyAppointmentsScreen({ navigation }: any) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [notifStatus, setNotifStatus] = useState<'unknown' | 'granted' | 'denied'>('unknown')
 
   const load = useCallback(async () => {
     try {
       setError('')
       const data = await appointmentAPI.listMine()
       setAppointments(data)
+
+      const granted = await hasNotificationPermission()
+      setNotifStatus(granted ? 'granted' : 'unknown')
+
+      if (granted) {
+        // Sync reminders to match the current state: schedule for confirmed
+        // upcoming appointments, cancel for anything no longer confirmed.
+        for (const a of data) {
+          const isUpcomingConfirmed = a.status === 'CONFIRMED' && new Date(a.slot.startTime) > new Date()
+          if (isUpcomingConfirmed) {
+            scheduleAppointmentReminder(a.id, a.vet.profile?.fullName || a.vet.email, a.slot.startTime).catch(() => {})
+          } else {
+            cancelAppointmentReminder(a.id).catch(() => {})
+          }
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load appointments')
     } finally {
@@ -74,14 +97,30 @@ export function MyAppointmentsScreen({ navigation }: any) {
 
   useFocusEffect(useCallback(() => { setLoading(true); load() }, [load]))
 
+  const handleEnableReminders = async () => {
+    const granted = await requestNotificationPermissions()
+    setNotifStatus(granted ? 'granted' : 'denied')
+    if (granted) {
+      load()
+      Alert.alert('Reminders enabled', "You'll get a notification 1 day before and 2 hours before each appointment.")
+    } else {
+      Alert.alert('Permission needed', 'Enable notifications in your device settings to get appointment reminders.')
+    }
+  }
+
   const handleCancel = (appt: Appointment) => {
     Alert.alert('Cancel this appointment?', 'The vet will be notified.', [
       { text: 'Keep it', style: 'cancel' },
       {
         text: 'Cancel appointment', style: 'destructive',
         onPress: async () => {
-          try { await appointmentAPI.cancel(appt.id); load() }
-          catch { Alert.alert('Error', 'Failed to cancel. Please try again.') }
+          try {
+            await appointmentAPI.cancel(appt.id)
+            await cancelAppointmentReminder(appt.id)
+            load()
+          } catch {
+            Alert.alert('Error', 'Failed to cancel. Please try again.')
+          }
         },
       },
     ])
@@ -102,7 +141,16 @@ export function MyAppointmentsScreen({ navigation }: any) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Button label="Book a new appointment" onPress={() => navigation.navigate('VetDirectory')} style={{ marginBottom: Spacing.xl } as any} />
+        <Button label="Book a new appointment" onPress={() => navigation.navigate('VetDirectory')} style={{ marginBottom: Spacing.lg } as any} />
+
+        {Platform.OS !== 'web' && notifStatus !== 'granted' && upcoming.length > 0 && (
+          <View style={styles.reminderBanner}>
+            <Text style={styles.reminderBannerText}>
+              Get notified 1 day before and 2 hours before each appointment.
+            </Text>
+            <Button label="Enable reminders" onPress={handleEnableReminders} style={{ marginTop: Spacing.sm } as any} />
+          </View>
+        )}
 
         {loading ? (
           <View style={styles.centred}><ActivityIndicator size="large" color={Colors.greenSage} /></View>
@@ -143,4 +191,6 @@ const styles = StyleSheet.create({
   centred: { alignItems: 'center', paddingVertical: Spacing['4xl'] },
   stateText: { fontSize: Typography.base, color: Colors.textMuted, textAlign: 'center' },
   sectionHeading: { fontSize: Typography.xs, fontWeight: '700', color: Colors.textLight, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: Spacing.md, marginTop: Spacing.sm },
+  reminderBanner: { backgroundColor: Colors.ivory, borderRadius: Radius.lg, padding: Spacing.lg, borderWidth: 1, borderColor: Colors.warmWhite, marginBottom: Spacing.lg },
+  reminderBannerText: { fontSize: Typography.sm, color: Colors.textBody, lineHeight: 20 },
 })

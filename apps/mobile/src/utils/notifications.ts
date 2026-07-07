@@ -106,3 +106,64 @@ export async function syncCatReminders(
 
   await setStoredIds(catId, newIds)
 }
+// ── Appointment reminders ────────────────────────────────────────────────────
+// Mirrors the cat-vaccination reminder pattern above, but keyed by appointment
+// ID and using its own storage prefix so the two reminder types never collide.
+
+const APPT_STORAGE_PREFIX = 'notif_scheduled_appt_'
+// 1 day before, and 2 hours before the appointment start time.
+const APPT_REMINDER_OFFSETS_MS = [24 * 60 * 60 * 1000, 2 * 60 * 60 * 1000]
+
+function apptStorageKey(appointmentId: string) {
+  return `${APPT_STORAGE_PREFIX}${appointmentId}`
+}
+
+export async function cancelAppointmentReminder(appointmentId: string) {
+  try {
+    const raw = await storage.getItem(apptStorageKey(appointmentId))
+    const ids: string[] = raw ? JSON.parse(raw) : []
+    for (const id of ids) {
+      try { await Notifications.cancelScheduledNotificationAsync(id) } catch { /* already gone */ }
+    }
+  } catch { /* ignore */ }
+  await storage.setItem(apptStorageKey(appointmentId), JSON.stringify([]))
+}
+
+/**
+ * Schedules local reminders for a single confirmed appointment. Safe to call
+ * whenever the appointment is booked or the appointment list is refreshed —
+ * it cancels any previously scheduled reminders for this appointment first,
+ * so it never double-schedules on repeated calls.
+ */
+export async function scheduleAppointmentReminder(
+  appointmentId: string,
+  vetName: string,
+  startTimeIso: string
+): Promise<void> {
+  if (Platform.OS === 'web') return
+
+  await cancelAppointmentReminder(appointmentId)
+
+  const slotStart = new Date(startTimeIso)
+  const newIds: string[] = []
+
+  for (const offsetMs of APPT_REMINDER_OFFSETS_MS) {
+    const trigger = new Date(slotStart.getTime() - offsetMs)
+    if (trigger.getTime() <= Date.now()) continue
+
+    const isDayBefore = offsetMs >= 24 * 60 * 60 * 1000
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: isDayBefore
+          ? `Appointment with ${vetName} tomorrow`
+          : `Appointment with ${vetName} in 2 hours`,
+        body: `Scheduled for ${slotStart.toLocaleString()}. Open PawSense for details.`,
+        data: { appointmentId },
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: trigger },
+    })
+    newIds.push(id)
+  }
+
+  await storage.setItem(apptStorageKey(appointmentId), JSON.stringify(newIds))
+}
