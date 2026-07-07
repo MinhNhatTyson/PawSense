@@ -20,6 +20,9 @@ import { FoodRecommendationScreen } from '../screens/nutrition/FoodRecommendatio
 import { EmergencyGuideListScreen } from '../screens/emergency/EmergencyGuideListScreen'
 import { EmergencyGuideDetailScreen } from '../screens/emergency/EmergencyGuideDetailScreen'
 import { HealthTrackingScreen } from '../screens/cats/HealthTrackingScreen'
+import { VetDirectoryScreen } from '../screens/appointments/VetDirectoryScreen'
+import { VetAvailabilityScreen } from '../screens/appointments/VetAvailabilityScreen'
+import { MyAppointmentsScreen } from '../screens/appointments/MyAppointmentsScreen'
 
 import { Colors, Typography } from '../theme'
 
@@ -137,6 +140,9 @@ function AppStack() {
         component={FoodRecommendationScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen name="VetDirectory" component={VetDirectoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="VetAvailability" component={VetAvailabilityScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   )
 }

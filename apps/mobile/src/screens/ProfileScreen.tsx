@@ -154,6 +154,13 @@ export function ProfileScreen({ navigation }: any) {
         />
 
         <ActionRow
+          emoji="📅"
+          title="Appointments"
+          desc="Book a vet visit and manage your bookings"
+          onPress={() => navigation.navigate('MyAppointments')}
+        />
+
+        <ActionRow
           emoji="🩺"
           title="AI Symptom Checker"
           desc="Describe symptoms and get an AI-assisted risk assessment"

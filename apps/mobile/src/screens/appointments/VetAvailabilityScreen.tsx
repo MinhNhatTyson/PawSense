@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Status
 import { useFocusEffect } from '@react-navigation/native'
 import { appointmentAPI, type VetAvailabilitySlot } from '../../api/appointmentAPI'
 import { catProfileAPI, type CatProfile } from '../../api/catProfileAPI'
+import { scheduleAppointmentReminder } from '../../utils/notifications'
 import { Button } from '../../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
 
@@ -49,11 +50,16 @@ export function VetAvailabilityScreen({ navigation, route }: any) {
     if (!selectedSlot) return
     setBooking(true)
     try {
-      await appointmentAPI.book({
+      const appointment = await appointmentAPI.book({
         slotId: selectedSlot.id,
         catProfileId: selectedCatId || undefined,
         reason: reason.trim() || undefined,
       })
+
+      // Schedule local reminders (24h + 2h before) right away so the owner
+      // doesn't have to revisit the appointments list first for it to sync.
+      scheduleAppointmentReminder(appointment.id, vetName, appointment.slot.startTime).catch(() => {})
+
       Alert.alert('Appointment booked', 'Your appointment has been confirmed.', [
         { text: 'View my appointments', onPress: () => navigation.replace('MyAppointments') },
       ])
