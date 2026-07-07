@@ -286,15 +286,17 @@ export function FoodRecommendationScreen({ navigation }: any) {
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null)
   const [selectedCatDetail, setSelectedCatDetail] = useState<CatProfile | null>(null)
 
-  const [allBreeds, setAllBreeds] = useState<CatBreedSummary[]>([])
+  const [breedOptions, setBreedOptions] = useState<CatBreedSummary[]>([])
   const [breedSearch, setBreedSearch] = useState('')
+  const breedSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [manualBreedId, setManualBreedId] = useState<string | null>(null)
   const [manualAgeYears, setManualAgeYears] = useState('')
   const [manualAgeMonths, setManualAgeMonths] = useState('')
   const [manualWeight, setManualWeight] = useState('')
 
-  const [allDiseases, setAllDiseases] = useState<DiseaseSummary[]>([])
+  const [diseaseOptions, setDiseaseOptions] = useState<DiseaseSummary[]>([])
   const [diseaseSearch, setDiseaseSearch] = useState('')
+  const diseaseSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [adHocDiseaseIds, setAdHocDiseaseIds] = useState<string[]>([])
   const [healthNotes, setHealthNotes] = useState('')
 
@@ -306,8 +308,8 @@ export function FoodRecommendationScreen({ navigation }: any) {
 
   useEffect(() => {
     catProfileAPI.list().then(setCats).catch(() => {})
-    catBreedAPI.list().then(setAllBreeds).catch(() => {})
-    diseaseAPI.list(100).then(setAllDiseases).catch(() => {})
+    catBreedAPI.list(30).then(setBreedOptions).catch(() => {})
+    diseaseAPI.list(30).then(setDiseaseOptions).catch(() => {})
   }, [])
 
   // Fetch full detail (including diagnoses) whenever a cat is picked
@@ -332,13 +334,31 @@ export function FoodRecommendationScreen({ navigation }: any) {
     setAdHocDiseaseIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
-  const filteredDiseases = diseaseSearch
-    ? allDiseases.filter((d) => d.name.toLowerCase().includes(diseaseSearch.toLowerCase()))
-    : allDiseases
+  const handleDiseaseSearch = (text: string) => {
+    setDiseaseSearch(text)
+    if (diseaseSearchTimer.current) clearTimeout(diseaseSearchTimer.current)
+    diseaseSearchTimer.current = setTimeout(async () => {
+      try {
+        const list = text.trim() ? await diseaseAPI.search(text.trim()) : await diseaseAPI.list(30)
+        setDiseaseOptions(list)
+      } catch {
+        // keep previous options on error
+      }
+    }, 350)
+  }
 
-  const filteredBreeds = breedSearch
-    ? allBreeds.filter((b) => b.name.toLowerCase().includes(breedSearch.toLowerCase()))
-    : allBreeds
+  const handleBreedSearch = (text: string) => {
+    setBreedSearch(text)
+    if (breedSearchTimer.current) clearTimeout(breedSearchTimer.current)
+    breedSearchTimer.current = setTimeout(async () => {
+      try {
+        const list = text.trim() ? await catBreedAPI.search(text.trim()) : await catBreedAPI.list(30)
+        setBreedOptions(list)
+      } catch {
+        // keep previous options on error
+      }
+    }, 350)
+  }
 
   async function handleSubmit() {
     setError('')
@@ -471,12 +491,12 @@ export function FoodRecommendationScreen({ navigation }: any) {
                   <Text style={styles.miniLabel}>Breed (optional)</Text>
                   <TextInput
                     value={breedSearch}
-                    onChangeText={setBreedSearch}
+                    onChangeText={handleBreedSearch}
                     placeholder="Search breeds…"
                     style={{ marginBottom: Spacing.sm }}
                   />
                   <View style={styles.chipsWrap}>
-                    {filteredBreeds.slice(0, 20).map((b) => (
+                    {breedOptions.map((b) => (
                       <Chip
                         key={b.id}
                         label={b.name}
@@ -484,6 +504,9 @@ export function FoodRecommendationScreen({ navigation }: any) {
                         onPress={() => setManualBreedId((prev) => (prev === b.id ? null : b.id))}
                       />
                     ))}
+                    {breedOptions.length === 0 && breedSearch.trim() !== '' && (
+                      <Text style={styles.noMatchText}>No breeds match "{breedSearch}".</Text>
+                    )}
                   </View>
                 </View>
                 <View style={styles.row}>
@@ -513,15 +536,15 @@ export function FoodRecommendationScreen({ navigation }: any) {
               )}
               <TextInput
                 value={diseaseSearch}
-                onChangeText={setDiseaseSearch}
+                onChangeText={handleDiseaseSearch}
                 placeholder="Search conditions… e.g. kidney"
                 style={{ marginBottom: Spacing.md, marginTop: Spacing.sm }}
               />
               <View style={styles.chipsWrap}>
-                {filteredDiseases.slice(0, 30).map((d) => (
+                {diseaseOptions.map((d) => (
                   <Chip key={d.id} label={d.name} selected={adHocDiseaseIds.includes(d.id)} onPress={() => toggleDisease(d.id)} />
                 ))}
-                {filteredDiseases.length === 0 && (
+                {diseaseOptions.length === 0 && (
                   <Text style={styles.noMatchText}>No matching conditions found.</Text>
                 )}
               </View>

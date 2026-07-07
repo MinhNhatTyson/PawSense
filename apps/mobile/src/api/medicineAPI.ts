@@ -43,10 +43,11 @@ async function getHeaders(): Promise<Record<string, string>> {
 }
 
 export const medicineAPI = {
-  async list(skip = 0, take = 20, search?: string): Promise<MedicineListResponse> {
+  async list(skip = 0, take = 20, search?: string, diseaseId?: string): Promise<MedicineListResponse> {
     const headers = await getHeaders()
     const params = new URLSearchParams({ skip: String(skip), take: String(take) })
     if (search) params.set('search', search)
+    if (diseaseId) params.set('diseaseId', diseaseId)
     const res = await fetch(`${API_URL}/medicines?${params}`, { headers })
     if (!res.ok) throw new Error('Failed to load medicines')
     return res.json()

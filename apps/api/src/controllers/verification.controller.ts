@@ -93,6 +93,8 @@ export async function approveMedicine(req: AuthRequest, res: Response) {
     },
   })
 
+  await notifyApproval(updated.createdById, 'MEDICINE', updated.id, updated.name)
+
   res.json(updated)
 }
 
@@ -115,6 +117,8 @@ export async function approveEmergencyGuide(req: AuthRequest, res: Response) {
     where: { id },
     data: { status: 'APPROVED', approvedById: approverId, approvedAt: new Date() },
   })
+
+  await notifyApproval(updated.createdById, 'EMERGENCY_GUIDE', updated.id, updated.title)
 
   res.json(updated)
 }
@@ -165,7 +169,7 @@ export async function raiseFlag(req: AuthRequest, res: Response) {
     data: { contentType, contentId, reason, raisedById },
     include: { raisedBy: { select: { id: true, email: true, profile: { select: { fullName: true } } } } },
   })
-
+  
   res.status(201).json(flag)
 }
 

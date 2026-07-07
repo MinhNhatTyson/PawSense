@@ -466,8 +466,11 @@ export function CatFormScreen({ navigation, route }: any) {
     cat?.weightKg != null ? String(cat.weightKg) : ''
   )
   const [breedId, setBreedId] = useState<string | null>(cat?.breedId ?? null)
-  const [allBreeds, setAllBreeds] = useState<CatBreedSummary[]>([])
+  const [breedOptions, setBreedOptions] = useState<CatBreedSummary[]>(
+    cat?.breed ? [cat.breed] : []
+  )
   const [breedSearch, setBreedSearch] = useState('')
+  const breedSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [color, setColor] = useState(cat?.color ?? '')
   const [notes, setNotes] = useState(cat?.notes ?? '')
 
@@ -596,9 +599,32 @@ export function CatFormScreen({ navigation, route }: any) {
   }
 
   const totalImages = existingImageUrls.length + newImageUris.length
+
+  // Keeps the cat's existing breed visible/selected even if it falls outside the default page
+  const mergeSelectedBreed = (list: CatBreedSummary[]): CatBreedSummary[] => {
+    if (cat?.breed && breedId === cat.breed.id && !list.some(b => b.id === cat.breed!.id)) {
+      return [cat.breed, ...list]
+    }
+    return list
+  }
+
+  const handleBreedSearch = (text: string) => {
+    setBreedSearch(text)
+    if (breedSearchTimer.current) clearTimeout(breedSearchTimer.current)
+    breedSearchTimer.current = setTimeout(async () => {
+      try {
+        const list = text.trim() ? await catBreedAPI.search(text.trim()) : await catBreedAPI.list(30)
+        setBreedOptions(mergeSelectedBreed(list))
+      } catch {
+        // keep previous options on error
+      }
+    }, 350)
+  }
+
   React.useEffect(() => {
-    catBreedAPI.list().then(setAllBreeds).catch(() => {})
+    catBreedAPI.list(30).then(list => setBreedOptions(mergeSelectedBreed(list))).catch(() => {})
   }, [])
+
   return (
     <KeyboardAvoidingView
       style={styles.root}
@@ -690,15 +716,12 @@ export function CatFormScreen({ navigation, route }: any) {
           </View>
           <TextInput
             value={breedSearch}
-            onChangeText={setBreedSearch}
+            onChangeText={handleBreedSearch}
             placeholder="Search breeds…"
             editable={!loading}
           />
           <View style={[styles.genderRow, { flexWrap: 'wrap', marginTop: Spacing.sm }]}>
-            {allBreeds
-              .filter(b => b.name.toLowerCase().includes(breedSearch.toLowerCase()))
-              .slice(0, 20)
-              .map(b => (
+            {breedOptions.map(b => (
                 <TouchableOpacity
                   key={b.id}
                   onPress={() => !loading && setBreedId(prev => (prev === b.id ? null : b.id))}
@@ -722,6 +745,11 @@ export function CatFormScreen({ navigation, route }: any) {
                   </Text>
                 </TouchableOpacity>
               ))}
+              {breedOptions.length === 0 && breedSearch.trim() !== '' && (
+                <Text style={{ fontSize: Typography.sm, color: Colors.textLight, fontStyle: 'italic', paddingVertical: Spacing.sm }}>
+                  No breeds match "{breedSearch}".
+                </Text>
+              )}
           </View>
 
           <Field label="Coat colour" optional>
