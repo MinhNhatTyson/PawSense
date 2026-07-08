@@ -124,3 +124,17 @@
   .ap-shell { grid-template-columns: 1fr; }
   .ap-form-row { grid-template-columns: 1fr; }
 }
+.ap-slot-edit-row { display: flex; align-items: center; gap: 6px; }
+.ap-slot-time-input {
+  font-size: 12px; padding: 3px 6px; border-radius: 6px;
+  border: 1px solid var(--warm-white); background: var(--ivory); color: var(--text-primary);
+}
+.ap-slot-time-sep { color: var(--text-muted); font-size: 12px; }
+.ap-slot-edit, .ap-slot-save {
+  padding: 3px 10px; font-size: 11px; font-weight: 600; border-radius: 100px;
+  border: 1px solid var(--green-sage); background: var(--green-pale); color: var(--green-forest); cursor: pointer;
+}
+.ap-slot-cancel-edit {
+  padding: 3px 10px; font-size: 11px; font-weight: 600; border-radius: 100px;
+  border: 1px solid var(--warm-white); background: var(--ivory); color: var(--text-muted); cursor: pointer;
+}

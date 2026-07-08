@@ -53,6 +53,9 @@ export const vetAvailabilityAPI = {
   unblockSlot: (id: string) =>
     apiClient.patch<VetAvailabilitySlot>(`/vet-availability/${id}/unblock`), // ← ADD
 
+  editSlot: (id: string, startTime: string, endTime: string) =>
+  apiClient.patch<VetAvailabilitySlot>(`/vet-availability/${id}`, { startTime, endTime }),  // ← ADD
+
   deleteSlot: (id: string) => apiClient.delete(`/vet-availability/${id}`),
 }
 

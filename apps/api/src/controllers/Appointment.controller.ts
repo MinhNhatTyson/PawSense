@@ -1,6 +1,7 @@
 import type { Response } from 'express'
 import { prisma } from '../lib/prisma.js'
 import type { AuthRequest } from '../middleware/auth.middleware.js'
+import { notify } from '../utils/notify.js'
 
 const appointmentInclude = {
   slot: true,
@@ -68,6 +69,19 @@ export async function bookAppointment(req: AuthRequest, res: Response) {
         },
         include: appointmentInclude,
       })
+    })
+    
+    const ownerName = appointment.owner?.profile?.fullName || appointment.owner?.email || 'A pet owner'
+    const apptDate = appointment.slot.startTime.toLocaleString('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    })
+
+    await notify({
+      userId: appointment.vetId,
+      type: 'APPOINTMENT_BOOKED',
+      title: 'New appointment booked',
+      message: `${ownerName} booked an appointment on ${apptDate}`,
+      link: `/appointments/${appointment.id}`,
     })
 
     res.status(201).json(appointment)
@@ -138,6 +152,20 @@ export async function cancelAppointment(req: AuthRequest, res: Response) {
       data: { isBooked: false },
     }),
   ])
+
+  const cancelledByVet = req.userId === appointment.vetId
+  const recipientId = cancelledByVet ? appointment.ownerId : appointment.vetId
+  const apptDate = appointment.slot.startTime.toLocaleString('en-US', {
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  })
+
+  await notify({
+    userId: recipientId,
+    type: 'APPOINTMENT_CANCELLED',
+    title: 'Appointment cancelled',
+    message: `The appointment on ${apptDate} was cancelled${cancelledByVet ? ' by the vet' : ' by the pet owner'}`,
+    link: `/appointments/${appointment.id}`,
+  })
 
   const full = await prisma.appointment.findUnique({ where: { id }, include: appointmentInclude })
   res.json(full)

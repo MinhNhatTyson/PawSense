@@ -208,3 +208,57 @@ export async function unblockSlot(req: AuthRequest, res: Response) {
   })
   res.json(updated)
 }
+
+// ── EDIT slot (VET only) — change start/end time in place ──────────────────
+export async function editSlot(req: AuthRequest, res: Response) {
+  const vetId = req.userId!
+  const { id } = req.params
+  const { startTime, endTime } = req.body
+
+  if (!startTime || !endTime) {
+    res.status(400).json({ error: 'startTime and endTime are required' })
+    return
+  }
+
+  const start = new Date(startTime)
+  const end = new Date(endTime)
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) {
+    res.status(400).json({ error: 'Invalid time range' })
+    return
+  }
+
+  const slot = await prisma.vetAvailabilitySlot.findUnique({ where: { id } })
+  if (!slot || slot.vetId !== vetId) {
+    res.status(404).json({ error: 'Slot not found' })
+    return
+  }
+  if (slot.isBooked) {
+    res.status(409).json({ error: 'Cannot edit a booked slot — cancel the appointment first' })
+    return
+  }
+  if (slot.blocked) {
+    res.status(409).json({ error: 'Cannot edit a blocked slot — unblock it first' })
+    return
+  }
+
+  // Overlap check against this vet's other slots (excluding self)
+  const overlap = await prisma.vetAvailabilitySlot.findFirst({
+    where: {
+      vetId,
+      id: { not: id },
+      startTime: { lt: end },
+      endTime: { gt: start },
+    },
+  })
+  if (overlap) {
+    res.status(409).json({ error: 'This time overlaps an existing slot' })
+    return
+  }
+
+  const updated = await prisma.vetAvailabilitySlot.update({
+    where: { id },
+    data: { startTime: start, endTime: end },
+  })
+  res.json(updated)
+}

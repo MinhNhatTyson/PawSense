@@ -134,6 +134,39 @@ export default function AppointmentManagement() {
     }
   }
 
+  const [editingSlotId, setEditingSlotId] = useState<string | null>(null)
+  const [editStart, setEditStart] = useState('')
+  const [editEnd, setEditEnd] = useState('')
+
+  const startEditing = (slot: VetAvailabilitySlot) => {
+    setEditingSlotId(slot.id)
+    setEditStart(toLocalTimeInputValue(new Date(slot.startTime)))
+    setEditEnd(toLocalTimeInputValue(new Date(slot.endTime)))
+  }
+
+  const cancelEditing = () => setEditingSlotId(null)
+
+  const saveEdit = async (slot: VetAvailabilitySlot) => {
+    try {
+      const day = new Date(slot.startTime)
+      const [sh, sm] = editStart.split(':').map(Number)
+      const [eh, em] = editEnd.split(':').map(Number)
+      const newStart = new Date(day); newStart.setHours(sh, sm, 0, 0)
+      const newEnd = new Date(day); newEnd.setHours(eh, em, 0, 0)
+
+      await vetAvailabilityAPI.editSlot(slot.id, newStart.toISOString(), newEnd.toISOString())
+      setEditingSlotId(null)
+      loadSlots()
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update slot')
+    }
+  }
+
+  // helper: Date -> "HH:mm" for <input type="time">
+  function toLocalTimeInputValue(d: Date) {
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  }
+
   const handleCancelAppointment = async (id: string) => {
     const reason = window.prompt('Reason for cancelling (optional):') || undefined
     try {
@@ -280,6 +313,14 @@ export default function AppointmentManagement() {
                               >
                                 Unblock
                               </button>
+                            </div>
+                          ) : editingSlotId === slot.id ? (
+                            <div className="ap-slot-edit-row">
+                              <input type="time" value={editStart} onChange={e => setEditStart(e.target.value)} className="ap-slot-time-input" />
+                              <span className="ap-slot-time-sep">–</span>
+                              <input type="time" value={editEnd} onChange={e => setEditEnd(e.target.value)} className="ap-slot-time-input" />
+                              <button className="ap-slot-save" onClick={() => saveEdit(slot)}>Save</button>
+                              <button className="ap-slot-cancel-edit" onClick={cancelEditing}>Cancel</button>
                             </div>
                           ) : (
                             <div className="ap-slot-booked-info">
