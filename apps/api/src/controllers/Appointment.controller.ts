@@ -201,5 +201,14 @@ export async function completeAppointment(req: AuthRequest, res: Response) {
     })
   })
 
+  await notify({
+    userId: updated.ownerId,
+    type: 'APPOINTMENT_COMPLETED',
+    title: 'Appointment completed',
+    message: `Your appointment with ${req.user?.profile?.fullName || 'your vet'} has been marked as completed`,
+    contentType: 'APPOINTMENT',
+    contentId: updated.id,
+  })
+
   res.json(updated)
 }
