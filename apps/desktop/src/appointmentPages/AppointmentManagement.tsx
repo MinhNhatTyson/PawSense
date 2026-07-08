@@ -116,6 +116,24 @@ export default function AppointmentManagement() {
     }
   }
 
+  const handleBlockSlot = async (id: string) => {
+    try {
+      await vetAvailabilityAPI.blockSlot(id)
+      loadSlots()
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to block slot')
+    }
+  }
+
+  const handleUnblockSlot = async (id: string) => {
+    try {
+      await vetAvailabilityAPI.unblockSlot(id)
+      loadSlots()
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to unblock slot')
+    }
+  }
+
   const handleCancelAppointment = async (id: string) => {
     const reason = window.prompt('Reason for cancelling (optional):') || undefined
     try {
@@ -236,10 +254,14 @@ export default function AppointmentManagement() {
                     <div className="ap-day-heading">{formatDateHeading(new Date(dateKey))}</div>
                     <div className="ap-slot-grid">
                       {daySlots.map(slot => (
-                        <div key={slot.id} className={`ap-slot-card${slot.isBooked ? ' booked' : ''}`}>
+                        <div
+                          key={slot.id}
+                          className={`ap-slot-card${slot.isBooked ? ' booked' : ''}${slot.blocked ? ' blocked' : ''}`}
+                        >
                           <div className="ap-slot-time">
                             {formatTime(new Date(slot.startTime))} – {formatTime(new Date(slot.endTime))}
                           </div>
+
                           {slot.isBooked && slot.appointment ? (
                             <div className="ap-slot-booked-info">
                               <span className="ap-slot-badge booked">Booked</span>
@@ -248,14 +270,34 @@ export default function AppointmentManagement() {
                                 {slot.appointment.catProfile && ` · ${slot.appointment.catProfile.name}`}
                               </span>
                             </div>
+                          ) : slot.blocked ? (
+                            <div className="ap-slot-booked-info">
+                              <span className="ap-slot-badge blocked">Blocked</span>
+                              <button
+                                className="ap-slot-unblock"
+                                onClick={() => handleUnblockSlot(slot.id)}
+                                title="Make available again"
+                              >
+                                Unblock
+                              </button>
+                            </div>
                           ) : (
                             <div className="ap-slot-booked-info">
                               <span className="ap-slot-badge open">Open</span>
-                              <button className="ap-slot-remove" onClick={() => handleDeleteSlot(slot.id)} title="Remove slot">
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                </svg>
-                              </button>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                <button
+                                  className="ap-slot-block"
+                                  onClick={() => handleBlockSlot(slot.id)}
+                                  title="Mark unavailable"
+                                >
+                                  Block
+                                </button>
+                                <button className="ap-slot-remove" onClick={() => handleDeleteSlot(slot.id)} title="Remove slot">
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                    <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                  </svg>
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>

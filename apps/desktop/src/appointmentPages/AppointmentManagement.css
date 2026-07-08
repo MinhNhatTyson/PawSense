@@ -59,6 +59,24 @@
   transition: background 0.15s, color 0.15s; flex-shrink: 0;
 }
 .ap-slot-remove:hover { background: var(--error-bg); color: var(--error); }
+.ap-slot-card.blocked { background: #f4f1ec; border-color: rgba(139,99,64,0.3); }
+.ap-slot-badge.blocked { background: rgba(139,99,64,0.15); color: var(--gold-deep); }
+
+.ap-slot-block, .ap-slot-unblock {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 100px;
+  border: 1px solid var(--warm-white);
+  background: var(--ivory);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ap-slot-block:hover { background: rgba(139,99,64,0.12); color: var(--gold-deep); border-color: rgba(139,99,64,0.3); }
+.ap-slot-unblock:hover { background: var(--green-pale); color: var(--green-forest); border-color: var(--green-sage); }
 
 .ap-toolbar { margin-bottom: 20px; }
 .ap-filter-select {

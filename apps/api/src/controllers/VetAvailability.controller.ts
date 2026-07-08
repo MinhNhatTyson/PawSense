@@ -161,10 +161,50 @@ export async function listPublicSlots(req: AuthRequest, res: Response) {
 
   const now = new Date()
   const slots = await prisma.vetAvailabilitySlot.findMany({
-    where: { vetId, isBooked: false, startTime: { gte: now } },
+    where: { vetId, isBooked: false, blocked: false, startTime: { gte: now } },
     orderBy: { startTime: 'asc' },
     take: 200,
   })
 
   res.json(slots)
+}
+
+// ── BLOCK slot (VET only) — mark unavailable without deleting ──────────────
+export async function blockSlot(req: AuthRequest, res: Response) {
+  const vetId = req.userId!
+  const { id } = req.params
+
+  const slot = await prisma.vetAvailabilitySlot.findUnique({ where: { id } })
+  if (!slot || slot.vetId !== vetId) {
+    res.status(404).json({ error: 'Slot not found' })
+    return
+  }
+  if (slot.isBooked) {
+    res.status(409).json({ error: 'Cannot block a booked slot — cancel the appointment first' })
+    return
+  }
+
+  const updated = await prisma.vetAvailabilitySlot.update({
+    where: { id },
+    data: { blocked: true },
+  })
+  res.json(updated)
+}
+
+// ── UNBLOCK slot (VET only) ─────────────────────────────────────────────────
+export async function unblockSlot(req: AuthRequest, res: Response) {
+  const vetId = req.userId!
+  const { id } = req.params
+
+  const slot = await prisma.vetAvailabilitySlot.findUnique({ where: { id } })
+  if (!slot || slot.vetId !== vetId) {
+    res.status(404).json({ error: 'Slot not found' })
+    return
+  }
+
+  const updated = await prisma.vetAvailabilitySlot.update({
+    where: { id },
+    data: { blocked: false },
+  })
+  res.json(updated)
 }
