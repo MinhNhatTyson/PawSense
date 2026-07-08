@@ -437,6 +437,9 @@ model Notification {
 enum NotificationType {
   CONTENT_APPROVED
   CONTENT_FLAGGED
+  APPOINTMENT_BOOKED       // ← ADD
+  APPOINTMENT_CANCELLED    // ← ADD
+  APPOINTMENT_COMPLETED 
 }
 
 model VetAvailabilitySlot {
