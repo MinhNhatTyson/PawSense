@@ -16,6 +16,7 @@ export interface VetAvailabilitySlot {
   startTime: string
   endTime: string
   isBooked: boolean
+  blocked: boolean  
   appointment?: {
     id: string
     reason?: string
@@ -45,6 +46,12 @@ export const vetAvailabilityAPI = {
 
   listMine: (from?: string) =>
     apiClient.get<VetAvailabilitySlot[]>('/vet-availability/mine', { params: { from } }),
+
+  blockSlot: (id: string) =>
+    apiClient.patch<VetAvailabilitySlot>(`/vet-availability/${id}/block`),   // ← ADD
+
+  unblockSlot: (id: string) =>
+    apiClient.patch<VetAvailabilitySlot>(`/vet-availability/${id}/unblock`), // ← ADD
 
   deleteSlot: (id: string) => apiClient.delete(`/vet-availability/${id}`),
 }

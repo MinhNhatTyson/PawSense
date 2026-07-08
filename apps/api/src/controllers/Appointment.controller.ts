@@ -40,6 +40,7 @@ export async function bookAppointment(req: AuthRequest, res: Response) {
         where: {
           id: slotId,
           isBooked: false,
+          blocked: false,          
           startTime: { gte: now },
         },
         data: { isBooked: true },
@@ -49,6 +50,7 @@ export async function bookAppointment(req: AuthRequest, res: Response) {
         const slot = await tx.vetAvailabilitySlot.findUnique({ where: { id: slotId } })
         if (!slot) throw new Error('SLOT_NOT_FOUND')
         if (slot.isBooked) throw new Error('SLOT_TAKEN')
+        if (slot.blocked) throw new Error('SLOT_BLOCKED')  
         if (slot.startTime < now) throw new Error('SLOT_PAST')
         throw new Error('SLOT_NOT_AVAILABLE')
       }
@@ -74,6 +76,7 @@ export async function bookAppointment(req: AuthRequest, res: Response) {
     if (err.message === 'SLOT_TAKEN') { res.status(409).json({ error: 'This slot has just been booked by someone else' }); return }
     if (err.message === 'SLOT_PAST') { res.status(400).json({ error: 'This slot is no longer available' }); return }
     if (err.message === 'SLOT_NOT_AVAILABLE') { res.status(409).json({ error: 'This slot is no longer available' }); return }
+    if (err.message === 'SLOT_BLOCKED') { res.status(409).json({ error: 'This slot is not available for booking' }); return }
     throw err
   }
 }

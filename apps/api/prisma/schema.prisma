@@ -446,6 +446,7 @@ model VetAvailabilitySlot {
   startTime   DateTime
   endTime     DateTime
   isBooked    Boolean      @default(false)
+  blocked     Boolean      @default(false)  
   appointment Appointment?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
