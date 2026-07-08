@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { notificationAPI, type Notification } from '../notificationPages/notificationAPI'
+import { useNavigate } from 'react-router-dom'
 import './NotificationBell.css'
 
 const POLL_INTERVAL = 30000
 
 export function NotificationBell() {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -40,10 +42,15 @@ export function NotificationBell() {
   }
 
   const handleNotificationClick = async (n: Notification) => {
-    if (n.read) return
-    await notificationAPI.markRead(n.id)
-    setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))
-    setUnreadCount(c => Math.max(0, c - 1))
+    if (!n.read) {
+      await notificationAPI.markRead(n.id)
+      setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))
+      setUnreadCount(c => Math.max(0, c - 1))
+    }
+    if (n.contentType === 'APPOINTMENT') {   
+      setOpen(false)
+      navigate('/appointments')
+    }
   }
 
   return (

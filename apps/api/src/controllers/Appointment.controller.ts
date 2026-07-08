@@ -81,7 +81,8 @@ export async function bookAppointment(req: AuthRequest, res: Response) {
       type: 'APPOINTMENT_BOOKED',
       title: 'New appointment booked',
       message: `${ownerName} booked an appointment on ${apptDate}`,
-      link: `/appointments/${appointment.id}`,
+      contentType: 'APPOINTMENT',
+      contentId: appointment.id,
     })
 
     res.status(201).json(appointment)
@@ -164,7 +165,8 @@ export async function cancelAppointment(req: AuthRequest, res: Response) {
     type: 'APPOINTMENT_CANCELLED',
     title: 'Appointment cancelled',
     message: `The appointment on ${apptDate} was cancelled${cancelledByVet ? ' by the vet' : ' by the pet owner'}`,
-    link: `/appointments/${appointment.id}`,
+    contentType: 'APPOINTMENT',
+    contentId: appointment.id,
   })
 
   const full = await prisma.appointment.findUnique({ where: { id }, include: appointmentInclude })

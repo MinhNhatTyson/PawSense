@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma.js' // ← adjust import path to match your actual prisma client location
+import { prisma } from '../lib/prisma.js'
 
 type NotificationType =
   | 'CONTENT_APPROVED'
@@ -7,12 +7,15 @@ type NotificationType =
   | 'APPOINTMENT_CANCELLED'
   | 'APPOINTMENT_COMPLETED'
 
+type ContentType = 'DISEASE' | 'MEDICINE' | 'EMERGENCY_GUIDE' | 'APPOINTMENT'
+
 interface NotifyInput {
   userId: string
   type: NotificationType
   title: string
   message: string
-  link?: string
+  contentType?: ContentType
+  contentId?: string
 }
 
 // Best-effort: a failed notification should never fail the parent transaction.
@@ -24,7 +27,8 @@ export async function notify(input: NotifyInput) {
         type: input.type as any,
         title: input.title,
         message: input.message,
-        link: input.link,
+        contentType: input.contentType as any,
+        contentId: input.contentId,
       },
     })
   } catch (err) {

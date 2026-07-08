@@ -12,10 +12,10 @@ apiClient.interceptors.request.use((config) => {
 
 export interface Notification {
   id: string
-  type: 'CONTENT_APPROVED' | 'CONTENT_FLAGGED'
+  type: 'CONTENT_APPROVED' | 'CONTENT_FLAGGED' | 'APPOINTMENT_BOOKED' | 'APPOINTMENT_CANCELLED' | 'APPOINTMENT_COMPLETED'  // ← MODIFIED
   title: string
   message: string
-  contentType?: 'DISEASE' | 'MEDICINE' | 'EMERGENCY_GUIDE'
+  contentType?: 'DISEASE' | 'MEDICINE' | 'EMERGENCY_GUIDE' | 'APPOINTMENT'  // ← MODIFIED
   contentId?: string
   read: boolean
   createdAt: string
