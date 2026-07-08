@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   View,
   Text,
@@ -12,6 +12,13 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { Card, DetailRow } from '../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../theme'
+import { notificationAPI } from '../api/notificationAPI'
+
+const [unreadNotifCount, setUnreadNotifCount] = useState(0)   // ← ADD
+
+React.useEffect(() => {   // ← ADD
+  notificationAPI.list(true, 0, 1).then(res => setUnreadNotifCount(res.unreadCount)).catch(() => {})
+}, [])
 
 export function ProfileScreen({ navigation }: any) {
   const { user, logout, isLoading } = useAuth()
@@ -144,6 +151,13 @@ export function ProfileScreen({ navigation }: any) {
           title="Edit profile"
           desc="Update your name, phone, and address"
           onPress={() => navigation.navigate('EditProfile')}
+        />
+
+        <ActionRow
+          emoji="🔔"
+          title="Notifications"
+          desc={unreadNotifCount > 0 ? `${unreadNotifCount} unread` : 'Appointment updates and alerts'}
+          onPress={() => navigation.navigate('Notifications')}
         />
 
         <ActionRow

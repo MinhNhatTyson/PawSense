@@ -23,6 +23,7 @@ import { HealthTrackingScreen } from '../screens/cats/HealthTrackingScreen'
 import { VetDirectoryScreen } from '../screens/appointments/VetDirectoryScreen'
 import { VetAvailabilityScreen } from '../screens/appointments/VetAvailabilityScreen'
 import { MyAppointmentsScreen } from '../screens/appointments/MyAppointmentsScreen'
+import { NotificationsScreen } from '../screens/NotificationsScreen'   
 
 import { Colors, Typography } from '../theme'
 
@@ -143,6 +144,11 @@ function AppStack() {
       <Stack.Screen name="VetDirectory" component={VetDirectoryScreen} options={{ headerShown: false }} />
       <Stack.Screen name="VetAvailability" component={VetAvailabilityScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   )
 }
