@@ -194,6 +194,7 @@ enum FlagContentType {
   DISEASE
   MEDICINE
   EMERGENCY_GUIDE
+  APPOINTMENT        
 }
 
 enum FlagStatus {
