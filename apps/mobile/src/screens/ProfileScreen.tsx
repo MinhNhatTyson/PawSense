@@ -14,13 +14,13 @@ import { Card, DetailRow } from '../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../theme'
 import { notificationAPI } from '../api/notificationAPI'
 
-const [unreadNotifCount, setUnreadNotifCount] = useState(0)   // ← ADD
-
-React.useEffect(() => {   // ← ADD
-  notificationAPI.list(true, 0, 1).then(res => setUnreadNotifCount(res.unreadCount)).catch(() => {})
-}, [])
-
 export function ProfileScreen({ navigation }: any) {
+  
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0)   // ← ADD
+
+  React.useEffect(() => {   // ← ADD
+    notificationAPI.list(true, 0, 1).then(res => setUnreadNotifCount(res.unreadCount)).catch(() => {})
+  }, [])
   const { user, logout, isLoading } = useAuth()
 
   const initials = (
