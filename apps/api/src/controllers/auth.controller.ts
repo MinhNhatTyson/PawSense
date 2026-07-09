@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { prisma } from '../lib/prisma.js'
+import { geocodeAddress } from '../utils/geocode.js'
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'changeme'
 
@@ -187,7 +188,28 @@ export async function updateProfile(req: Request, res: Response) {
     address,
     specialization,
     avatar,
+    latitude,
+    longitude,
   } = req.body
+
+  const existing = await prisma.profile.findUnique({ where: { userId } })
+
+  // Manual coordinates (typed or device GPS) always win. Otherwise, if the
+  // address is new or changed, try to auto-resolve coordinates from it so
+  // vets don't have to find lat/lng themselves.
+  let resolvedLat = latitude !== undefined ? latitude : undefined
+  let resolvedLng = longitude !== undefined ? longitude : undefined
+
+  const addressChanged = address !== undefined && address !== existing?.address
+  const noCoordsProvided = latitude === undefined && longitude === undefined
+
+  if (addressChanged && noCoordsProvided && address?.trim()) {
+    const geocoded = await geocodeAddress(address)
+    if (geocoded) {
+      resolvedLat = geocoded.latitude
+      resolvedLng = geocoded.longitude
+    }
+  }
 
   const profile = await prisma.profile.upsert({
     where: { userId },
@@ -198,6 +220,8 @@ export async function updateProfile(req: Request, res: Response) {
       address: address || undefined,
       specialization: specialization || undefined,
       avatar: avatar || undefined,
+      latitude: resolvedLat !== undefined ? (resolvedLat === null || resolvedLat === '' ? null : Number(resolvedLat)) : undefined,
+      longitude: resolvedLng !== undefined ? (resolvedLng === null || resolvedLng === '' ? null : Number(resolvedLng)) : undefined,
     },
     create: {
       userId,
@@ -207,6 +231,8 @@ export async function updateProfile(req: Request, res: Response) {
       address: address || null,
       specialization: specialization || null,
       avatar: avatar || null,
+      latitude: resolvedLat !== undefined && resolvedLat !== '' ? Number(resolvedLat) : null,
+      longitude: resolvedLng !== undefined && resolvedLng !== '' ? Number(resolvedLng) : null,
     },
   })
 

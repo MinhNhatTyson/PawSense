@@ -1,8 +1,24 @@
 import React, { useState, useCallback } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, StatusBar, ActivityIndicator, Platform } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
-import { vetDirectoryAPI, type VetSummary } from '../../api/vetDirectoryAPI'
+import * as Location from 'expo-location'
+import { vetDirectoryAPI, type VetSummary, type Coordinates } from '../../api/vetDirectoryAPI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
+
+function DistanceBadge({ distanceKm }: { distanceKm?: number | null }) {
+  if (distanceKm == null) return null
+  const label = distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m away` : `${distanceKm.toFixed(1)} km away`
+  return (
+    <View style={distStyles.wrap}>
+      <Text style={distStyles.text}>📍 {label}</Text>
+    </View>
+  )
+}
+
+const distStyles = StyleSheet.create({
+  wrap: { alignSelf: 'flex-start', backgroundColor: Colors.greenPale, paddingHorizontal: Spacing.sm, paddingVertical: 2, borderRadius: Radius.full, marginTop: 6 },
+  text: { fontSize: 11, fontWeight: '700', color: Colors.greenForest },
+})
 
 function VetCard({ vet, onPress }: { vet: VetSummary; onPress: () => void }) {
   const name = vet.profile?.fullName || vet.email
@@ -20,6 +36,7 @@ function VetCard({ vet, onPress }: { vet: VetSummary; onPress: () => void }) {
             <Text style={cardStyles.specPillText}>{vet.profile.specialization}</Text>
           </View>
         ) : null}
+        <DistanceBadge distanceKm={vet.distanceKm} />
       </View>
       <Text style={cardStyles.chevron}>›</Text>
     </TouchableOpacity>
@@ -38,6 +55,8 @@ const cardStyles = StyleSheet.create({
   chevron: { fontSize: 22, color: Colors.textLight },
 })
 
+const RADIUS_OPTIONS = [5, 10, 25, 50]
+
 export function VetDirectoryScreen({ navigation }: any) {
   const [vets, setVets] = useState<VetSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,10 +64,14 @@ export function VetDirectoryScreen({ navigation }: any) {
   const [search, setSearch] = useState('')
   const searchTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const load = useCallback(async (q = '') => {
+  const [coords, setCoords] = useState<Coordinates | null>(null)
+  const [locationState, setLocationState] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle')
+  const [radiusKm, setRadiusKm] = useState<number | null>(null)
+
+  const load = useCallback(async (q = '', useCoords: Coordinates | null = null, radius: number | null = null) => {
     try {
       setError('')
-      const data = await vetDirectoryAPI.list(q || undefined)
+      const data = await vetDirectoryAPI.list(q || undefined, useCoords || undefined, radius || undefined)
       setVets(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load vets')
@@ -57,12 +80,51 @@ export function VetDirectoryScreen({ navigation }: any) {
     }
   }, [])
 
-  useFocusEffect(useCallback(() => { setLoading(true); load(search) }, []))
+  useFocusEffect(useCallback(() => { setLoading(true); load(search, coords, radiusKm) }, []))
 
   const handleSearch = (text: string) => {
     setSearch(text)
     if (searchTimer.current) clearTimeout(searchTimer.current)
-    searchTimer.current = setTimeout(() => load(text), 350)
+    searchTimer.current = setTimeout(() => { setLoading(true); load(text, coords, radiusKm) }, 350)
+  }
+
+  async function handleEnableLocation() {
+    if (Platform.OS === 'web') {
+      setError('Location search is not supported in this preview — try it on a device or simulator.')
+      return
+    }
+    setLocationState('requesting')
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync()
+      if (status !== 'granted') {
+        setLocationState('denied')
+        return
+      }
+      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
+      const next: Coordinates = { latitude: position.coords.latitude, longitude: position.coords.longitude }
+      setCoords(next)
+      setLocationState('granted')
+      setLoading(true)
+      load(search, next, radiusKm)
+    } catch {
+      setLocationState('denied')
+      setError('Could not determine your location. Please try again.')
+    }
+  }
+
+  function handleClearLocation() {
+    setCoords(null)
+    setRadiusKm(null)
+    setLocationState('idle')
+    setLoading(true)
+    load(search, null, null)
+  }
+
+  function handleRadiusSelect(km: number) {
+    const next = radiusKm === km ? null : km
+    setRadiusKm(next)
+    setLoading(true)
+    load(search, coords, next)
   }
 
   return (
@@ -73,10 +135,54 @@ export function VetDirectoryScreen({ navigation }: any) {
           <Text style={styles.backBtnText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Find a Vet</Text>
-        <Text style={styles.headerSubtitle}>Search by name or clinic, then book an open slot</Text>
+        <Text style={styles.headerSubtitle}>
+          {coords ? 'Showing vets sorted by distance from you' : 'Search by name or clinic, then book an open slot'}
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Location prompt */}
+        {locationState !== 'granted' && (
+          <View style={styles.locationBanner}>
+            <Text style={styles.locationBannerText}>
+              {locationState === 'denied'
+                ? 'Location access was denied. Enable it in your device settings to see distances to vets.'
+                : 'Enable location to find veterinarians nearest to you.'}
+            </Text>
+            <TouchableOpacity
+              style={styles.locationBtn}
+              onPress={handleEnableLocation}
+              disabled={locationState === 'requesting'}
+            >
+              {locationState === 'requesting' ? (
+                <ActivityIndicator size="small" color={Colors.cream} />
+              ) : (
+                <Text style={styles.locationBtnText}>📍 Use my location</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Radius filter — only meaningful once we have coordinates */}
+        {locationState === 'granted' && (
+          <View style={styles.radiusRow}>
+            {RADIUS_OPTIONS.map(km => (
+              <TouchableOpacity
+                key={km}
+                style={[styles.radiusChip, radiusKm === km && styles.radiusChipSelected]}
+                onPress={() => handleRadiusSelect(km)}
+              >
+                <Text style={[styles.radiusChipText, radiusKm === km && styles.radiusChipTextSelected]}>
+                  Within {km} km
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={styles.radiusClear} onPress={handleClearLocation}>
+              <Text style={styles.radiusClearText}>Clear</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={styles.searchWrap}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
@@ -95,7 +201,11 @@ export function VetDirectoryScreen({ navigation }: any) {
         ) : error ? (
           <View style={styles.centred}><Text style={styles.stateText}>{error}</Text></View>
         ) : vets.length === 0 ? (
-          <View style={styles.centred}><Text style={styles.stateText}>No vets found.</Text></View>
+          <View style={styles.centred}>
+            <Text style={styles.stateText}>
+              {radiusKm ? `No vets found within ${radiusKm} km. Try a wider radius.` : 'No vets found.'}
+            </Text>
+          </View>
         ) : (
           vets.map(vet => (
             <VetCard
@@ -119,6 +229,26 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 26, fontWeight: '700', color: Colors.cream, letterSpacing: -0.5 },
   headerSubtitle: { fontSize: Typography.sm, color: 'rgba(245,240,232,0.62)', lineHeight: 20 },
   scroll: { padding: Spacing['2xl'] },
+
+  locationBanner: {
+    backgroundColor: Colors.ivory, borderRadius: Radius.lg, padding: Spacing.lg,
+    borderWidth: 1, borderColor: Colors.warmWhite, marginBottom: Spacing.lg, gap: Spacing.sm,
+  },
+  locationBannerText: { fontSize: Typography.sm, color: Colors.textBody, lineHeight: 20 },
+  locationBtn: {
+    alignSelf: 'flex-start', backgroundColor: Colors.greenDeep, paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm + 2, borderRadius: Radius.full,
+  },
+  locationBtnText: { fontSize: Typography.sm, fontWeight: '700', color: Colors.cream },
+
+  radiusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.md, alignItems: 'center' },
+  radiusChip: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm - 1, borderRadius: Radius.full, borderWidth: 1.5, borderColor: Colors.warmWhite, backgroundColor: Colors.white },
+  radiusChipSelected: { borderColor: Colors.greenSage, backgroundColor: Colors.greenPale },
+  radiusChipText: { fontSize: Typography.sm, fontWeight: '500', color: Colors.textBody },
+  radiusChipTextSelected: { color: Colors.greenForest, fontWeight: '700' },
+  radiusClear: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs },
+  radiusClearText: { fontSize: Typography.sm, color: Colors.error, fontWeight: '600' },
+
   searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: Radius.lg, borderWidth: 1.5, borderColor: Colors.warmWhite, paddingHorizontal: Spacing.md, marginBottom: Spacing.lg, gap: Spacing.sm },
   searchIcon: { fontSize: 16 },
   searchInput: { flex: 1, height: 46, fontSize: Typography.base, color: Colors.textPrimary },

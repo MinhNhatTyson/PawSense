@@ -113,6 +113,16 @@ const NAV_ITEMS = [
     vetOnly: true,
   },
   {
+    to: '/nearby-vets',
+    label: 'Nearby Vets',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1.5c-3 0-5.5 2.4-5.5 5.5 0 4 5.5 8 5.5 8s5.5-4 5.5-8c0-3.1-2.5-5.5-5.5-5.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+        <circle cx="8" cy="7" r="2" stroke="currentColor" strokeWidth="1.4"/>
+      </svg>
+    ),
+  },
+  {
     to: '/profile',
     label: 'My Profile',
     icon: (
