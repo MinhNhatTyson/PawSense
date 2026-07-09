@@ -12,6 +12,8 @@ export interface UserProfile {
     address?: string
     specialization?: string
     avatar?: string
+    latitude?: number | null
+    longitude?: number | null
   }
 }
 

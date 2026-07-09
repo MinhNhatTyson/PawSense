@@ -11,31 +11,58 @@ export function EditProfilePage() {
   const [success, setSuccess] = useState('')
 
   const [fullName, setFullName]               = useState(user?.profile?.fullName || '')
-  const [phone, setPhone]                     = useState(user?.profile?.phone || '')
-  const [clinicName, setClinicName]           = useState(user?.profile?.clinicName || '')
-  const [address, setAddress]                 = useState(user?.profile?.address || '')
-  const [specialization, setSpecialization]   = useState(user?.profile?.specialization || '')
+   const [phone, setPhone]                     = useState(user?.profile?.phone || '')
+   const [clinicName, setClinicName]           = useState(user?.profile?.clinicName || '')
+   const [address, setAddress]                 = useState(user?.profile?.address || '')
+   const [specialization, setSpecialization]   = useState(user?.profile?.specialization || '')
+  const [latitude, setLatitude]   = useState<number | null>(user?.profile?.latitude ?? null)
+  const [longitude, setLongitude] = useState<number | null>(user?.profile?.longitude ?? null)
+  const [locating, setLocating]   = useState(false)
+  const [locationError, setLocationError] = useState('')
+
+  function handleUseCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported in this browser.')
+      return
+    }
+    setLocating(true)
+    setLocationError('')
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatitude(pos.coords.latitude)
+        setLongitude(pos.coords.longitude)
+        setLocating(false)
+      },
+      () => {
+        setLocationError('Could not detect your location. Enter coordinates manually, or check your browser location permissions.')
+        setLocating(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
 
   if (!user) return <div className="loading-screen">Loading…</div>
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
-    try {
-      await updateProfile({
-        fullName:       fullName || undefined,
-        phone:          phone || undefined,
-        clinicName:     clinicName || undefined,
-        address:        address || undefined,
-        specialization: specialization || undefined,
-      })
-      setSuccess('Profile updated successfully!')
-      setTimeout(() => navigate('/profile'), 1800)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Update failed')
-    }
-  }
+     e.preventDefault()
+     setError('')
+     setSuccess('')
+     try {
+       await updateProfile({
+         fullName:       fullName || undefined,
+         phone:          phone || undefined,
+         clinicName:     clinicName || undefined,
+         address:        address || undefined,
+         specialization: specialization || undefined,
+        latitude:       latitude ?? undefined,
+        longitude:      longitude ?? undefined,
+       })
+       setSuccess('Profile updated successfully!')
+       setTimeout(() => navigate('/profile'), 1800)
+     } catch (err) {
+       setError(err instanceof Error ? err.message : 'Update failed')
+     }
+   }
 
   return (
     <div className="app-shell">
@@ -150,6 +177,64 @@ export function EditProfilePage() {
                     />
                   </div>
                 </div>
+              </>
+            )}
+            {user.role === 'VET' && (
+              <>
+                <div className="form-section-title">Clinic location</div>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: -8, marginBottom: 16 }}>
+                  Used to show your clinic in "nearby vets" search results for pet owners on the mobile app.
+                </p>
+
+                {locationError && (
+                  <div className="alert alert-error">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    {locationError}
+                  </div>
+                )}
+
+                <div className="form-row">
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="latitude">Latitude</label>
+                    <input
+                      id="latitude"
+                      type="number"
+                      step="any"
+                      className="form-input"
+                      value={latitude ?? ''}
+                      onChange={(e) => setLatitude(e.target.value ? parseFloat(e.target.value) : null)}
+                      placeholder="e.g. 10.7769"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="longitude">Longitude</label>
+                    <input
+                      id="longitude"
+                      type="number"
+                      step="any"
+                      className="form-input"
+                      value={longitude ?? ''}
+                      onChange={(e) => setLongitude(e.target.value ? parseFloat(e.target.value) : null)}
+                      placeholder="e.g. 106.7009"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ width: 'auto', marginBottom: 'var(--space-lg)' }}
+                  onClick={handleUseCurrentLocation}
+                  disabled={locating || isLoading}
+                >
+                  {locating && <span className="spinner spinner-dark" />}
+                  {locating ? 'Detecting…' : '📍 Use my current location'}
+                </button>
               </>
             )}
 
