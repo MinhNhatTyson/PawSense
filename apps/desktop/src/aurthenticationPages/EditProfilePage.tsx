@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { PawLogo } from '../components/PawLogo'
 import { Sidebar } from '../components/Sidebar'
+import { LocationPicker } from '../components/LocationPicker'
 
 export function EditProfilePage() {
   const { user, updateProfile, isLoading, logout } = useAuth()
