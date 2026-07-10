@@ -1,11 +1,7 @@
 import type { Response } from 'express'
-import Anthropic from '@anthropic-ai/sdk'
+import { getGeminiModel, cleanJsonText } from '../lib/gemini.js'
 import { prisma } from '../lib/prisma.js'
 import type { AuthRequest } from '../middleware/auth.middleware.js'
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-})
 
 const BODY_AREA_LABELS: Record<string, string> = {
   SKIN: 'skin and coat',
@@ -96,35 +92,19 @@ export async function analyzeImage(req: AuthRequest, res: Response) {
     `${files.length} photo(s) of the ${bodyAreaLabel} are attached for analysis.`,
   ].filter(Boolean)
 
-  const contentBlocks: Anthropic.MessageParam['content'] = [
+  const parts = [
     ...files.map((file) => ({
-      type: 'image' as const,
-      source: {
-        type: 'base64' as const,
-        media_type: file.mimetype as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
-        data: file.buffer.toString('base64'),
-      },
+      inlineData: { mimeType: file.mimetype, data: file.buffer.toString('base64') },
     })),
-    { type: 'text' as const, text: userTextParts.join('\n\n') },
+    { text: userTextParts.join('\n\n') },
   ]
 
   let aiResult: AiImageDiagnosisResult
 
   try {
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
-      system: buildSystemPrompt(bodyAreaLabel),
-      messages: [{ role: 'user', content: contentBlocks }],
-    })
-
-    const textBlock = message.content.find((b) => b.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') {
-      throw new Error('No text response from AI model')
-    }
-
-    const cleaned = textBlock.text.replace(/```json|```/g, '').trim()
-    aiResult = JSON.parse(cleaned)
+    const model = getGeminiModel(buildSystemPrompt(bodyAreaLabel))
+    const result = await model.generateContent(parts)
+    aiResult = JSON.parse(cleanJsonText(result.response.text()))
   } catch (err) {
     console.error('Image diagnosis AI error:', err)
     res.status(502).json({ error: 'Failed to analyze image. Please try again.' })

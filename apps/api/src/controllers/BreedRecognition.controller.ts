@@ -1,11 +1,8 @@
+// after
 import type { Response } from 'express'
-import Anthropic from '@anthropic-ai/sdk'
+import { getGeminiModel, cleanJsonText } from '../lib/gemini.js'
 import { prisma } from '../lib/prisma.js'
 import type { AuthRequest } from '../middleware/auth.middleware.js'
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-})
 
 const BREED_ANALYSIS_PROMPT = `You are a feline breed identification expert analyzing a photo of a cat.
 
@@ -49,38 +46,17 @@ export async function analyzeBreed(req: AuthRequest, res: Response) {
     return
   }
 
+  // after
   const base64Image = req.file.buffer.toString('base64')
   let aiResult: AiBreedResult
 
   try {
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mimeType as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
-                data: base64Image,
-              },
-            },
-            { type: 'text', text: BREED_ANALYSIS_PROMPT },
-          ],
-        },
-      ],
-    })
+    const model = getGeminiModel(BREED_ANALYSIS_PROMPT)
+    const result = await model.generateContent([
+      { inlineData: { mimeType, data: base64Image } },
+    ])
 
-    const textBlock = message.content.find((b) => b.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') {
-      throw new Error('No text response from AI model')
-    }
-
-    const cleaned = textBlock.text.replace(/```json|```/g, '').trim()
-    aiResult = JSON.parse(cleaned)
+    aiResult = JSON.parse(cleanJsonText(result.response.text()))
   } catch (err) {
     console.error('Breed recognition AI error:', err)
     res.status(502).json({ error: 'Failed to analyze image. Please try again.' })

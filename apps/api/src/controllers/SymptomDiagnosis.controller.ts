@@ -1,11 +1,7 @@
 import type { Response } from 'express'
-import Anthropic from '@anthropic-ai/sdk'
+import { getGeminiModel, cleanJsonText } from '../lib/gemini.js'
 import { prisma } from '../lib/prisma.js'
 import type { AuthRequest } from '../middleware/auth.middleware.js'
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-})
 
 const SYSTEM_PROMPT = `You are a veterinary triage assistant helping a pet owner understand a cat's symptoms. You are NOT a replacement for a licensed veterinarian and must never present a diagnosis as certain.
 
@@ -87,35 +83,19 @@ export async function analyzeSymptoms(req: AuthRequest, res: Response) {
     files.length > 0 ? `${files.length} photo(s) of the affected area are attached.` : null,
   ].filter(Boolean)
 
-  const contentBlocks: Anthropic.MessageParam['content'] = [
+  const parts = [
     ...files.map((file) => ({
-      type: 'image' as const,
-      source: {
-        type: 'base64' as const,
-        media_type: file.mimetype as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
-        data: file.buffer.toString('base64'),
-      },
+      inlineData: { mimeType: file.mimetype, data: file.buffer.toString('base64') },
     })),
-    { type: 'text' as const, text: userTextParts.join('\n\n') },
+    { text: userTextParts.join('\n\n') },
   ]
 
   let aiResult: AiDiagnosisResult
 
   try {
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: contentBlocks }],
-    })
-
-    const textBlock = message.content.find((b) => b.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') {
-      throw new Error('No text response from AI model')
-    }
-
-    const cleaned = textBlock.text.replace(/```json|```/g, '').trim()
-    aiResult = JSON.parse(cleaned)
+    const model = getGeminiModel(SYSTEM_PROMPT)
+    const result = await model.generateContent(parts)
+    aiResult = JSON.parse(cleanJsonText(result.response.text()))
   } catch (err) {
     console.error('Symptom diagnosis AI error:', err)
     res.status(502).json({ error: 'Failed to analyze symptoms. Please try again.' })

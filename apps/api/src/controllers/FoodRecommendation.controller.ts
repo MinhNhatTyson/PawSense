@@ -1,11 +1,7 @@
 import type { Response } from 'express'
-import Anthropic from '@anthropic-ai/sdk'
+import { getGeminiModel, cleanJsonText } from '../lib/gemini.js'
 import { prisma } from '../lib/prisma.js'
 import type { AuthRequest } from '../middleware/auth.middleware.js'
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-})
 
 const SYSTEM_PROMPT = `You are a feline nutrition assistant helping a pet owner choose an appropriate diet for their cat. You are NOT a replacement for a licensed veterinarian and must never present dietary advice as a substitute for prescribed veterinary treatment.
 
@@ -205,21 +201,11 @@ export async function analyzeFoodRecommendation(req: AuthRequest, res: Response)
   let aiResult: AiFoodResult
 
   try {
-
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1200,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: contextLines.join('\n') || 'No specific details provided.' }],
-    })
-
-    const textBlock = message.content.find((b) => b.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') {
-      throw new Error('No text response from AI model')
-    }
-
-    const cleaned = textBlock.text.replace(/```json|```/g, '').trim()
-    aiResult = JSON.parse(cleaned)
+    const model = getGeminiModel(SYSTEM_PROMPT)
+    const result = await model.generateContent(
+      contextLines.join('\n') || 'No specific details provided.'
+    )
+    aiResult = JSON.parse(cleanJsonText(result.response.text()))
   } catch (err) {
     console.error('Food recommendation AI error:', err)
     res.status(502).json({ error: 'Failed to generate food recommendations. Please try again.' })
