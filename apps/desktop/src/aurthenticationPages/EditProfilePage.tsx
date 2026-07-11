@@ -184,7 +184,7 @@ export function EditProfilePage() {
               <>
                 <div className="form-section-title">Clinic location</div>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: -8, marginBottom: 16 }}>
-                  Used to show your clinic in "nearby vets" search results for pet owners on the mobile app.
+                  Click the map to place a pin at your clinic, or drag the pin to fine-tune it. Used to show your clinic in "nearby vets" search results.
                 </p>
 
                 {locationError && (
@@ -197,45 +197,31 @@ export function EditProfilePage() {
                   </div>
                 )}
 
-                <div className="form-row">
-                  <div className="form-field">
-                    <label className="form-label" htmlFor="latitude">Latitude</label>
-                    <input
-                      id="latitude"
-                      type="number"
-                      step="any"
-                      className="form-input"
-                      value={latitude ?? ''}
-                      onChange={(e) => setLatitude(e.target.value ? parseFloat(e.target.value) : null)}
-                      placeholder="e.g. 10.7769"
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="form-field">
-                    <label className="form-label" htmlFor="longitude">Longitude</label>
-                    <input
-                      id="longitude"
-                      type="number"
-                      step="any"
-                      className="form-input"
-                      value={longitude ?? ''}
-                      onChange={(e) => setLongitude(e.target.value ? parseFloat(e.target.value) : null)}
-                      placeholder="e.g. 106.7009"
-                      disabled={isLoading}
-                    />
-                  </div>
+                <div className="form-field">
+                  <LocationPicker
+                    latitude={latitude}
+                    longitude={longitude}
+                    onChange={(lat, lng) => { setLatitude(lat); setLongitude(lng) }}
+                  />
                 </div>
 
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ width: 'auto', marginBottom: 'var(--space-lg)' }}
-                  onClick={handleUseCurrentLocation}
-                  disabled={locating || isLoading}
-                >
-                  {locating && <span className="spinner spinner-dark" />}
-                  {locating ? 'Detecting…' : '📍 Use my current location'}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 'var(--space-lg)' }}>
+                  <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+                    {latitude !== null && longitude !== null
+                      ? `Pinned at ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+                      : 'No location set yet'}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ width: 'auto', flexShrink: 0 }}
+                    onClick={handleUseCurrentLocation}
+                    disabled={locating || isLoading}
+                  >
+                    {locating && <span className="spinner spinner-dark" />}
+                    {locating ? 'Detecting…' : '📍 Use my current location'}
+                  </button>
+                </div>
               </>
             )}
 

@@ -1,7 +1,15 @@
 import { useState, useRef } from 'react'
 import type { Symptom } from '../symptomPages/symptomAPI'
 import type { Disease } from '../diseasePages/diseaseAPI'
+import axios from 'axios'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const apiClient = axios.create({ baseURL: API_BASE_URL })
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface DiagnosisResult {
   rank: number
@@ -324,61 +332,36 @@ export default function DiagnosisPanel({ allSymptoms, allDiseases }: DiagnosisPa
     setStep('select')
   }
 
-  const runDiagnosis = async () => {
-    if (selected.length < 2) {
-      setError('Please select at least 2 symptoms to run a differential diagnosis.')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-    setResult(null)
-
-    try {
-      const prompt = buildPrompt(selected, allDiseases)
-
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      const rawText = data.content
-        .filter((block: { type: string }) => block.type === 'text')
-        .map((block: { text: string }) => block.text)
-        .join('')
-
-      // Strip markdown fences if present
-      const jsonText = rawText.replace(/```json\n?|\n?```/g, '').trim()
-      const parsed: DiagnosisResponse = JSON.parse(jsonText)
-
-      setResult(parsed)
-      setStep('result')
-
-      // Scroll to results
-      setTimeout(() => {
-        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 100)
-    } catch (err) {
-      console.error('Diagnosis error:', err)
-      setError(
-        err instanceof SyntaxError
-          ? 'The AI returned an unexpected response. Please try again.'
-          : 'Failed to run diagnosis. Please check your connection and try again.'
-      )
-    } finally {
-      setLoading(false)
-    }
+  // AFTER
+const runDiagnosis = async () => {
+  if (selected.length < 2) {
+    setError('Please select at least 2 symptoms to run a differential diagnosis.')
+    return
   }
+
+  setLoading(true)
+  setError(null)
+  setResult(null)
+
+  try {
+    const res = await apiClient.post<DiagnosisResponse>('/differential-diagnosis/analyze', {
+      symptomIds: selected.map(s => s.id),
+    })
+
+    setResult(res.data)
+    setStep('result')
+
+    // Scroll to results
+    setTimeout(() => {
+      resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  } catch (err) {
+    console.error('Diagnosis error:', err)
+    setError('Failed to run diagnosis. Please check your connection and try again.')
+  } finally {
+    setLoading(false)
+  }
+}
 
   return (
     <div className="diag-panel">
