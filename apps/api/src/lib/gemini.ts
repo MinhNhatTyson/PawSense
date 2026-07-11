@@ -6,13 +6,13 @@ if (!process.env.GOOGLE_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!)
 
-// Flash tier — fast/cheap, used across all PawSense AI features.
+ // Flash tier — fast/cheap, used across all PawSense AI features.
  // gemini-2.5-flash was prematurely retired by Google on 2026-07-09
  // (ahead of its stated Oct 16 2026 shutdown) — migrated to the 3.x tier.
  // Verify this is still the current model string against Google's docs
  // before deploying — model names get deprecated/renamed periodically.
  export const GEMINI_MODEL = 'gemini-3.5-flash'
-
+ 
 /**
  * Returns a Gemini model configured for structured JSON output, mirroring
  * the "raw JSON object only" prompting pattern the Anthropic controllers used.
