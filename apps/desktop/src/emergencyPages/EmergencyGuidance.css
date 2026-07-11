@@ -214,3 +214,228 @@
   .eg-shell { grid-template-columns: 1fr; }
   .eg-grid { grid-template-columns: 1fr; }
 }
+/* ── Card interaction (added) ────────────────────── */
+.eg-card-clickable {
+  all: unset;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  cursor: pointer;
+  font-family: var(--font-body);
+  box-sizing: border-box;
+}
+
+.eg-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ivory);
+}
+
+/* ── Loading / error states (added) ──────────────── */
+.eg-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.eg-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid rgba(192,57,43,0.15);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.eg-empty-inline {
+  font-size: 13px;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+/* ── Flag issue modal (added) ────────────────────── */
+.eg-flag-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  width: min(480px, 90vw);
+  box-shadow: var(--shadow-lg);
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeUp 0.2s var(--ease-out) both;
+}
+
+.eg-flag-modal-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.eg-flag-modal-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.eg-flag-modal-error {
+  padding: 10px 14px;
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid rgba(192,57,43,0.15);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+
+.eg-flag-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* ── Verification bar in detail panel (added) ────── */
+.eg-detail-verify-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.eg-detail-self-note {
+  font-size: 13px;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.eg-detail-verified-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--green-pale);
+  border: 1px solid rgba(74,124,95,0.2);
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  color: var(--green-deep);
+}
+
+/* ── Create / Edit form (added) ──────────────────── */
+.eg-form-shell {
+  max-width: 720px;
+  animation: fadeUp 0.4s var(--ease-out) both;
+}
+
+.eg-form-header { margin-bottom: 32px; }
+
+.eg-form-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+.eg-form-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.eg-form-card {
+  background: #fff;
+  border: 1px solid var(--warm-white);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 20px;
+}
+
+.eg-form-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin: 0 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eg-form-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--warm-white);
+}
+
+.eg-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.eg-select {
+  width: 100%;
+  padding: 12px 40px 12px 16px;
+  background: var(--ivory);
+  border: 1.5px solid var(--warm-white);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a9882' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.eg-select:focus { border-color: var(--green-sage); box-shadow: var(--shadow-glow); }
+
+.eg-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--ivory);
+  border: 1.5px solid var(--warm-white);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-primary);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  line-height: 1.6;
+}
+.eg-textarea::placeholder { color: var(--text-light); }
+.eg-textarea:focus { border-color: var(--green-sage); box-shadow: var(--shadow-glow); }
+.eg-textarea:disabled { opacity: 0.5; }
+
+.eg-form-actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .eg-form-row { grid-template-columns: 1fr; }
+}

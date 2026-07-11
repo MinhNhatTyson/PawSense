@@ -58,14 +58,14 @@ export default function EmergencyGuideForm({ guide, onSubmit, loading, onCancel 
           <div className="eg-form-row">
             <div className="form-field" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="eg-category">Category *</label>
-              <select id="eg-category" className="dm-select" value={category}
+              <select id="eg-category" className="eg-select" value={category}
                 onChange={e => setCategory(e.target.value)} disabled={loading}>
                 {EMERGENCY_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="form-field" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="eg-urgency">Urgency *</label>
-              <select id="eg-urgency" className="dm-select" value={urgency}
+              <select id="eg-urgency" className="eg-select" value={urgency}
                 onChange={e => setUrgency(e.target.value as Urgency)} disabled={loading}>
                 <option value="CRITICAL">Critical</option>
                 <option value="URGENT">Urgent</option>
@@ -75,7 +75,7 @@ export default function EmergencyGuideForm({ guide, onSubmit, loading, onCancel 
 
           <div className="form-field" style={{ marginBottom: 0 }}>
             <label className="form-label" htmlFor="eg-summary">Summary *</label>
-            <textarea id="eg-summary" className="dm-textarea" rows={3} value={summary}
+            <textarea id="eg-summary" className="eg-textarea" rows={3} value={summary}
               onChange={e => setSummary(e.target.value)} required disabled={loading}
               placeholder="One or two sentences describing the emergency and typical cause…" />
           </div>
@@ -86,7 +86,7 @@ export default function EmergencyGuideForm({ guide, onSubmit, loading, onCancel 
 
           <div className="form-field">
             <label className="form-label" htmlFor="eg-symptoms">Emergency symptoms</label>
-            <textarea id="eg-symptoms" className="dm-textarea" rows={5} value={emergencySymptoms}
+            <textarea id="eg-symptoms" className="eg-textarea" rows={5} value={emergencySymptoms}
               onChange={e => setEmergencySymptoms(e.target.value)} disabled={loading}
               placeholder={'Vomiting or drooling\nDisorientation\nSeizures'} />
             <span style={{ fontSize: 11, color: 'var(--text-light)' }}>One entry per line</span>
@@ -94,7 +94,7 @@ export default function EmergencyGuideForm({ guide, onSubmit, loading, onCancel 
 
           <div className="form-field">
             <label className="form-label" htmlFor="eg-firstaid">First-aid steps</label>
-            <textarea id="eg-firstaid" className="dm-textarea" rows={6} value={firstAidSteps}
+            <textarea id="eg-firstaid" className="eg-textarea" rows={6} value={firstAidSteps}
               onChange={e => setFirstAidSteps(e.target.value)} disabled={loading}
               placeholder={'Move the animal away from the source\nCall emergency vet immediately'} />
             <span style={{ fontSize: 11, color: 'var(--text-light)' }}>One step per line, in order</span>
@@ -102,7 +102,7 @@ export default function EmergencyGuideForm({ guide, onSubmit, loading, onCancel 
 
           <div className="form-field" style={{ marginBottom: 0 }}>
             <label className="form-label" htmlFor="eg-donots">Do NOTs</label>
-            <textarea id="eg-donots" className="dm-textarea" rows={4} value={doNots}
+            <textarea id="eg-donots" className="eg-textarea" rows={4} value={doNots}
               onChange={e => setDoNots(e.target.value)} disabled={loading}
               placeholder={'Do not induce vomiting without guidance'} />
             <span style={{ fontSize: 11, color: 'var(--text-light)' }}>One entry per line</span>
@@ -113,7 +113,7 @@ export default function EmergencyGuideForm({ guide, onSubmit, loading, onCancel 
           <div className="eg-form-section-title">Escalation</div>
           <div className="form-field" style={{ marginBottom: 0 }}>
             <label className="form-label" htmlFor="eg-whentovet">When to seek veterinary care *</label>
-            <textarea id="eg-whentovet" className="dm-textarea" rows={2} value={whenToSeekVet}
+            <textarea id="eg-whentovet" className="eg-textarea" rows={2} value={whenToSeekVet}
               onChange={e => setWhenToSeekVet(e.target.value)} required disabled={loading} />
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function EmergencyGuideForm({ guide, onSubmit, loading, onCancel 
             onChange={e => setImageFile(e.target.files?.[0])} />
         </div>
 
-        <div className="dm-form-actions">
+        <div className="eg-form-actions">
           <button type="submit" className="btn btn-primary" style={{ width: 'auto', flex: 1 }} disabled={loading}>
             {loading && <span className="spinner" />}
             {loading ? 'Saving…' : isEditing ? 'Save changes' : 'Create guide (submits for review)'}

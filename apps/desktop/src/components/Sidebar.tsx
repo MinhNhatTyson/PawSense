@@ -172,11 +172,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar-brand">
-        <PawLogo size={28} />
-        <span className="sidebar-brand-name">Paw<span>Sense</span></span>
-      </div>
+    <aside className="sidebar">      
       <div className="sidebar-brand" style={{ justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
           <PawLogo size={28} />
