@@ -1,6 +1,6 @@
 // after
 import type { Response } from 'express'
-import { getGeminiModel, cleanJsonText } from '../lib/gemini.js'
+import { getGeminiModel, extractGeminiJson, GeminiResponseError } from '../lib/gemini.js'
 import { prisma } from '../lib/prisma.js'
 import type { AuthRequest } from '../middleware/auth.middleware.js'
 
@@ -56,9 +56,13 @@ export async function analyzeBreed(req: AuthRequest, res: Response) {
       { inlineData: { mimeType, data: base64Image } },
     ])
 
-    aiResult = JSON.parse(cleanJsonText(result.response.text()))
+    aiResult = extractGeminiJson<AiBreedResult>(result)
   } catch (err) {
     console.error('Breed recognition AI error:', err)
+    if (err instanceof GeminiResponseError && err.reason === 'SAFETY') {
+      res.status(422).json({ error: 'This photo could not be analyzed because it was flagged by content safety filters.' })
+      return
+    }
     res.status(502).json({ error: 'Failed to analyze image. Please try again.' })
     return
   }

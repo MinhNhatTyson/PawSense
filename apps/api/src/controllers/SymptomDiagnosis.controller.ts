@@ -1,5 +1,5 @@
 import type { Response } from 'express'
-import { getGeminiModel, cleanJsonText } from '../lib/gemini.js'
+import { getGeminiModel, extractGeminiJson, GeminiResponseError } from '../lib/gemini.js'
 import { prisma } from '../lib/prisma.js'
 import type { AuthRequest } from '../middleware/auth.middleware.js'
 
@@ -95,9 +95,16 @@ export async function analyzeSymptoms(req: AuthRequest, res: Response) {
   try {
     const model = getGeminiModel(SYSTEM_PROMPT)
     const result = await model.generateContent(parts)
-    aiResult = JSON.parse(cleanJsonText(result.response.text()))
+    aiResult = extractGeminiJson<AiDiagnosisResult>(result)
   } catch (err) {
     console.error('Symptom diagnosis AI error:', err)
+    if (err instanceof GeminiResponseError && err.reason === 'SAFETY') {
+      res.status(422).json({
+        error:
+          'Your description could not be analyzed because it was flagged by content safety filters. If this is urgent, please contact your veterinarian or emergency animal hospital directly. Otherwise, try rephrasing with less graphic detail.',
+      })
+      return
+    }
     res.status(502).json({ error: 'Failed to analyze symptoms. Please try again.' })
     return
   }

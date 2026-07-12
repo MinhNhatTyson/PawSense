@@ -1,5 +1,5 @@
 import type { Response } from 'express'
-import { getGeminiModel, cleanJsonText } from '../lib/gemini.js'
+import { getGeminiModel, extractGeminiJson, GeminiResponseError } from '../lib/gemini.js'
 import { prisma } from '../lib/prisma.js'
 import type { AuthRequest } from '../middleware/auth.middleware.js'
 
@@ -205,9 +205,13 @@ export async function analyzeFoodRecommendation(req: AuthRequest, res: Response)
     const result = await model.generateContent(
       contextLines.join('\n') || 'No specific details provided.'
     )
-    aiResult = JSON.parse(cleanJsonText(result.response.text()))
+    aiResult = extractGeminiJson<AiFoodResult>(result)
   } catch (err) {
     console.error('Food recommendation AI error:', err)
+    if (err instanceof GeminiResponseError && err.reason === 'SAFETY') {
+      res.status(422).json({ error: 'This photo could not be analyzed because it was flagged by content safety filters.' })
+      return
+    }
     res.status(502).json({ error: 'Failed to generate food recommendations. Please try again.' })
     return
   }

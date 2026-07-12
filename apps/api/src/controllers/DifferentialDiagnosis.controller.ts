@@ -1,5 +1,5 @@
 import type { Response } from 'express'
-import { getGeminiModel, cleanJsonText } from '../lib/gemini.js'
+import { getGeminiModel, cleanJsonText, assertNotTruncated } from '../lib/gemini.js'
 import { prisma } from '../lib/prisma.js'
 import type { AuthRequest } from '../middleware/auth.middleware.js'
 
@@ -98,9 +98,14 @@ ${knowledgeBaseDiseases || 'No diseases currently in knowledge base.'}`
   try {
     const model = getGeminiModel(SYSTEM_PROMPT)
     const result = await model.generateContent(userPrompt)
+    assertNotTruncated(result)
     aiResult = JSON.parse(cleanJsonText(result.response.text()))
   } catch (err) {
     console.error('Differential diagnosis AI error:', err)
+    if (err instanceof Error && err.message.startsWith('GEMINI_TRUNCATED')) {
+      res.status(502).json({ error: 'The AI response was too long and got cut off. Please try again — this usually resolves on retry.' })
+      return
+    }
     res.status(502).json({ error: 'Failed to run diagnosis. Please try again.' })
     return
   }
