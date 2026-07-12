@@ -11,6 +11,7 @@ import {
 } from 'react-native'
 import { medicineAPI, type Medicine } from '../../api/medicineAPI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
+import { SkeletonBlock, FadeSlideIn } from '../../components/Motion'
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -117,8 +118,15 @@ export function MedicineDetailScreen({ navigation, route }: any) {
 
   if (loading) {
     return (
-      <View style={styles.centred}>
-        <ActivityIndicator size="large" color={Colors.greenSage} />
+      <View style={styles.root}>
+        <View style={[styles.hero, { backgroundColor: Colors.greenPale }]}>
+          <SkeletonBlock width="100%" height={220} style={{ position: 'absolute', top: 0, left: 0, right: 0 }} />
+        </View>
+        <View style={styles.content}>
+          <SkeletonBlock width="60%" height={22} style={{ marginBottom: Spacing.md }} />
+          <SkeletonBlock width="100%" height={80} style={{ marginBottom: Spacing.lg, borderRadius: Radius.xl }} />
+          <SkeletonBlock width="100%" height={60} style={{ borderRadius: Radius.xl }} />
+        </View>
       </View>
     )
   }
@@ -174,75 +182,87 @@ export function MedicineDetailScreen({ navigation, route }: any) {
         <View style={styles.content}>
 
           {/* Description */}
-          <InfoCard>
-            <SectionHeader title="About this medicine" />
-            <Text style={styles.bodyText}>{medicine.description}</Text>
-          </InfoCard>
+          <FadeSlideIn delay={40}>
+            <InfoCard>
+              <SectionHeader title="About this medicine" />
+              <Text style={styles.bodyText}>{medicine.description}</Text>
+            </InfoCard>
+          </FadeSlideIn>
 
           {/* Dosage */}
-          <InfoCard>
-            <SectionHeader title="Dosage" />
-            <View style={styles.dosageBox}>
-              <Text style={styles.dosageIcon}>📋</Text>
-              <Text style={styles.dosageText}>{medicine.dosage}</Text>
-            </View>
-          </InfoCard>
+          <FadeSlideIn delay={90}>
+            <InfoCard>
+              <SectionHeader title="Dosage" />
+              <View style={styles.dosageBox}>
+                <Text style={styles.dosageIcon}>📋</Text>
+                <Text style={styles.dosageText}>{medicine.dosage}</Text>
+              </View>
+            </InfoCard>
+          </FadeSlideIn>
 
           {/* Usage instructions */}
-          <InfoCard>
-            <SectionHeader title="How to use" />
-            <Text style={styles.bodyText}>{medicine.usageInstructions}</Text>
-          </InfoCard>
+          <FadeSlideIn delay={140}>
+            <InfoCard>
+              <SectionHeader title="How to use" />
+              <Text style={styles.bodyText}>{medicine.usageInstructions}</Text>
+            </InfoCard>
+          </FadeSlideIn>
 
           {/* Side effects */}
           {medicine.sideEffects.length > 0 && (
-            <InfoCard>
-              <SectionHeader title={`Side effects (${medicine.sideEffects.length})`} />
-              <View style={styles.bulletList}>
-                {medicine.sideEffects.map((effect, i) => (
-                  <BulletItem key={i} text={effect} />
-                ))}
-              </View>
-            </InfoCard>
+            <FadeSlideIn delay={190}>
+              <InfoCard>
+                <SectionHeader title={`Side effects (${medicine.sideEffects.length})`} />
+                <View style={styles.bulletList}>
+                  {medicine.sideEffects.map((effect, i) => (
+                    <BulletItem key={i} text={effect} />
+                  ))}
+                </View>
+              </InfoCard>
+            </FadeSlideIn>
           )}
 
           {/* Warnings — distinct red card */}
           {medicine.warnings.length > 0 && (
-            <View style={styles.warningCard}>
-              <View style={styles.warningCardHeader}>
-                <Text style={styles.warningCardIcon}>⚠</Text>
-                <Text style={styles.warningCardTitle}>
-                  Warnings & Contraindications
-                </Text>
+            <FadeSlideIn delay={240}>
+              <View style={styles.warningCard}>
+                <View style={styles.warningCardHeader}>
+                  <Text style={styles.warningCardIcon}>⚠</Text>
+                  <Text style={styles.warningCardTitle}>
+                    Warnings & Contraindications
+                  </Text>
+                </View>
+                <View style={styles.bulletList}>
+                  {medicine.warnings.map((warn, i) => (
+                    <BulletItem key={i} text={warn} danger />
+                  ))}
+                </View>
               </View>
-              <View style={styles.bulletList}>
-                {medicine.warnings.map((warn, i) => (
-                  <BulletItem key={i} text={warn} danger />
-                ))}
-              </View>
-            </View>
+            </FadeSlideIn>
           )}
 
           {/* Linked diseases */}
           {linkedDiseases.length > 0 && (
-            <InfoCard>
-              <SectionHeader title={`Used for (${linkedDiseases.length})`} />
-              <View style={styles.diseaseList}>
-                {linkedDiseases.map(dm => {
-                  const s = SEV_STYLE[dm.disease.severity] ?? SEV_STYLE.MEDIUM
-                  return (
-                    <View key={dm.id} style={styles.diseaseRow}>
-                      <Text style={styles.diseaseName}>{dm.disease.name}</Text>
-                      <View style={[styles.sevBadge, { backgroundColor: s.bg }]}>
-                        <Text style={[styles.sevBadgeText, { color: s.color }]}>
-                          {dm.disease.severity}
-                        </Text>
+            <FadeSlideIn delay={290}>
+              <InfoCard>
+                <SectionHeader title={`Used for (${linkedDiseases.length})`} />
+                <View style={styles.diseaseList}>
+                  {linkedDiseases.map(dm => {
+                    const s = SEV_STYLE[dm.disease.severity] ?? SEV_STYLE.MEDIUM
+                    return (
+                      <View key={dm.id} style={styles.diseaseRow}>
+                        <Text style={styles.diseaseName}>{dm.disease.name}</Text>
+                        <View style={[styles.sevBadge, { backgroundColor: s.bg }]}>
+                          <Text style={[styles.sevBadgeText, { color: s.color }]}>
+                            {dm.disease.severity}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  )
-                })}
-              </View>
-            </InfoCard>
+                    )
+                  })}
+                </View>
+              </InfoCard>
+            </FadeSlideIn>
           )}
 
           {/* Footer note */}

@@ -10,6 +10,7 @@ import {
 } from '../../utils/notifications'
 import { Button } from '../../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
+import { FadeSlideIn, EmptyState, SkeletonBlock } from '../../components/Motion'
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   CONFIRMED: { bg: '#edf7f1', color: '#2d7a4f' },
@@ -153,23 +154,40 @@ export function MyAppointmentsScreen({ navigation }: any) {
         )}
 
         {loading ? (
-          <View style={styles.centred}><ActivityIndicator size="large" color={Colors.greenSage} /></View>
+          <>
+            <SkeletonBlock width="100%" height={110} style={{ borderRadius: 16, marginBottom: Spacing.md }} />
+            <SkeletonBlock width="100%" height={110} style={{ borderRadius: 16 }} />
+          </>
         ) : error ? (
           <View style={styles.centred}><Text style={styles.stateText}>{error}</Text></View>
         ) : appointments.length === 0 ? (
-          <View style={styles.centred}><Text style={styles.stateText}>You haven't booked any appointments yet.</Text></View>
+          <EmptyState
+            emoji="📅"
+            title="No appointments yet"
+            desc="You haven't booked any appointments yet."
+            actionLabel="Find a vet"
+            onAction={() => navigation.navigate('VetDirectory')}
+          />
         ) : (
           <>
             {upcoming.length > 0 && (
               <>
                 <Text style={styles.sectionHeading}>Upcoming</Text>
-                {upcoming.map(a => <AppointmentCard key={a.id} appt={a} onCancel={() => handleCancel(a)} />)}
+                {upcoming.map((a, i) => (
+                  <FadeSlideIn key={a.id} delay={i * 60} distance={14}>
+                    <AppointmentCard appt={a} onCancel={() => handleCancel(a)} />
+                  </FadeSlideIn>
+                ))}
               </>
             )}
             {past.length > 0 && (
               <>
                 <Text style={styles.sectionHeading}>Past & cancelled</Text>
-                {past.map(a => <AppointmentCard key={a.id} appt={a} onCancel={() => handleCancel(a)} />)}
+                {past.map((a, i) => (
+                  <FadeSlideIn key={a.id} delay={i * 60} distance={14}>
+                    <AppointmentCard appt={a} onCancel={() => handleCancel(a)} />
+                  </FadeSlideIn>
+                ))}
               </>
             )}
           </>

@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   StatusBar,
   RefreshControl,
-  ActivityIndicator,
   Platform,
 } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import { notificationAPI, type AppNotification } from '../api/notificationAPI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../theme'
+import { SkeletonBlock, FadeSlideIn, EmptyState } from '../components/Motion'
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime()
@@ -80,6 +80,19 @@ const rowStyles = StyleSheet.create({
   time: { fontSize: Typography.xs, color: Colors.textLight, marginTop: 2 },
 })
 
+/** Skeleton placeholder row, shown while the list is first loading. */
+function NotificationSkeletonRow() {
+  return (
+    <View style={rowStyles.card}>
+      <View style={{ flex: 1, gap: 6 }}>
+        <SkeletonBlock width="55%" height={16} />
+        <SkeletonBlock width="90%" height={14} />
+        <SkeletonBlock width="30%" height={11} />
+      </View>
+    </View>
+  )
+}
+
 export function NotificationsScreen({ navigation }: any) {
   const [notifications, setNotifications] = useState<AppNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -132,24 +145,26 @@ export function NotificationsScreen({ navigation }: any) {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
 
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>← Back</Text>
-        </TouchableOpacity>
-        <View style={styles.headerTopRow}>
-          <View>
-            <Text style={styles.headerTitle}>Notifications</Text>
-            <Text style={styles.headerSubtitle}>
-              {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
-            </Text>
+      <FadeSlideIn distance={-16}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>← Back</Text>
+          </TouchableOpacity>
+          <View style={styles.headerTopRow}>
+            <View>
+              <Text style={styles.headerTitle}>Notifications</Text>
+              <Text style={styles.headerSubtitle}>
+                {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+              </Text>
+            </View>
+            {unreadCount > 0 && (
+              <TouchableOpacity onPress={handleMarkAllRead}>
+                <Text style={styles.markAllText}>Mark all read</Text>
+              </TouchableOpacity>
+            )}
           </View>
-          {unreadCount > 0 && (
-            <TouchableOpacity onPress={handleMarkAllRead}>
-              <Text style={styles.markAllText}>Mark all read</Text>
-            </TouchableOpacity>
-          )}
         </View>
-      </View>
+      </FadeSlideIn>
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -163,21 +178,26 @@ export function NotificationsScreen({ navigation }: any) {
         }
       >
         {loading ? (
-          <View style={styles.centred}>
-            <ActivityIndicator size="large" color={Colors.greenSage} />
-          </View>
+          <>
+            <NotificationSkeletonRow />
+            <NotificationSkeletonRow />
+            <NotificationSkeletonRow />
+          </>
         ) : error ? (
           <View style={styles.centred}>
             <Text style={styles.stateText}>{error}</Text>
           </View>
         ) : notifications.length === 0 ? (
-          <View style={styles.centred}>
-            <Text style={styles.emptyEmoji}>🔔</Text>
-            <Text style={styles.stateText}>No notifications yet.</Text>
-          </View>
+          <EmptyState
+            emoji="🔔"
+            title="No notifications yet"
+            desc="Appointment updates and record approvals will show up here."
+          />
         ) : (
-          notifications.map(n => (
-            <NotificationRow key={n.id} n={n} onPress={() => handlePress(n)} />
+          notifications.map((n, i) => (
+            <FadeSlideIn key={n.id} delay={i * 60} distance={14}>
+              <NotificationRow n={n} onPress={() => handlePress(n)} />
+            </FadeSlideIn>
           ))
         )}
         <View style={{ height: Spacing['4xl'] }} />
@@ -203,6 +223,5 @@ const styles = StyleSheet.create({
   markAllText: { fontSize: Typography.sm, color: Colors.gold, fontWeight: '600' },
   scroll: { padding: Spacing['2xl'] },
   centred: { alignItems: 'center', paddingVertical: Spacing['4xl'], gap: Spacing.sm },
-  emptyEmoji: { fontSize: 48 },
   stateText: { fontSize: Typography.base, color: Colors.textMuted, textAlign: 'center' },
 })

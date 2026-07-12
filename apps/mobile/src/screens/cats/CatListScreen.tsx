@@ -19,6 +19,7 @@ import { catProfileAPI, type CatProfile } from '../../api/catProfileAPI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
 import { Button } from '../../components/UI'
 
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 // ── Skeleton pulse animation ──────────────────────────────────────────────────

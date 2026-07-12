@@ -48,7 +48,8 @@ export function LoginScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         {/* Hero panel */}
-        <View style={styles.hero}>
+        <FadeSlideIn delay={0} distance={-16}>
+          <View style={styles.hero}>
           <View style={styles.logoWrap}>
             <PawLogo size={44} />
           </View>
@@ -57,53 +58,57 @@ export function LoginScreen({ navigation }: any) {
           </Text>
           <Text style={styles.tagline}>Your pet's health companion</Text>
         </View>
+        </FadeSlideIn>        
 
         {/* Form card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Welcome back</Text>
-          <Text style={styles.cardSubtitle}>Sign in to your account</Text>
+        <FadeSlideIn delay={120}>
+          <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Welcome back</Text>
+                  <Text style={styles.cardSubtitle}>Sign in to your account</Text>
 
-          {error ? <AlertBanner type="error" message={error} /> : null}
+                  {error ? <AlertBanner type="error" message={error} /> : null}
 
-          <Field label="Email address">
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@email.com"
-              keyboardType="email-address"
-              autoComplete="email"
-              editable={!isLoading}
-            />
-          </Field>
+                  <Field label="Email address">
+                    <TextInput
+                      value={email}
+                      onChangeText={setEmail}
+                      placeholder="you@email.com"
+                      keyboardType="email-address"
+                      autoComplete="email"
+                      editable={!isLoading}
+                    />
+                  </Field>
 
-          <Field label="Password">
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              secureTextEntry
-              secureToggle
-              autoComplete="password"
-              editable={!isLoading}
-              onSubmitEditing={handleLogin}
-              returnKeyType="done"
-            />
-          </Field>
+                  <Field label="Password">
+                    <TextInput
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholder="••••••••"
+                      secureTextEntry
+                      secureToggle
+                      autoComplete="password"
+                      editable={!isLoading}
+                      onSubmitEditing={handleLogin}
+                      returnKeyType="done"
+                    />
+                  </Field>
 
-          <Button
-            label="Sign in"
-            onPress={handleLogin}
-            loading={isLoading}
-            style={styles.submitBtn}
-          />
+                  <Button
+                    label="Sign in"
+                    onPress={handleLogin}
+                    loading={isLoading}
+                    style={styles.submitBtn}
+                  />
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>New to PawSense? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.footerLink}>Create an account</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+                  <View style={styles.footer}>
+                    <Text style={styles.footerText}>New to PawSense? </Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                      <Text style={styles.footerLink}>Create an account</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+        </FadeSlideIn>
+        
 
         {/* Bottom spacer */}
         <View style={{ height: Spacing['3xl'] }} />

@@ -14,6 +14,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native'
 import { emergencyGuideAPI, type EmergencyGuide, type Urgency } from '../../api/emergencyGuideAPI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
+import { SkeletonBlock, FadeSlideIn, EmptyState } from '../../components/Motion'
 
 const URGENCY_STYLE: Record<Urgency, { bg: string; color: string; label: string }> = {
   CRITICAL: { bg: '#fce8e6', color: '#922b21', label: 'Critical' },
@@ -56,6 +57,16 @@ const chipStyles = StyleSheet.create({
   label: { fontSize: Typography.sm, fontWeight: '500', color: Colors.textBody },
   labelSelected: { color: Colors.greenForest, fontWeight: '700' },
 })
+
+function GuideSkeletonCard() {
+  return (
+    <View style={cardStyles.card}>
+      <SkeletonBlock width="70%" height={18} style={{ marginBottom: 8 }} />
+      <SkeletonBlock width="100%" height={14} style={{ marginBottom: 6 }} />
+      <SkeletonBlock width="40%" height={12} />
+    </View>
+  )
+}
 
 function GuideCard({ guide, onPress }: { guide: EmergencyGuide; onPress: () => void }) {
   return (
@@ -194,26 +205,30 @@ export function EmergencyGuideListScreen({ navigation }: any) {
         )}
 
         {loading ? (
-          <View style={styles.centred}>
-            <ActivityIndicator size="large" color={Colors.greenSage} />
-          </View>
+          <>
+            <GuideSkeletonCard />
+            <GuideSkeletonCard />
+            <GuideSkeletonCard />
+          </>
         ) : error ? (
           <View style={styles.centred}>
             <Text style={styles.stateTitle}>Something went wrong</Text>
             <Text style={styles.stateDesc}>{error}</Text>
           </View>
         ) : filtered.length === 0 ? (
-          <View style={styles.centred}>
-            <Text style={styles.stateTitle}>No guides found</Text>
-            <Text style={styles.stateDesc}>Try a different search or filter.</Text>
-          </View>
+          <EmptyState
+            emoji="🚨"
+            title="No guides found"
+            desc="Try a different search or filter."
+          />
         ) : (
-          filtered.map(g => (
-            <GuideCard
-              key={g.id}
-              guide={g}
-              onPress={() => navigation.navigate('EmergencyGuideDetail', { guideId: g.id })}
-            />
+          filtered.map((g, i) => (
+            <FadeSlideIn key={g.id} delay={i * 50} distance={14}>
+              <GuideCard
+                guide={g}
+                onPress={() => navigation.navigate('EmergencyGuideDetail', { guideId: g.id })}
+              />
+            </FadeSlideIn>
           ))
         )}
         <View style={{ height: Spacing['4xl'] }} />
