@@ -1,32 +1,56 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenAI } from '@google/genai'
 
 if (!process.env.GOOGLE_API_KEY) {
   console.warn('⚠️  GOOGLE_API_KEY is not set — Gemini-powered features will fail.')
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!)
+const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY! })
 
- // Flash tier — fast/cheap, used across all PawSense AI features.
- // gemini-2.5-flash was prematurely retired by Google on 2026-07-09
- // (ahead of its stated Oct 16 2026 shutdown) — migrated to the 3.x tier.
- // Verify this is still the current model string against Google's docs
- // before deploying — model names get deprecated/renamed periodically.
- export const GEMINI_MODEL = 'gemini-3.5-flash'
- 
+// Flash tier — fast/cheap, used across all PawSense AI features.
+// gemini-2.5-flash was prematurely retired by Google on 2026-07-09
+// (ahead of its stated Oct 16 2026 shutdown) — migrated to the 3.x tier.
+// Verify this is still the current model string against Google's docs
+// before deploying — model names get deprecated/renamed periodically.
+export const GEMINI_MODEL = 'gemini-3.5-flash'
+
 /**
- * Returns a Gemini model configured for structured JSON output, mirroring
- * the "raw JSON object only" prompting pattern the Anthropic controllers used.
- * Pass the same system/instruction prompt you'd have passed as `system` before.
+ * Returns a Gemini model wrapper configured for structured JSON output.
+ * Mirrors the old @google/generative-ai shape (getGeminiModel().generateContent(parts)
+ * -> result.response.text()/.promptFeedback/.candidates) so the four AI
+ * controllers didn't need to change when we migrated off the legacy,
+ * EOL'd @google/generative-ai SDK to the actively maintained @google/genai SDK.
+ *
+ * thinkingConfig.thinkingBudget: 0 disables "thinking" tokens — gemini-3.5-flash
+ * has thinking on by default, and thinking tokens are drawn from the SAME
+ * maxOutputTokens budget as the visible output, which was silently truncating
+ * every structured JSON response under the old SDK (which didn't forward this
+ * field at all). These controllers only need structured JSON output, not deep
+ * reasoning, so disabling thinking is safe and keeps the full token budget for
+ * the actual response.
  */
 export function getGeminiModel(systemInstruction?: string) {
-  return genAI.getGenerativeModel({
-    model: GEMINI_MODEL,
-    ...(systemInstruction ? { systemInstruction } : {}),
-    generationConfig: {
-      responseMimeType: 'application/json',
-      maxOutputTokens: 16384,
+  return {
+    async generateContent(contents: unknown) {
+      const response = await ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: contents as any,
+        config: {
+          responseMimeType: 'application/json',
+          maxOutputTokens: 16384,
+          thinkingConfig: { thinkingBudget: 0 },
+          ...(systemInstruction ? { systemInstruction } : {}),
+        },
+      })
+
+      return {
+        response: {
+          text: () => response.text ?? '',
+          promptFeedback: response.promptFeedback,
+          candidates: response.candidates,
+        },
+      }
     },
-  })
+  }
 }
 
 /** Strips markdown code fences, kept for defense-in-depth even with JSON mode on. */
@@ -45,6 +69,7 @@ export function assertNotTruncated(result: { response: { candidates?: Array<{ fi
     throw new Error('GEMINI_TRUNCATED: response was cut off at the output token limit')
   }
 }
+
 /**
  * Human-readable reasons Gemini can fail to return usable content even on a
  * "successful" (non-throwing) API call — safety blocks, recitation blocks,

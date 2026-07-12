@@ -2,11 +2,13 @@ packages:
   - 'apps/*'
   - 'packages/*'
 allowBuilds:
+  '@google/genai': true
   '@prisma/engines': true
   electron-winstaller: true
   esbuild: true
   msgpackr-extract: true
   prisma: true
+  protobufjs: false
 onlyBuiltDependencies:
   - esbuild
   - prisma
