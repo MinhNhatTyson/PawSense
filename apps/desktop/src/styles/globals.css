@@ -541,6 +541,7 @@ body {
   position: sticky;
   top: 0;
   height: 100vh;
+  overflow: hidden; 
 }
 
 .sidebar-brand {
@@ -564,8 +565,38 @@ body {
   flex-direction: column;
   gap: 4px;
   flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 6px;
+  margin-right: -6px; /* pull scrollbar flush to the sidebar edge */
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
 }
 
+/* Chromium / WebKit (Electron uses this) */
+.sidebar-nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 100px;
+  transition: background 0.15s;
+}
+
+.sidebar-nav:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
 .nav-item {
   display: flex;
   align-items: center;

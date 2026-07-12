@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Image,
   StatusBar,
@@ -14,6 +14,7 @@ import {
   Platform,
 } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
+import { Feather } from '@expo/vector-icons'
 import { catProfileAPI, type CatProfile } from '../../api/catProfileAPI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
 import { Button } from '../../components/UI'
@@ -123,8 +124,8 @@ const gBadge = StyleSheet.create({
   text: { fontSize: Typography.xs, fontWeight: '700', letterSpacing: 0.3 },
 })
 
-// ── Animated cat card ─────────────────────────────────────────────────────────
-function CatCard({
+// ── Animated cat card (memoized — avoids re-render on unrelated list state) ───
+const CatCard = React.memo(function CatCard({
   cat,
   index,
   onPress,
@@ -209,7 +210,7 @@ function CatCard({
             />
           ) : (
             <View style={cardStyles.imagePlaceholder}>
-              <Text style={cardStyles.imagePlaceholderEmoji}>🐱</Text>
+              <Feather name="camera-off" size={40} color={Colors.greenSage} />
               <Text style={cardStyles.imagePlaceholderText}>No photo yet</Text>
             </View>
           )}
@@ -254,8 +255,9 @@ function CatCard({
 
           {cat.vaccinations.length > 0 && (
             <View style={cardStyles.vaccinePill}>
+              <Feather name="shield" size={11} color={Colors.greenForest} style={{ marginRight: 4 }} />
               <Text style={cardStyles.vaccinePillText}>
-                💉 {cat.vaccinations.length} vaccination
+                {cat.vaccinations.length} vaccination
                 {cat.vaccinations.length !== 1 ? 's' : ''}
               </Text>
             </View>
@@ -293,7 +295,7 @@ function CatCard({
       </TouchableOpacity>
     </Animated.View>
   )
-}
+})
 
 const cardStyles = StyleSheet.create({
   card: {
@@ -314,7 +316,6 @@ const cardStyles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.sm,
   },
-  imagePlaceholderEmoji: { fontSize: 52 },
   imagePlaceholderText: {
     fontSize: Typography.sm,
     color: Colors.greenSage,
@@ -377,6 +378,8 @@ const cardStyles = StyleSheet.create({
     color: Colors.textBody,
   },
   vaccinePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
     backgroundColor: Colors.greenPale,
     paddingHorizontal: Spacing.sm,
@@ -449,11 +452,9 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 
   return (
     <Animated.View style={[emptyStyles.wrap, { opacity: fadeAnim }]}>
-      <Animated.Text
-        style={[emptyStyles.emoji, { transform: [{ translateY: bounceAnim }] }]}
-      >
-        🐾
-      </Animated.Text>
+      <Animated.View style={{ transform: [{ translateY: bounceAnim }] }}>
+        <Feather name="heart" size={56} color={Colors.greenSage} />
+      </Animated.View>
       <Text style={emptyStyles.title}>No cats yet</Text>
       <Text style={emptyStyles.desc}>
         Add your first cat to start tracking their health, vaccinations, and more.
@@ -474,7 +475,6 @@ const emptyStyles = StyleSheet.create({
     paddingHorizontal: Spacing['2xl'],
     gap: Spacing.md,
   },
-  emoji: { fontSize: 72, marginBottom: Spacing.md },
   title: {
     fontSize: Typography.xl,
     fontWeight: '700',
@@ -525,7 +525,7 @@ export function CatListScreen({ navigation }: any) {
     }, [loadCats])
   )
 
-  const handleDelete = (cat: CatProfile) => {
+  const handleDelete = useCallback((cat: CatProfile) => {
     Alert.alert(
       `Delete ${cat.name}?`,
       'This will permanently remove this cat profile and all their health records. This cannot be undone.',
@@ -545,7 +545,23 @@ export function CatListScreen({ navigation }: any) {
         },
       ]
     )
-  }
+  }, [])
+
+  // Stable render/key functions so FlatList doesn't recreate closures every render,
+  // and CatCard's React.memo actually prevents unnecessary re-renders.
+  const renderCat = useCallback(
+    ({ item, index }: { item: CatProfile; index: number }) => (
+      <CatCard
+        cat={item}
+        index={index}
+        onPress={() => navigation.navigate('CatDetail', { catId: item.id })}
+        onEdit={() => navigation.navigate('CatForm', { mode: 'edit', cat: item })}
+        onDelete={() => handleDelete(item)}
+      />
+    ),
+    [navigation, handleDelete]
+  )
+  const keyExtractor = useCallback((item: CatProfile) => item.id, [])
 
   return (
     <View style={styles.root}>
@@ -583,14 +599,16 @@ export function CatListScreen({ navigation }: any) {
               onPress={() => navigation.navigate('BreedRecognition')}
               activeOpacity={0.8}
             >
-              <Text style={styles.identifyBtnText}>🐾 Identify breed</Text>
+              <Feather name="camera" size={13} color={Colors.cream} />
+              <Text style={styles.identifyBtnText}>Identify breed</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.addBtn}
               onPress={() => navigation.navigate('CatForm', { mode: 'create' })}
               activeOpacity={0.8}
             >
-              <Text style={styles.addBtnText}>+ New cat</Text>
+              <Feather name="plus" size={14} color={Colors.white} />
+              <Text style={styles.addBtnText}>New cat</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -608,29 +626,16 @@ export function CatListScreen({ navigation }: any) {
         </View>
       </Animated.View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true)
-              loadCats()
-            }}
-            tintColor={Colors.greenSage}
-            colors={[Colors.greenForest]}
-          />
-        }
-      >
-        {loading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
-        ) : error ? (
+      {loading ? (
+        <View style={styles.scroll}>
+          <SkeletonCard />
+          <View style={{ height: Spacing.lg }} />
+          <SkeletonCard />
+        </View>
+      ) : error ? (
+        <View style={styles.scroll}>
           <View style={styles.errorWrap}>
-            <Text style={styles.errorEmoji}>⚠️</Text>
+            <Feather name="alert-triangle" size={40} color={Colors.error} />
             <Text style={styles.errorTitle}>Something went wrong</Text>
             <Text style={styles.errorDesc}>{error}</Text>
             <Button
@@ -640,24 +645,36 @@ export function CatListScreen({ navigation }: any) {
               style={{ marginTop: Spacing.lg } as any}
             />
           </View>
-        ) : cats.length === 0 ? (
-          <EmptyState
-            onAdd={() => navigation.navigate('CatForm', { mode: 'create' })}
-          />
-        ) : (
-          cats.map((cat, index) => (
-            <CatCard
-              key={cat.id}
-              cat={cat}
-              index={index}
-              onPress={() => navigation.navigate('CatDetail', { catId: cat.id })}
-              onEdit={() => navigation.navigate('CatForm', { mode: 'edit', cat })}
-              onDelete={() => handleDelete(cat)}
+        </View>
+      ) : (
+        <FlatList
+          data={cats}
+          keyExtractor={keyExtractor}
+          renderItem={renderCat}
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={{ height: Spacing.lg }} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true)
+                loadCats()
+              }}
+              tintColor={Colors.greenSage}
+              colors={[Colors.greenForest]}
             />
-          ))
-        )}
-        <View style={{ height: Spacing['4xl'] }} />
-      </ScrollView>
+          }
+          ListEmptyComponent={
+            <EmptyState
+              onAdd={() => navigation.navigate('CatForm', { mode: 'create' })}
+            />
+          }
+          ListFooterComponent={<View style={{ height: Spacing['4xl'] }} />}
+          windowSize={7}
+          removeClippedSubviews={Platform.OS !== 'web'}
+        />
+      )}
     </View>
   )
 }
@@ -697,6 +714,9 @@ const styles = StyleSheet.create({
     color: 'rgba(245,240,232,0.62)',
   },
   addBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: Colors.gold,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm + 2,
@@ -711,6 +731,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   identifyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: 'rgba(255,255,255,0.14)',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm + 2,
@@ -727,14 +750,12 @@ const styles = StyleSheet.create({
   },
   scroll: {
     padding: Spacing['2xl'],
-    gap: Spacing.lg,
   },
   errorWrap: {
     alignItems: 'center',
     paddingVertical: Spacing['4xl'],
     gap: Spacing.md,
   },
-  errorEmoji: { fontSize: 48 },
   errorTitle: {
     fontSize: Typography.xl,
     fontWeight: '700',

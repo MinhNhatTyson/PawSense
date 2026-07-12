@@ -14,6 +14,7 @@ import { Button, AlertBanner, PawLogo } from '../components/UI'
 import { TextInput } from '../components/TextInput'
 import { Field } from '../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../theme'
+import { FadeSlideIn } from '../components/Motion'
 
 export function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('')

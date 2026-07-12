@@ -36,7 +36,7 @@ export function getGeminiModel(systemInstruction?: string) {
         contents: contents as any,
         config: {
           responseMimeType: 'application/json',
-          maxOutputTokens: 16384,
+          maxOutputTokens: 32768,
           thinkingConfig: { thinkingBudget: 0 },
           ...(systemInstruction ? { systemInstruction } : {}),
         },
@@ -47,6 +47,7 @@ export function getGeminiModel(systemInstruction?: string) {
           text: () => response.text ?? '',
           promptFeedback: response.promptFeedback,
           candidates: response.candidates,
+          usageMetadata: response.usageMetadata,
         },
       }
     },
@@ -102,6 +103,7 @@ export function extractGeminiJson<T = unknown>(result: {
     text: () => string
     promptFeedback?: { blockReason?: string } | null
     candidates?: Array<{ finishReason?: string }> | null
+    usageMetadata?: { thoughtsTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number } 
   }
 }): T {
   const { response } = result
@@ -128,6 +130,7 @@ export function extractGeminiJson<T = unknown>(result: {
     return JSON.parse(cleanJsonText(raw)) as T
   } catch {
     console.error('Gemini returned non-JSON text (first 500 chars):', raw.slice(0, 500))
+    console.error('Gemini diagnostic — finishReason:', finishReason, '| usageMetadata:', response.usageMetadata)
     throw new GeminiResponseError('Gemini returned malformed JSON.', 'PARSE_ERROR')
   }
 }

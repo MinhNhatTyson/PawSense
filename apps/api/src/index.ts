@@ -21,6 +21,9 @@ import { emergencyGuideRouter } from './routes/emergencyGuide.route.js'
 import { catTreatmentRecordRouter } from './routes/catTreatmentRecord.route.js'
 import { notificationRouter } from './routes/notification.route.js'
 import { differentialDiagnosisRouter } from './routes/differentialDiagnosis.route.js'
+import { vetAvailabilityRouter } from './routes/vetAvailability.route.js'
+import { appointmentRouter } from './routes/appointment.route.js'
+import { vetDirectoryRouter } from './routes/vetDirectory.route.js'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -49,6 +52,9 @@ app.use('/api/emergency-guides', emergencyGuideRouter)
 app.use('/api/cat-treatment-records', catTreatmentRecordRouter)
 app.use('/api/notifications', notificationRouter)
 app.use('/api/differential-diagnosis', differentialDiagnosisRouter)
+app.use('/api/vet-availability', vetAvailabilityRouter)
+app.use('/api/appointments', appointmentRouter)
+app.use('/api/vet-directory', vetDirectoryRouter)
 
 // Health check
 app.get('/health', (_req, res) => {

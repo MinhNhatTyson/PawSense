@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   View,
   Text,
@@ -8,20 +8,88 @@ import {
   StatusBar,
   Alert,
   Platform,
+  Animated,
 } from 'react-native'
+import { Feather } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
 import { Card, DetailRow } from '../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../theme'
 import { notificationAPI } from '../api/notificationAPI'
 
-export function ProfileScreen({ navigation }: any) {
-  
-  const [unreadNotifCount, setUnreadNotifCount] = useState(0)   // ← ADD
+// ── Animated action row ──────────────────────────────────────────────────────
+// Memoized + staggered fade/slide-in so the list feels alive on first paint
+// without re-animating on every parent re-render (index/delay are stable props).
+const ActionRow = React.memo(function ActionRow({
+  icon,
+  title,
+  desc,
+  onPress,
+  delay = 0,
+}: {
+  icon: keyof typeof Feather.glyphMap
+  title: string
+  desc: string
+  onPress: () => void
+  delay?: number
+}) {
+  const fadeAnim = useRef(new Animated.Value(0)).current
+  const slideAnim = useRef(new Animated.Value(14)).current
+  const scaleAnim = useRef(new Animated.Value(1)).current
 
-  React.useEffect(() => {   // ← ADD
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 320, delay, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, tension: 70, friction: 11, delay, useNativeDriver: true }),
+    ]).start()
+  }, [])
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, { toValue: 0.97, tension: 200, friction: 10, useNativeDriver: true }).start()
+  }
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, { toValue: 1, tension: 200, friction: 10, useNativeDriver: true }).start()
+  }
+
+  return (
+    <Animated.View
+      style={{
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+      }}
+    >
+      <TouchableOpacity
+        style={styles.actionRow}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.85}
+      >
+        <View style={styles.actionIcon}>
+          <Feather name={icon} size={19} color={Colors.greenForest} />
+        </View>
+        <View style={styles.actionContent}>
+          <Text style={styles.actionTitle}>{title}</Text>
+          <Text style={styles.actionDesc}>{desc}</Text>
+        </View>
+        <Feather name="chevron-right" size={20} color={Colors.textLight} />
+      </TouchableOpacity>
+    </Animated.View>
+  )
+})
+
+export function ProfileScreen({ navigation }: any) {
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0)
+
+  useEffect(() => {
     notificationAPI.list(true, 0, 1).then(res => setUnreadNotifCount(res.unreadCount)).catch(() => {})
   }, [])
+
   const { user, logout, isLoading } = useAuth()
+
+  const heroAnim = useRef(new Animated.Value(0)).current
+  useEffect(() => {
+    Animated.spring(heroAnim, { toValue: 1, tension: 60, friction: 10, useNativeDriver: true }).start()
+  }, [])
 
   const initials = (
     user?.profile?.fullName?.charAt(0) ||
@@ -31,7 +99,6 @@ export function ProfileScreen({ navigation }: any) {
 
   function handleLogout() {
     if (Platform.OS === 'web') {
-      // Custom styled confirmation instead of bare window.confirm
       const modal = document.createElement('div')
       modal.style.cssText = `
         position: fixed; inset: 0; z-index: 9999;
@@ -111,7 +178,18 @@ export function ProfileScreen({ navigation }: any) {
       <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
 
       {/* Hero banner */}
-      <View style={styles.hero}>
+      <Animated.View
+        style={[
+          styles.hero,
+          {
+            opacity: heroAnim,
+            transform: [
+              { translateY: heroAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) },
+              { scale: heroAnim.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
+            ],
+          },
+        ]}
+      >
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
@@ -119,9 +197,10 @@ export function ProfileScreen({ navigation }: any) {
           {user.profile?.fullName || 'Pet Owner'}
         </Text>
         <View style={styles.rolePill}>
+          <Feather name="user" size={12} color={Colors.cream} style={{ marginRight: 6 }} />
           <Text style={styles.rolePillText}>Pet Owner</Text>
         </View>
-      </View>
+      </Animated.View>
 
       {/* Content */}
       <View style={styles.content}>
@@ -147,59 +226,60 @@ export function ProfileScreen({ navigation }: any) {
         <Text style={styles.sectionHeading}>Account</Text>
 
         <ActionRow
-          emoji="✎"
+          icon="edit-3"
           title="Edit profile"
           desc="Update your name, phone, and address"
           onPress={() => navigation.navigate('EditProfile')}
+          delay={20}
         />
-
         <ActionRow
-          emoji="🔔"
+          icon="bell"
           title="Notifications"
           desc={unreadNotifCount > 0 ? `${unreadNotifCount} unread` : 'Appointment updates and alerts'}
           onPress={() => navigation.navigate('Notifications')}
+          delay={60}
         />
-
         <ActionRow
-          emoji="🐱"
+          icon="heart"
           title="My cats"
           desc="Manage cat profiles and health records"
           onPress={() => navigation.navigate('CatList')}
+          delay={100}
         />
-
         <ActionRow
-          emoji="📅"
+          icon="calendar"
           title="Appointments"
           desc="Book a vet visit and manage your bookings"
           onPress={() => navigation.navigate('MyAppointments')}
+          delay={140}
         />
-
         <ActionRow
-          emoji="🩺"
+          icon="activity"
           title="AI Symptom Checker"
           desc="Describe symptoms and get an AI-assisted risk assessment"
           onPress={() => navigation.navigate('SymptomChecker')}
+          delay={180}
         />
-
         <ActionRow
-          emoji="🍽"
+          icon="pie-chart"
           title="Food Recommendations"
           desc="Get AI-powered diet suggestions by breed, age, weight & health"
           onPress={() => navigation.navigate('FoodRecommendation')}
+          delay={220}
         />
-
         <ActionRow
-          emoji="🚨"
+          icon="alert-triangle"
           title="Emergency Guidance"
           desc="First-aid steps and urgent care recommendations"
           onPress={() => navigation.navigate('EmergencyGuideList')}
+          delay={260}
         />
-
         <ActionRow
-          emoji="🔒"
+          icon="lock"
           title="Change password"
           desc="Update your login credentials"
           onPress={() => navigation.navigate('ChangePassword')}
+          delay={300}
         />
 
         {/* Sign out */}
@@ -209,6 +289,7 @@ export function ProfileScreen({ navigation }: any) {
           activeOpacity={0.8}
           disabled={isLoading}
         >
+          <Feather name="log-out" size={16} color={Colors.error} style={{ marginRight: 8 }} />
           <Text style={styles.signOutText}>
             {isLoading ? 'Signing out…' : 'Sign out'}
           </Text>
@@ -216,36 +297,6 @@ export function ProfileScreen({ navigation }: any) {
 
       </View>
     </ScrollView>
-  )
-}
-
-// ── Reusable action row ───────────────────────────────────────────────────────
-function ActionRow({
-  emoji,
-  title,
-  desc,
-  onPress,
-}: {
-  emoji: string
-  title: string
-  desc: string
-  onPress: () => void
-}) {
-  return (
-    <TouchableOpacity
-      style={styles.actionRow}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View style={styles.actionIcon}>
-        <Text style={styles.actionIconText}>{emoji}</Text>
-      </View>
-      <View style={styles.actionContent}>
-        <Text style={styles.actionTitle}>{title}</Text>
-        <Text style={styles.actionDesc}>{desc}</Text>
-      </View>
-      <Text style={styles.actionChevron}>›</Text>
-    </TouchableOpacity>
   )
 }
 
@@ -289,6 +340,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   rolePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.xs,
     backgroundColor: 'rgba(255,255,255,0.15)',
@@ -346,7 +399,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  actionIconText: { fontSize: 18 },
   actionContent: { flex: 1 },
   actionTitle: {
     fontSize: Typography.base,
@@ -358,14 +410,10 @@ const styles = StyleSheet.create({
     fontSize: Typography.sm,
     color: Colors.textMuted,
   },
-  actionChevron: {
-    fontSize: 22,
-    color: Colors.textLight,
-    lineHeight: 26,
-  },
 
   // ── Sign out ──────────────────────────────────────
   signOutBtn: {
+    flexDirection: 'row',
     marginTop: Spacing.xl,
     backgroundColor: Colors.errorBg,
     borderWidth: 1,
@@ -373,6 +421,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     paddingVertical: Spacing.lg,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   signOutText: {
     fontSize: Typography.base,

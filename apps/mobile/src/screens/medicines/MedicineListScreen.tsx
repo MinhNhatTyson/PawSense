@@ -3,15 +3,17 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   TextInput,
   StatusBar,
   RefreshControl,
   ActivityIndicator,
   Image,
+  Platform,
 } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
+import { Feather } from '@expo/vector-icons'
 import { medicineAPI, type Medicine } from '../../api/medicineAPI'
 import { Button } from '../../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
@@ -97,9 +99,9 @@ const chipStyles = StyleSheet.create({
   },
 })
 
-// ── Medicine card ─────────────────────────────────────────────────────────────
+// ── Medicine card (memoized — avoids re-render on unrelated list state) ───────
 
-function MedicineCard({ med, onPress }: { med: Medicine; onPress: () => void }) {
+const MedicineCard = React.memo(function MedicineCard({ med, onPress }: { med: Medicine; onPress: () => void }) {
   const diseases = med.diseaseMedicines?.slice(0, 2) ?? []
   const extra = (med.diseaseMedicines?.length ?? 0) - 2
 
@@ -111,7 +113,7 @@ function MedicineCard({ med, onPress }: { med: Medicine; onPress: () => void }) 
           <Image source={{ uri: med.imageUrl }} style={cardStyles.image} />
         ) : (
           <View style={cardStyles.imagePlaceholder}>
-            <Text style={cardStyles.imagePlaceholderIcon}>💊</Text>
+            <Feather name="package" size={40} color={Colors.greenSage} />
           </View>
         )}
       </View>
@@ -155,7 +157,7 @@ function MedicineCard({ med, onPress }: { med: Medicine; onPress: () => void }) 
         {/* Warnings indicator */}
         {med.warnings.length > 0 && (
           <View style={cardStyles.warnRow}>
-            <Text style={cardStyles.warnIcon}>⚠</Text>
+            <Feather name="alert-triangle" size={12} color="#c0392b" />
             <Text style={cardStyles.warnText}>
               {med.warnings.length} warning{med.warnings.length !== 1 ? 's' : ''}
             </Text>
@@ -164,7 +166,7 @@ function MedicineCard({ med, onPress }: { med: Medicine; onPress: () => void }) 
       </View>
     </TouchableOpacity>
   )
-}
+})
 
 const cardStyles = StyleSheet.create({
   card: {
@@ -185,7 +187,6 @@ const cardStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  imagePlaceholderIcon: { fontSize: 48 },
   body: { padding: Spacing.lg, gap: Spacing.sm },
   name: {
     fontSize: Typography.lg,
@@ -232,7 +233,6 @@ const cardStyles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.xs,
   },
-  warnIcon: { fontSize: 13, color: '#c0392b' },
   warnText: {
     fontSize: Typography.xs,
     color: '#c0392b',
@@ -252,6 +252,7 @@ export function MedicineListScreen({ navigation }: any) {
   const [page, setPage] = useState(0)
   const [diseaseOptions, setDiseaseOptions] = useState<DiseaseSummary[]>([])
   const [selectedDiseaseId, setSelectedDiseaseId] = useState<string | null>(null)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   const PER_PAGE = 20
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -270,6 +271,7 @@ export function MedicineListScreen({ navigation }: any) {
     } finally {
       setLoading(false)
       setRefreshing(false)
+      setLoadingMore(false)
     }
   }, [])
 
@@ -313,9 +315,24 @@ export function MedicineListScreen({ navigation }: any) {
   }
 
   const selectedDiseaseName = diseaseOptions.find(d => d.id === selectedDiseaseId)?.name
-
   const hasMore = medicines.length < total
 
+  const handleLoadMore = useCallback(() => {
+    if (loading || loadingMore || !hasMore) return
+    setLoadingMore(true)
+    loadMedicines(search, page + 1, selectedDiseaseId ?? undefined)
+  }, [loading, loadingMore, hasMore, search, page, selectedDiseaseId, loadMedicines])
+
+  const renderMedicine = useCallback(
+    ({ item }: { item: Medicine }) => (
+      <MedicineCard
+        med={item}
+        onPress={() => navigation.navigate('MedicineDetail', { medicineId: item.id })}
+      />
+    ),
+    [navigation]
+  )
+  const keyExtractor = useCallback((item: Medicine) => item.id, [])
 
   return (
     <View style={styles.root}>
@@ -335,15 +352,20 @@ export function MedicineListScreen({ navigation }: any) {
 
       {/* Top disclaimer */}
       <View style={styles.disclaimer}>
-        <Text style={styles.disclaimerIcon}>⚕</Text>
+        <Feather name="info" size={15} color="#7a5a2a" />
         <Text style={styles.disclaimerText}>
           For reference only. Always consult your veterinarian before giving any medicine to your pet.
         </Text>
       </View>
 
-      <ScrollView
+      <FlatList
+        data={medicines}
+        keyExtractor={keyExtractor}
+        renderItem={renderMedicine}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -354,115 +376,106 @@ export function MedicineListScreen({ navigation }: any) {
             tintColor={Colors.greenSage}
           />
         }
-      >
-        {/* Search bar */}
-        <View style={styles.searchWrap}>
-          <Text style={styles.searchIcon}>🔍</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search medicines…"
-            placeholderTextColor={Colors.textLight}
-            value={search}
-            onChangeText={handleSearch}
-            clearButtonMode="while-editing"
-            returnKeyType="search"
-            autoCorrect={false}
-            autoCapitalize="none"
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={handleClearSearch} style={styles.clearBtn}>
-              <Text style={styles.clearBtnText}>✕</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Disease filter chips — now composes with the text search server-side */}
-        {diseaseOptions.length > 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.chipsScroll}
-            contentContainerStyle={styles.chipsContent}
-          >
-            <FilterChip label="All" selected={selectedDiseaseId === null} onPress={clearDiseaseFilter} />
-            {diseaseOptions.map(d => (
-              <FilterChip
-                key={d.id}
-                label={d.name}
-                selected={selectedDiseaseId === d.id}
-                onPress={() => handleDiseaseFilter(d.id)}
-              />
-            ))}
-          </ScrollView>
-        )}
-
-        {/* Active filter label */}
-        {selectedDiseaseId && (
-          <View style={styles.activeFilterRow}>
-            <Text style={styles.activeFilterText}>
-              Filtered by: <Text style={styles.activeFilterName}>{selectedDiseaseName}</Text>
-            </Text>
-            <TouchableOpacity onPress={clearDiseaseFilter}>
-              <Text style={styles.activeFilterClear}>Clear</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Results */}
-        {loading && medicines.length === 0 ? (
-          <View style={styles.centred}>
-            <ActivityIndicator size="large" color={Colors.greenSage} />
-            <Text style={styles.loadingText}>Loading medicines…</Text>
-          </View>
-        ) : error ? (
-          <View style={styles.centred}>
-            <Text style={styles.stateIcon}>⚠️</Text>
-            <Text style={styles.stateTitle}>Something went wrong</Text>
-            <Text style={styles.stateDesc}>{error}</Text>
-            <Button
-              label="Try again"
-              onPress={() => { setLoading(true); loadMedicines(search, 0, selectedDiseaseId ?? undefined) }}
-              variant="secondary"
-              style={{ marginTop: Spacing.lg }}
-            />
-          </View>
-        ) : medicines.length === 0 ? (
-          <View style={styles.centred}>
-            <Text style={styles.stateIcon}>💊</Text>
-            <Text style={styles.stateTitle}>No medicines found</Text>
-            <Text style={styles.stateDesc}>
-              {search
-                ? `No results for "${search}". Try a different search term.`
-                : selectedDiseaseId
-                ? `No medicines linked to ${selectedDiseaseName}.`
-                : 'The medicine database appears to be empty.'}
-            </Text>
-          </View>
-        ) : (
+        ListHeaderComponent={
           <>
-            {medicines.map(med => (
-              <MedicineCard
-                key={med.id}
-                med={med}
-                onPress={() =>
-                  navigation.navigate('MedicineDetail', { medicineId: med.id })
-                }
+            {/* Search bar */}
+            <View style={styles.searchWrap}>
+              <Feather name="search" size={16} color={Colors.textLight} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search medicines…"
+                placeholderTextColor={Colors.textLight}
+                value={search}
+                onChangeText={handleSearch}
+                clearButtonMode="while-editing"
+                returnKeyType="search"
+                autoCorrect={false}
+                autoCapitalize="none"
               />
-            ))}
+              {search.length > 0 && (
+                <TouchableOpacity onPress={handleClearSearch} style={styles.clearBtn}>
+                  <Feather name="x" size={14} color={Colors.textLight} />
+                </TouchableOpacity>
+              )}
+            </View>
 
-            {hasMore && (
-              <Button
-                label="Load more"
-                onPress={() => loadMedicines(search, page + 1, selectedDiseaseId ?? undefined)}
-                variant="secondary"
-                style={{ marginTop: Spacing.sm }}
+            {/* Disease filter chips */}
+            {diseaseOptions.length > 0 && (
+              <FlatList
+                horizontal
+                data={diseaseOptions}
+                keyExtractor={d => d.id}
+                showsHorizontalScrollIndicator={false}
+                style={styles.chipsScroll}
+                contentContainerStyle={styles.chipsContent}
+                ListHeaderComponent={
+                  <FilterChip label="All" selected={selectedDiseaseId === null} onPress={clearDiseaseFilter} />
+                }
+                renderItem={({ item: d }) => (
+                  <FilterChip
+                    label={d.name}
+                    selected={selectedDiseaseId === d.id}
+                    onPress={() => handleDiseaseFilter(d.id)}
+                  />
+                )}
               />
             )}
 
-            <View style={{ height: Spacing['2xl'] }} />
+            {/* Active filter label */}
+            {selectedDiseaseId && (
+              <View style={styles.activeFilterRow}>
+                <Text style={styles.activeFilterText}>
+                  Filtered by: <Text style={styles.activeFilterName}>{selectedDiseaseName}</Text>
+                </Text>
+                <TouchableOpacity onPress={clearDiseaseFilter}>
+                  <Text style={styles.activeFilterClear}>Clear</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </>
-        )}
-      </ScrollView>
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View style={styles.centred}>
+              <ActivityIndicator size="large" color={Colors.greenSage} />
+              <Text style={styles.loadingText}>Loading medicines…</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.centred}>
+              <Feather name="alert-triangle" size={40} color={Colors.textLight} />
+              <Text style={styles.stateTitle}>Something went wrong</Text>
+              <Text style={styles.stateDesc}>{error}</Text>
+              <Button
+                label="Try again"
+                onPress={() => { setLoading(true); loadMedicines(search, 0, selectedDiseaseId ?? undefined) }}
+                variant="secondary"
+                style={{ marginTop: Spacing.lg }}
+              />
+            </View>
+          ) : (
+            <View style={styles.centred}>
+              <Feather name="package" size={40} color={Colors.textLight} />
+              <Text style={styles.stateTitle}>No medicines found</Text>
+              <Text style={styles.stateDesc}>
+                {search
+                  ? `No results for "${search}". Try a different search term.`
+                  : selectedDiseaseId
+                  ? `No medicines linked to ${selectedDiseaseName}.`
+                  : 'The medicine database appears to be empty.'}
+              </Text>
+            </View>
+          )
+        }
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator size="small" color={Colors.greenSage} style={{ marginVertical: Spacing.lg }} />
+          ) : (
+            <View style={{ height: Spacing['2xl'] }} />
+          )
+        }
+        windowSize={7}
+        removeClippedSubviews={Platform.OS !== 'web'}
+      />
     </View>
   )
 }
@@ -502,7 +515,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing['2xl'],
     paddingVertical: Spacing.md,
   },
-  disclaimerIcon: { fontSize: 15, lineHeight: 21, flexShrink: 0 },
   disclaimerText: {
     fontSize: Typography.sm,
     color: '#7a5a2a',
@@ -523,7 +535,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
     gap: Spacing.sm,
   },
-  searchIcon: { fontSize: 16 },
   searchInput: {
     flex: 1,
     height: 46,
@@ -531,7 +542,6 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   clearBtn: { padding: Spacing.xs },
-  clearBtnText: { fontSize: Typography.sm, color: Colors.textLight, fontWeight: '600' },
 
   // Disease chips
   chipsScroll: { marginBottom: Spacing.md, marginHorizontal: -Spacing['2xl'] },
@@ -567,7 +577,6 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   loadingText: { fontSize: Typography.base, color: Colors.textMuted },
-  stateIcon: { fontSize: 56 },
   stateTitle: {
     fontSize: Typography.xl,
     fontWeight: '600',
