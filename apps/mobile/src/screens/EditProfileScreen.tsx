@@ -13,6 +13,7 @@ import { Button, AlertBanner, Card } from '../components/UI'
 import { Field } from '../components/UI'
 import { TextInput } from '../components/TextInput'
 import { Colors, Typography, Spacing, Shadow } from '../theme'
+import { FadeSlideIn } from '../components/Motion'
 
 export function EditProfileScreen({ navigation }: any) {
   const { user, updateProfile, isLoading } = useAuth()
@@ -52,15 +53,18 @@ export function EditProfileScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         {/* Page header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Edit profile</Text>
-          <Text style={styles.headerSubtitle}>Update your personal information</Text>
-        </View>
+        <FadeSlideIn distance={-16}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Edit profile</Text>
+            <Text style={styles.headerSubtitle}>Update your personal information</Text>
+          </View>
+        </FadeSlideIn>
 
         <View style={styles.content}>
           {error ? <AlertBanner type="error" message={error} /> : null}
           {success ? <AlertBanner type="success" message={success} /> : null}
 
+          <FadeSlideIn delay={80}>
           <Card>
             <Text style={styles.sectionTitle}>Personal information</Text>
 
@@ -97,6 +101,7 @@ export function EditProfileScreen({ navigation }: any) {
               />
             </Field>
           </Card>
+          </FadeSlideIn>
 
           <Button
             label="Save changes"

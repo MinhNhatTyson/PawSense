@@ -22,6 +22,7 @@ import {
 import { Button, Field } from '../../components/UI'
 import { TextInput } from '../../components/TextInput'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
+import { PressableScale, EmptyState } from '../../components/Motion'
 
 type Source = 'cat' | 'manual'
 type Stage = 'form' | 'loading' | 'result'
@@ -38,20 +39,12 @@ const CATEGORY_STYLE: Record<FoodCategory, { bg: string; color: string; label: s
 function SourceTabs({ source, onChange }: { source: Source; onChange: (s: Source) => void }) {
   return (
     <View style={tabStyles.wrap}>
-      <TouchableOpacity
-        style={[tabStyles.tab, source === 'cat' && tabStyles.tabActive]}
-        onPress={() => onChange('cat')}
-        activeOpacity={0.8}
-      >
+      <PressableScale onPress={() => onChange('cat')} scaleTo={0.96} style={[tabStyles.tab, source === 'cat' && tabStyles.tabActive] as any}>
         <Text style={[tabStyles.tabText, source === 'cat' && tabStyles.tabTextActive]}>🐱 My cats</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[tabStyles.tab, source === 'manual' && tabStyles.tabActive]}
-        onPress={() => onChange('manual')}
-        activeOpacity={0.8}
-      >
+      </PressableScale>
+      <PressableScale onPress={() => onChange('manual')} scaleTo={0.96} style={[tabStyles.tab, source === 'manual' && tabStyles.tabActive] as any}>
         <Text style={[tabStyles.tabText, source === 'manual' && tabStyles.tabTextActive]}>✎ Manual entry</Text>
-      </TouchableOpacity>
+      </PressableScale>
     </View>
   )
 }
@@ -74,13 +67,9 @@ const tabStyles = StyleSheet.create({
 
 function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
   return (
-    <TouchableOpacity
-      style={[chipStyles.chip, selected && chipStyles.chipSelected]}
-      onPress={onPress}
-      activeOpacity={0.75}
-    >
+    <PressableScale onPress={onPress} scaleTo={0.93} style={[chipStyles.chip, selected && chipStyles.chipSelected] as any}>
       <Text style={[chipStyles.text, selected && chipStyles.textSelected]}>{label}</Text>
-    </TouchableOpacity>
+    </PressableScale>
   )
 }
 
@@ -442,15 +431,13 @@ export function FoodRecommendationScreen({ navigation }: any) {
               <FormCard delay={40}>
                 <SectionHeading title="Choose a cat" />
                 {cats.length === 0 ? (
-                  <View style={styles.noCatsWrap}>
-                    <Text style={styles.noCatsText}>You don't have any cat profiles yet.</Text>
-                    <Button
-                      label="Add a cat"
-                      onPress={() => navigation.navigate('CatForm', { mode: 'create' })}
-                      variant="secondary"
-                      style={{ marginTop: Spacing.md } as any}
-                    />
-                  </View>
+                  <EmptyState
+                    emoji="🐱"
+                    title="No cats yet"
+                    desc="Add a cat profile to get personalized food recommendations."
+                    actionLabel="Add a cat"
+                    onAction={() => navigation.navigate('CatForm', { mode: 'create' })}
+                  />
                 ) : (
                   <>
                     <View style={styles.chipsWrap}>
@@ -697,8 +684,6 @@ const styles = StyleSheet.create({
   },
   helperText: { fontSize: Typography.xs, color: Colors.textLight, fontStyle: 'italic', marginBottom: Spacing.xs },
 
-  noCatsWrap: { alignItems: 'center', paddingVertical: Spacing.lg },
-  noCatsText: { fontSize: Typography.base, color: Colors.textMuted, textAlign: 'center' },
   noMatchText: { fontSize: Typography.sm, color: Colors.textLight, fontStyle: 'italic' },
 
   catSummary: {

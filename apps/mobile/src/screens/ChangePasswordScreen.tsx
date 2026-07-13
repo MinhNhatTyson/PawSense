@@ -13,6 +13,7 @@ import { Button, AlertBanner, Card, SectionTitle } from '../components/UI'
 import { Field } from '../components/UI'
 import { TextInput } from '../components/TextInput'
 import { Colors, Typography, Spacing } from '../theme'
+import { FadeSlideIn } from '../components/Motion'
 
 export function ChangePasswordScreen({ navigation }: any) {
   const { changePassword, isLoading } = useAuth()
@@ -71,16 +72,19 @@ export function ChangePasswordScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         {/* Page header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Change password</Text>
-          <Text style={styles.headerSubtitle}>Keep your account secure with a strong password</Text>
-        </View>
+        <FadeSlideIn distance={-16}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Change password</Text>
+            <Text style={styles.headerSubtitle}>Keep your account secure with a strong password</Text>
+          </View>
+        </FadeSlideIn>
 
         <View style={styles.content}>
           {error ? <AlertBanner type="error" message={error} /> : null}
           {success ? <AlertBanner type="success" message={success} /> : null}
 
           {/* Current password */}
+          <FadeSlideIn delay={60}>
           <Card>
             <SectionTitle title="Current password" />
 
@@ -96,8 +100,10 @@ export function ChangePasswordScreen({ navigation }: any) {
               />
             </Field>
           </Card>
+          </FadeSlideIn>
 
           {/* New password */}
+          <FadeSlideIn delay={110}>
           <Card>
             <SectionTitle title="New password" />
 
@@ -155,6 +161,7 @@ export function ChangePasswordScreen({ navigation }: any) {
               )}
             </Field>
           </Card>
+          </FadeSlideIn>
 
           <Button
             label="Update password"

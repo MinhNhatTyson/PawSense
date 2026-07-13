@@ -173,7 +173,7 @@ export const catProfileAPI = {
       ageYears?: number
       ageMonths?: number
       weightKg?: number
-      breed?: string
+      breedId?: string
       color?: string
       notes?: string
       existingImageUrls?: string[]
@@ -195,7 +195,7 @@ export const catProfileAPI = {
     if (data.ageYears !== undefined) formData.append('ageYears', String(data.ageYears))
     if (data.ageMonths !== undefined) formData.append('ageMonths', String(data.ageMonths))
     if (data.weightKg !== undefined) formData.append('weightKg', String(data.weightKg))
-    if (data.breed !== undefined) formData.append('breed', data.breed)
+    if (data.breedId !== undefined) formData.append('breedId', data.breedId)
     if (data.color !== undefined) formData.append('color', data.color)
     if (data.notes !== undefined) formData.append('notes', data.notes)
     if (data.existingImageUrls !== undefined)

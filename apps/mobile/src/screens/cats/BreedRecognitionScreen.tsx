@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { breedRecognitionAPI, type BreedRecognitionResult } from '../../api/breedRecognitionAPI'
 import { Button } from '../../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
+import { FadeSlideIn } from '../../components/Motion'
 
 type Stage = 'pick' | 'preview' | 'loading' | 'result'
 
@@ -179,15 +180,17 @@ export function BreedRecognitionScreen({ navigation }: any) {
 
         {/* ── Pick stage ── */}
         {stage === 'pick' && (
-          <View style={styles.pickCard}>
-            <Text style={styles.pickIcon}>🐾</Text>
-            <Text style={styles.pickTitle}>Identify your cat's breed</Text>
-            <Text style={styles.pickDesc}>
-              Take a clear, well-lit photo of your cat's face and body for the most accurate result.
-            </Text>
-            <Button label="📷 Take a photo" onPress={() => pickImage(true)} style={{ marginTop: Spacing.xl } as any} />
-            <Button label="🖼 Choose from library" onPress={() => pickImage(false)} variant="secondary" style={{ marginTop: Spacing.md } as any} />
-          </View>
+          <FadeSlideIn>
+            <View style={styles.pickCard}>
+              <Text style={styles.pickIcon}>🐾</Text>
+              <Text style={styles.pickTitle}>Identify your cat's breed</Text>
+              <Text style={styles.pickDesc}>
+                Take a clear, well-lit photo of your cat's face and body for the most accurate result.
+              </Text>
+              <Button label="📷 Take a photo" onPress={() => pickImage(true)} style={{ marginTop: Spacing.xl } as any} />
+              <Button label="🖼 Choose from library" onPress={() => pickImage(false)} variant="secondary" style={{ marginTop: Spacing.md } as any} />
+            </View>
+          </FadeSlideIn>
         )}
 
         {/* ── Preview / loading stage ── */}
@@ -216,16 +219,18 @@ export function BreedRecognitionScreen({ navigation }: any) {
         {/* ── Result stage ── */}
         {stage === 'result' && result && imageUri && (
           <View>
-            <View style={styles.resultHero}>
-              <Image source={{ uri: imageUri }} style={styles.resultImage} />
-              <View style={styles.resultHeroBody}>
-                <Text style={styles.resultBreedName}>{result.breedName}</Text>
-                {result.isMixedOrUnclear && (
-                  <Text style={styles.resultMixedNote}>Likely a mixed breed / domestic cat</Text>
-                )}
+            <FadeSlideIn distance={12}>
+              <View style={styles.resultHero}>
+                <Image source={{ uri: imageUri }} style={styles.resultImage} />
+                <View style={styles.resultHeroBody}>
+                  <Text style={styles.resultBreedName}>{result.breedName}</Text>
+                  {result.isMixedOrUnclear && (
+                    <Text style={styles.resultMixedNote}>Likely a mixed breed / domestic cat</Text>
+                  )}
+                </View>
+                <ConfidenceRing value={result.confidence} />
               </View>
-              <ConfidenceRing value={result.confidence} />
-            </View>
+            </FadeSlideIn>
 
             {result.matchedBreed && (
               <View style={styles.matchedBanner}>
@@ -235,33 +240,41 @@ export function BreedRecognitionScreen({ navigation }: any) {
               </View>
             )}
 
-            <ResultSection title="About this breed">
-              <Text style={styles.bodyText}>{result.description}</Text>
-            </ResultSection>
+            <FadeSlideIn delay={40}>
+              <ResultSection title="About this breed">
+                <Text style={styles.bodyText}>{result.description}</Text>
+              </ResultSection>
+            </FadeSlideIn>
 
             {result.characteristics.length > 0 && (
-              <ResultSection title="Physical characteristics">
-                <TagList items={result.characteristics} />
-              </ResultSection>
+              <FadeSlideIn delay={90}>
+                <ResultSection title="Physical characteristics">
+                  <TagList items={result.characteristics} />
+                </ResultSection>
+              </FadeSlideIn>
             )}
 
             {result.temperament.length > 0 && (
-              <ResultSection title="Temperament">
-                <TagList items={result.temperament} tone="gold" />
-              </ResultSection>
+              <FadeSlideIn delay={140}>
+                <ResultSection title="Temperament">
+                  <TagList items={result.temperament} tone="gold" />
+                </ResultSection>
+              </FadeSlideIn>
             )}
 
             {result.careInstructions.length > 0 && (
-              <ResultSection title="Care instructions">
-                <View style={{ gap: Spacing.sm }}>
-                  {result.careInstructions.map((tip, i) => (
-                    <View key={i} style={styles.careRow}>
-                      <View style={styles.careDot} />
-                      <Text style={styles.careText}>{tip}</Text>
-                    </View>
-                  ))}
-                </View>
-              </ResultSection>
+              <FadeSlideIn delay={190}>
+                <ResultSection title="Care instructions">
+                  <View style={{ gap: Spacing.sm }}>
+                    {result.careInstructions.map((tip, i) => (
+                      <View key={i} style={styles.careRow}>
+                        <View style={styles.careDot} />
+                        <Text style={styles.careText}>{tip}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </ResultSection>
+              </FadeSlideIn>
             )}
 
             <View style={styles.disclaimer}>

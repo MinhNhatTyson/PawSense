@@ -14,6 +14,7 @@ import { Button, AlertBanner, PawLogo, SectionTitle } from '../components/UI'
 import { Field } from '../components/UI'
 import { TextInput } from '../components/TextInput'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../theme'
+import { FadeSlideIn } from '../components/Motion'
 
 export function RegisterScreen({ navigation }: any) {
   const [email, setEmail] = useState('')
@@ -70,17 +71,20 @@ export function RegisterScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         {/* Hero */}
-        <View style={styles.hero}>
-          <View style={styles.logoWrap}>
-            <PawLogo size={44} />
+        <FadeSlideIn distance={-16}>
+          <View style={styles.hero}>
+            <View style={styles.logoWrap}>
+              <PawLogo size={44} />
+            </View>
+            <Text style={styles.brandName}>
+              Paw<Text style={styles.brandAccent}>Sense</Text>
+            </Text>
+            <Text style={styles.tagline}>Create your account</Text>
           </View>
-          <Text style={styles.brandName}>
-            Paw<Text style={styles.brandAccent}>Sense</Text>
-          </Text>
-          <Text style={styles.tagline}>Create your account</Text>
-        </View>
+        </FadeSlideIn>
 
         {/* Form card */}
+        <FadeSlideIn delay={120}>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Join PawSense</Text>
           <Text style={styles.cardSubtitle}>Track and manage your pet's health in one place</Text>
@@ -203,6 +207,7 @@ export function RegisterScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
         </View>
+        </FadeSlideIn>
 
         <View style={{ height: Spacing['3xl'] }} />
       </ScrollView>
