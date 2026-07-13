@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, StatusBar, ActivityIndicator, Alert, Platform } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, StatusBar, Alert, Platform } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import { appointmentAPI, type VetAvailabilitySlot } from '../../api/appointmentAPI'
 import { catProfileAPI, type CatProfile } from '../../api/catProfileAPI'
 import { scheduleAppointmentReminder } from '../../utils/notifications'
 import { Button } from '../../components/UI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
+import { SkeletonBlock, FadeSlideIn, EmptyState, PressableScale } from '../../components/Motion'
 
 function groupByDate(slots: VetAvailabilitySlot[]) {
   const groups: Record<string, VetAvailabilitySlot[]> = {}
@@ -15,6 +16,21 @@ function groupByDate(slots: VetAvailabilitySlot[]) {
     groups[key].push(s)
   }
   return Object.entries(groups)
+}
+
+/** Skeleton placeholder for a day's worth of slot chips, shown while availability loads. */
+function DaySkeletonGroup() {
+  return (
+    <View style={styles.dayGroup}>
+      <SkeletonBlock width="45%" height={16} style={{ marginBottom: Spacing.sm }} />
+      <View style={styles.slotRow}>
+        <SkeletonBlock width={70} height={38} style={{ borderRadius: Radius.full }} />
+        <SkeletonBlock width={70} height={38} style={{ borderRadius: Radius.full }} />
+        <SkeletonBlock width={70} height={38} style={{ borderRadius: Radius.full }} />
+        <SkeletonBlock width={70} height={38} style={{ borderRadius: Radius.full }} />
+      </View>
+    </View>
+  )
 }
 
 export function VetAvailabilityScreen({ navigation, route }: any) {
@@ -77,84 +93,99 @@ export function VetAvailabilityScreen({ navigation, route }: any) {
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{vetName}</Text>
-        <Text style={styles.headerSubtitle}>Choose an open slot to book</Text>
-      </View>
+      <FadeSlideIn distance={-16}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{vetName}</Text>
+          <Text style={styles.headerSubtitle}>Choose an open slot to book</Text>
+        </View>
+      </FadeSlideIn>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {loading ? (
-          <View style={styles.centred}><ActivityIndicator size="large" color={Colors.greenSage} /></View>
+          <>
+            <DaySkeletonGroup />
+            <DaySkeletonGroup />
+          </>
         ) : error ? (
           <View style={styles.centred}><Text style={styles.stateText}>{error}</Text></View>
         ) : grouped.length === 0 ? (
-          <View style={styles.centred}>
-            <Text style={styles.stateText}>This vet has no open slots right now. Please check back later.</Text>
-          </View>
+          <EmptyState
+            emoji="📆"
+            title="No open slots"
+            desc="This vet has no open slots right now. Please check back later."
+          />
         ) : (
-          grouped.map(([dateKey, daySlots]) => (
-            <View key={dateKey} style={styles.dayGroup}>
-              <Text style={styles.dayHeading}>
-                {new Date(dateKey).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </Text>
-              <View style={styles.slotRow}>
-                {daySlots.map(slot => (
-                  <TouchableOpacity
-                    key={slot.id}
-                    style={[styles.slotChip, selectedSlot?.id === slot.id && styles.slotChipSelected]}
-                    onPress={() => setSelectedSlot(slot)}
-                  >
-                    <Text style={[styles.slotChipText, selectedSlot?.id === slot.id && styles.slotChipTextSelected]}>
-                      {new Date(slot.startTime).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' })}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+          grouped.map(([dateKey, daySlots], groupIndex) => (
+            <FadeSlideIn key={dateKey} delay={groupIndex * 70} distance={14}>
+              <View style={styles.dayGroup}>
+                <Text style={styles.dayHeading}>
+                  {new Date(dateKey).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </Text>
+                <View style={styles.slotRow}>
+                  {daySlots.map(slot => {
+                    const isSelected = selectedSlot?.id === slot.id
+                    return (
+                      <PressableScale
+                        key={slot.id}
+                        scaleTo={0.94}
+                        onPress={() => setSelectedSlot(slot)}
+                        style={[styles.slotChip, isSelected && styles.slotChipSelected] as any}
+                      >
+                        <Text style={[styles.slotChipText, isSelected && styles.slotChipTextSelected]}>
+                          {new Date(slot.startTime).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' })}
+                        </Text>
+                      </PressableScale>
+                    )
+                  })}
+                </View>
               </View>
-            </View>
+            </FadeSlideIn>
           ))
         )}
 
         {selectedSlot && (
-          <View style={styles.bookingCard}>
-            <Text style={styles.bookingTitle}>Confirm appointment</Text>
-            <Text style={styles.bookingTime}>
-              {new Date(selectedSlot.startTime).toLocaleString('en-GB', {
-                weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
-              })}
-            </Text>
+          <FadeSlideIn distance={16}>
+            <View style={styles.bookingCard}>
+              <Text style={styles.bookingTitle}>Confirm appointment</Text>
+              <Text style={styles.bookingTime}>
+                {new Date(selectedSlot.startTime).toLocaleString('en-GB', {
+                  weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
+                })}
+              </Text>
 
-            {cats.length > 0 && (
-              <>
-                <Text style={styles.fieldLabel}>Which cat? (optional)</Text>
-                <View style={styles.chipsWrap}>
-                  <TouchableOpacity style={[styles.catChip, selectedCatId === null && styles.catChipSelected]} onPress={() => setSelectedCatId(null)}>
-                    <Text style={[styles.catChipText, selectedCatId === null && styles.catChipTextSelected]}>Not specified</Text>
-                  </TouchableOpacity>
-                  {cats.map(c => (
-                    <TouchableOpacity key={c.id} style={[styles.catChip, selectedCatId === c.id && styles.catChipSelected]} onPress={() => setSelectedCatId(c.id)}>
-                      <Text style={[styles.catChipText, selectedCatId === c.id && styles.catChipTextSelected]}>{c.name}</Text>
+              {cats.length > 0 && (
+                <>
+                  <Text style={styles.fieldLabel}>Which cat? (optional)</Text>
+                  <View style={styles.chipsWrap}>
+                    <TouchableOpacity style={[styles.catChip, selectedCatId === null && styles.catChipSelected]} onPress={() => setSelectedCatId(null)}>
+                      <Text style={[styles.catChipText, selectedCatId === null && styles.catChipTextSelected]}>Not specified</Text>
                     </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
+                    {cats.map(c => (
+                      <TouchableOpacity key={c.id} style={[styles.catChip, selectedCatId === c.id && styles.catChipSelected]} onPress={() => setSelectedCatId(c.id)}>
+                        <Text style={[styles.catChipText, selectedCatId === c.id && styles.catChipTextSelected]}>{c.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
 
-            <Text style={styles.fieldLabel}>Reason for visit (optional)</Text>
-            <TextInput
-              style={styles.reasonInput}
-              value={reason}
-              onChangeText={setReason}
-              placeholder="e.g. Annual checkup, limping on left paw…"
-              placeholderTextColor={Colors.textLight}
-              multiline
-            />
+              <Text style={styles.fieldLabel}>Reason for visit (optional)</Text>
+              <TextInput
+                style={styles.reasonInput}
+                value={reason}
+                onChangeText={setReason}
+                placeholder="e.g. Annual checkup, limping on left paw…"
+                placeholderTextColor={Colors.textLight}
+                multiline
+              />
 
-            <Button label={booking ? 'Booking…' : 'Confirm booking'} onPress={handleBook} loading={booking} style={{ marginTop: Spacing.md } as any} />
-            <Button label="Cancel selection" onPress={() => setSelectedSlot(null)} variant="secondary" disabled={booking} style={{ marginTop: Spacing.sm } as any} />
-          </View>
+              <Button label={booking ? 'Booking…' : 'Confirm booking'} onPress={handleBook} loading={booking} style={{ marginTop: Spacing.md } as any} />
+              <Button label="Cancel selection" onPress={() => setSelectedSlot(null)} variant="secondary" disabled={booking} style={{ marginTop: Spacing.sm } as any} />
+            </View>
+          </FadeSlideIn>
         )}
 
         <View style={{ height: Spacing['4xl'] }} />

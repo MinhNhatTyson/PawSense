@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import { Feather } from '@expo/vector-icons'
 import { catProfileAPI, type CatProfile } from '../../api/catProfileAPI'
 import {
   symptomDiagnosisAPI,
@@ -38,10 +39,10 @@ const COMMON_SYMPTOMS = [
   'Ocular discharge', 'Weight loss', 'Bad breath',
 ]
 
-const BODY_AREA_OPTIONS: { value: BodyArea; label: string; icon: string }[] = [
-  { value: 'SKIN', label: 'Skin & Coat', icon: '🐾' },
-  { value: 'EYE', label: 'Eyes', icon: '👁' },
-  { value: 'EAR', label: 'Ears', icon: '👂' },
+const BODY_AREA_OPTIONS: { value: BodyArea; label: string; icon: keyof typeof Feather.glyphMap }[] = [
+  { value: 'SKIN', label: 'Skin & Coat', icon: 'feather' },
+  { value: 'EYE', label: 'Eyes', icon: 'eye' },
+  { value: 'EAR', label: 'Ears', icon: 'volume-2' },
 ]
 
 const RISK_STYLE: Record<RiskLevel, { bg: string; color: string; label: string }> = {
@@ -51,8 +52,8 @@ const RISK_STYLE: Record<RiskLevel, { bg: string; color: string; label: string }
   CRITICAL: { bg: '#fce8e6', color: '#922b21', label: 'Critical risk' },
 }
 
-// ── Mode tab switcher ─────────────────────────────────────────────────────────
-function ModeTabs({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
+// ── Mode tab switcher (memoized — only re-renders when mode itself changes) ───
+const ModeTabs = React.memo(function ModeTabs({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
   return (
     <View style={tabStyles.wrap}>
       <TouchableOpacity
@@ -60,22 +61,28 @@ function ModeTabs({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void 
         onPress={() => onChange('symptoms')}
         activeOpacity={0.8}
       >
-        <Text style={[tabStyles.tabText, mode === 'symptoms' && tabStyles.tabTextActive]}>
-          🩺 Symptoms
-        </Text>
+        <View style={tabStyles.tabInner}>
+          <Feather name="clipboard" size={14} color={mode === 'symptoms' ? Colors.cream : Colors.textMuted} />
+          <Text style={[tabStyles.tabText, mode === 'symptoms' && tabStyles.tabTextActive]}>
+            Symptoms
+          </Text>
+        </View>
       </TouchableOpacity>
       <TouchableOpacity
         style={[tabStyles.tab, mode === 'photo' && tabStyles.tabActive]}
         onPress={() => onChange('photo')}
         activeOpacity={0.8}
       >
-        <Text style={[tabStyles.tabText, mode === 'photo' && tabStyles.tabTextActive]}>
-          📷 Photo Scan
-        </Text>
+        <View style={tabStyles.tabInner}>
+          <Feather name="camera" size={14} color={mode === 'photo' ? Colors.cream : Colors.textMuted} />
+          <Text style={[tabStyles.tabText, mode === 'photo' && tabStyles.tabTextActive]}>
+            Photo Scan
+          </Text>
+        </View>
       </TouchableOpacity>
     </View>
   )
-}
+})
 
 const tabStyles = StyleSheet.create({
   wrap: {
@@ -93,6 +100,7 @@ const tabStyles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: Radius.full,
   },
+  tabInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   tabActive: {
     backgroundColor: Colors.greenDeep,
     ...Shadow.sm,
@@ -102,7 +110,7 @@ const tabStyles = StyleSheet.create({
 })
 
 // ── Symptom chip (also reused for body-area / cat selection) ───────────────────
-function SymptomChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+const SymptomChip = React.memo(function SymptomChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
   return (
     <TouchableOpacity
       style={[chipStyles.chip, selected && chipStyles.chipSelected]}
@@ -112,7 +120,7 @@ function SymptomChip({ label, selected, onPress }: { label: string; selected: bo
       <Text style={[chipStyles.text, selected && chipStyles.textSelected]}>{label}</Text>
     </TouchableOpacity>
   )
-}
+})
 
 const chipStyles = StyleSheet.create({
   chip: {
@@ -131,21 +139,21 @@ const chipStyles = StyleSheet.create({
 })
 
 // ── Body area card (bigger tappable card, since it's a required single choice) ─
-function BodyAreaCard({
+const BodyAreaCard = React.memo(function BodyAreaCard({
   icon, label, selected, onPress,
-}: { icon: string; label: string; selected: boolean; onPress: () => void }) {
+}: { icon: keyof typeof Feather.glyphMap; label: string; selected: boolean; onPress: () => void }) {
   return (
     <TouchableOpacity
       style={[areaStyles.card, selected && areaStyles.cardSelected]}
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <Text style={areaStyles.icon}>{icon}</Text>
+      <Feather name={icon} size={24} color={selected ? Colors.greenForest : Colors.textMuted} />
       <Text style={[areaStyles.label, selected && areaStyles.labelSelected]}>{label}</Text>
       {selected && <View style={areaStyles.checkDot} />}
     </TouchableOpacity>
   )
-}
+})
 
 const areaStyles = StyleSheet.create({
   card: {
@@ -160,7 +168,6 @@ const areaStyles = StyleSheet.create({
     position: 'relative',
   },
   cardSelected: { borderColor: Colors.greenSage, backgroundColor: Colors.greenPale },
-  icon: { fontSize: 26 },
   label: { fontSize: Typography.sm, fontWeight: '600', color: Colors.textMuted },
   labelSelected: { color: Colors.greenForest, fontWeight: '700' },
   checkDot: {
@@ -283,7 +290,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
     return () => loop.stop()
   }, [activeStage])
 
-  function getCatContext() {
+  const getCatContext = useCallback(() => {
     const selectedCat = cats.find(c => c.id === selectedCatId)
     return selectedCat
       ? {
@@ -293,14 +300,14 @@ export function SymptomCheckerScreen({ navigation }: any) {
           ageMonths: selectedCat.ageMonths ?? undefined,
         }
       : undefined
-  }
+  }, [cats, selectedCatId])
 
   // ── Symptom-mode handlers ───────────────────────
-  const toggleSymptom = (s: string) => {
+  const toggleSymptom = useCallback((s: string) => {
     setSelectedSymptoms(prev => (prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]))
-  }
+  }, [])
 
-  async function pickSymptomImage() {
+  const pickSymptomImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'PawSense needs access to your photos to attach an image of the affected area.')
@@ -316,13 +323,13 @@ export function SymptomCheckerScreen({ navigation }: any) {
     })
     if (result.canceled) return
     setSymptomImageUris(prev => [...prev, ...result.assets.map(a => a.uri)].slice(0, 3))
-  }
+  }, [symptomImageUris.length])
 
-  function removeSymptomImage(idx: number) {
+  const removeSymptomImage = useCallback((idx: number) => {
     setSymptomImageUris(prev => prev.filter((_, i) => i !== idx))
-  }
+  }, [])
 
-  async function handleSymptomSubmit() {
+  const handleSymptomSubmit = useCallback(async () => {
     const freeText = otherSymptoms.trim() ? [otherSymptoms.trim()] : []
     const allSymptoms = [...selectedSymptoms, ...freeText]
 
@@ -340,9 +347,9 @@ export function SymptomCheckerScreen({ navigation }: any) {
       setSymptomError(err instanceof Error ? err.message : 'Failed to analyze symptoms')
       setSymptomStage('form')
     }
-  }
+  }, [otherSymptoms, selectedSymptoms, behaviorChanges, symptomImageUris, getCatContext])
 
-  function resetSymptom() {
+  const resetSymptom = useCallback(() => {
     setSelectedSymptoms([])
     setOtherSymptoms('')
     setBehaviorChanges('')
@@ -350,10 +357,10 @@ export function SymptomCheckerScreen({ navigation }: any) {
     setResult(null)
     setSymptomError('')
     setSymptomStage('form')
-  }
+  }, [])
 
   // ── Photo-scan-mode handlers ────────────────────
-  async function pickPhotoScanImage() {
+  const pickPhotoScanImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'PawSense needs access to your photos to scan the affected area.')
@@ -369,13 +376,13 @@ export function SymptomCheckerScreen({ navigation }: any) {
     })
     if (result.canceled) return
     setPhotoImageUris(prev => [...prev, ...result.assets.map(a => a.uri)].slice(0, 5))
-  }
+  }, [photoImageUris.length])
 
-  function removePhotoImage(idx: number) {
+  const removePhotoImage = useCallback((idx: number) => {
     setPhotoImageUris(prev => prev.filter((_, i) => i !== idx))
-  }
+  }, [])
 
-  async function handlePhotoSubmit() {
+  const handlePhotoSubmit = useCallback(async () => {
     if (!bodyArea) {
       setPhotoError('Please choose which body area you are scanning.')
       return
@@ -394,15 +401,15 @@ export function SymptomCheckerScreen({ navigation }: any) {
       setPhotoError(err instanceof Error ? err.message : 'Failed to analyze image')
       setPhotoStage('form')
     }
-  }
+  }, [bodyArea, photoImageUris, getCatContext])
 
-  function resetPhoto() {
+  const resetPhoto = useCallback(() => {
     setBodyArea(null)
     setPhotoImageUris([])
     setImageResult(null)
     setPhotoError('')
     setPhotoStage('form')
-  }
+  }, [])
 
   const error = mode === 'symptoms' ? symptomError : photoError
 
@@ -482,7 +489,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
                     <View key={idx} style={styles.photoThumb}>
                       <Image source={{ uri }} style={styles.photoImg} />
                       <TouchableOpacity style={styles.photoRemove} onPress={() => removeSymptomImage(idx)}>
-                        <Text style={styles.photoRemoveText}>×</Text>
+                        <Feather name="x" size={13} color={Colors.white} />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -490,7 +497,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
               )}
               {symptomImageUris.length < 3 && (
                 <TouchableOpacity style={styles.uploadZone} onPress={pickSymptomImage} activeOpacity={0.8}>
-                  <Text style={styles.uploadZoneIcon}>📷</Text>
+                  <Feather name="camera" size={24} color={Colors.textBody} />
                   <Text style={styles.uploadZoneLabel}>Add a photo of the affected area</Text>
                   <Text style={styles.uploadZoneHint}>Up to {3 - symptomImageUris.length} more</Text>
                 </TouchableOpacity>
@@ -509,7 +516,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
 
         {mode === 'symptoms' && symptomStage === 'loading' && (
           <Animated.View style={[styles.loadingCard, { opacity: pulseAnim }]}>
-            <Text style={styles.loadingIcon}>🩺</Text>
+            <Feather name="activity" size={56} color={Colors.greenSage} />
             <Text style={styles.loadingTitle}>Analyzing symptoms…</Text>
             <Text style={styles.loadingHint}>Cross-checking against the veterinary knowledge base</Text>
           </Animated.View>
@@ -525,7 +532,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
 
             {result.urgentWarning && (
               <View style={styles.urgentBanner}>
-                <Text style={styles.urgentIcon}>⚠</Text>
+                <Feather name="alert-triangle" size={18} color="#c0392b" />
                 <Text style={styles.urgentText}>{result.urgentWarning}</Text>
               </View>
             )}
@@ -542,8 +549,9 @@ export function SymptomCheckerScreen({ navigation }: any) {
                   <Text style={styles.diseaseReasoning}>{pd.reasoning}</Text>
                   {pd.matched && (
                     <View style={styles.matchedPill}>
+                      <Feather name="check" size={11} color={Colors.greenForest} />
                       <Text style={styles.matchedPillText}>
-                        ✓ In library · {pd.matched.severity} severity
+                        In library · {pd.matched.severity} severity
                       </Text>
                     </View>
                   )}
@@ -615,7 +623,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
                     <View key={idx} style={styles.photoThumb}>
                       <Image source={{ uri }} style={styles.photoImg} />
                       <TouchableOpacity style={styles.photoRemove} onPress={() => removePhotoImage(idx)}>
-                        <Text style={styles.photoRemoveText}>×</Text>
+                        <Feather name="x" size={13} color={Colors.white} />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -623,7 +631,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
               )}
               {photoImageUris.length < 5 && (
                 <TouchableOpacity style={styles.uploadZone} onPress={pickPhotoScanImage} activeOpacity={0.8}>
-                  <Text style={styles.uploadZoneIcon}>📷</Text>
+                  <Feather name="camera" size={24} color={Colors.textBody} />
                   <Text style={styles.uploadZoneLabel}>
                     {bodyArea
                       ? `Add clear, well-lit photo(s) of the ${BODY_AREA_OPTIONS.find(o => o.value === bodyArea)!.label.toLowerCase()}`
@@ -658,7 +666,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
 
         {mode === 'photo' && photoStage === 'loading' && (
           <Animated.View style={[styles.loadingCard, { opacity: pulseAnim }]}>
-            <Text style={styles.loadingIcon}>🔍</Text>
+            <Feather name="search" size={56} color={Colors.greenSage} />
             <Text style={styles.loadingTitle}>Scanning photo…</Text>
             <Text style={styles.loadingHint}>Looking for visible signs and cross-checking the knowledge base</Text>
           </Animated.View>
@@ -674,7 +682,7 @@ export function SymptomCheckerScreen({ navigation }: any) {
 
             {imageResult.urgentWarning && (
               <View style={styles.urgentBanner}>
-                <Text style={styles.urgentIcon}>⚠</Text>
+                <Feather name="alert-triangle" size={18} color="#c0392b" />
                 <Text style={styles.urgentText}>{imageResult.urgentWarning}</Text>
               </View>
             )}
@@ -691,8 +699,9 @@ export function SymptomCheckerScreen({ navigation }: any) {
                   <Text style={styles.diseaseReasoning}>{pd.reasoning}</Text>
                   {pd.matched && (
                     <View style={styles.matchedPill}>
+                      <Feather name="check" size={11} color={Colors.greenForest} />
                       <Text style={styles.matchedPillText}>
-                        ✓ In library · {pd.matched.severity} severity
+                        In library · {pd.matched.severity} severity
                       </Text>
                     </View>
                   )}
@@ -765,12 +774,10 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10,
     backgroundColor: 'rgba(26,58,42,0.80)', alignItems: 'center', justifyContent: 'center',
   },
-  photoRemoveText: { color: Colors.white, fontSize: 14, lineHeight: 16, fontWeight: '700' },
   uploadZone: {
     borderWidth: 1.5, borderColor: Colors.warmWhite, borderStyle: 'dashed', borderRadius: Radius.lg,
     paddingVertical: Spacing.xl, alignItems: 'center', gap: 4, backgroundColor: Colors.ivory,
   },
-  uploadZoneIcon: { fontSize: 24 },
   uploadZoneLabel: { fontSize: Typography.base, fontWeight: '600', color: Colors.textBody, textAlign: 'center', paddingHorizontal: Spacing.lg },
   uploadZoneHint: { fontSize: Typography.sm, color: Colors.textLight },
 
@@ -785,7 +792,6 @@ const styles = StyleSheet.create({
   loadingCard: {
     alignItems: 'center', paddingVertical: Spacing['4xl'], gap: Spacing.sm,
   },
-  loadingIcon: { fontSize: 56 },
   loadingTitle: { fontSize: Typography.xl, fontWeight: '700', color: Colors.textPrimary },
   loadingHint: { fontSize: Typography.sm, color: Colors.textLight, fontStyle: 'italic' },
 
@@ -798,7 +804,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fdf0ee', borderWidth: 1.5, borderColor: 'rgba(192,57,43,0.25)',
     borderRadius: Radius.lg, padding: Spacing.lg, marginBottom: Spacing.lg,
   },
-  urgentIcon: { fontSize: 18, color: '#c0392b' },
   urgentText: { flex: 1, fontSize: Typography.base, color: '#922b21', fontWeight: '600', lineHeight: 21 },
 
   diseaseRow: { marginBottom: Spacing.lg, gap: 6 },
@@ -807,6 +812,7 @@ const styles = StyleSheet.create({
   diseaseLikelihood: { fontSize: Typography.sm, fontWeight: '700', color: Colors.greenForest },
   diseaseReasoning: { fontSize: Typography.sm, color: Colors.textMuted, lineHeight: 19 },
   matchedPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
     alignSelf: 'flex-start', backgroundColor: Colors.greenPale, paddingHorizontal: Spacing.sm,
     paddingVertical: 3, borderRadius: Radius.full, marginTop: 2,
   },

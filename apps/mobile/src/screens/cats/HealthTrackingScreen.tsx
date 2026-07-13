@@ -13,6 +13,7 @@ import {
   hasNotificationPermission,
   syncCatReminders,
 } from '../../utils/notifications'
+import { FadeSlideIn, EmptyState, PressableScale } from '../../components/Motion'
 
 type Tab = 'vaccinations' | 'history' | 'treatments'
 
@@ -63,7 +64,15 @@ const tabStyles = StyleSheet.create({
   tabTextActive: { color: Colors.cream },
 })
 
-function Card({ children }: { children: React.ReactNode }) {
+/** Card wrapper — now a PressableScale so vaccination/history/treatment rows give tactile feedback on tap. */
+function Card({ children, onPress }: { children: React.ReactNode; onPress?: () => void }) {
+  if (onPress) {
+    return (
+      <PressableScale onPress={onPress} scaleTo={0.985} style={cardStyles.card as any}>
+        {children}
+      </PressableScale>
+    )
+  }
   return <View style={cardStyles.card}>{children}</View>
 }
 const cardStyles = StyleSheet.create({
@@ -240,13 +249,15 @@ export function HealthTrackingScreen({ navigation, route }: any) {
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
 
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{cat.name}'s Health</Text>
-        <Text style={styles.headerSubtitle}>Vaccinations, medical history & treatments in one place</Text>
-      </View>
+      <FadeSlideIn distance={-16}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{cat.name}'s Health</Text>
+          <Text style={styles.headerSubtitle}>Vaccinations, medical history & treatments in one place</Text>
+        </View>
+      </FadeSlideIn>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <TabBar tab={tab} onChange={setTab} counts={counts} />
@@ -267,45 +278,45 @@ export function HealthTrackingScreen({ navigation, route }: any) {
             )}
 
             {cat.vaccinations.length === 0 ? (
-              <View style={styles.emptyWrap}>
-                <Text style={styles.emptyText}>No vaccinations recorded yet.</Text>
-                <Button
-                  label="Add a vaccination"
-                  variant="secondary"
-                  onPress={() => navigation.navigate('CatForm', { mode: 'edit', cat })}
-                  style={{ marginTop: Spacing.md } as any}
-                />
-              </View>
+              <EmptyState
+                emoji="💉"
+                title="No vaccinations recorded"
+                desc="Add vaccination records and due dates to keep track of your cat's shots."
+                actionLabel="Add a vaccination"
+                onAction={() => navigation.navigate('CatForm', { mode: 'edit', cat })}
+              />
             ) : (
-              cat.vaccinations.map(v => {
+              cat.vaccinations.map((v, i) => {
                 const nextDue = v.nextDueDate ? new Date(v.nextDueDate) : null
                 const overdue = !!nextDue && nextDue < new Date()
                 const dueSoon = !!nextDue && !overdue && nextDue.getTime() - Date.now() < 30 * 24 * 60 * 60 * 1000
                 return (
-                  <Card key={v.id}>
-                    <View style={rowStyles.top}>
-                      <Text style={rowStyles.title}>{v.vaccineName}</Text>
-                      {nextDue && (
-                        <View style={[
-                          rowStyles.statusPill,
-                          { backgroundColor: overdue ? '#fdf0ee' : dueSoon ? '#fdf7ed' : Colors.greenPale },
-                        ]}>
-                          <Text style={[
-                            rowStyles.statusPillText,
-                            { color: overdue ? Colors.error : dueSoon ? '#8b6340' : Colors.greenForest },
+                  <FadeSlideIn key={v.id} delay={i * 50} distance={12}>
+                    <Card>
+                      <View style={rowStyles.top}>
+                        <Text style={rowStyles.title}>{v.vaccineName}</Text>
+                        {nextDue && (
+                          <View style={[
+                            rowStyles.statusPill,
+                            { backgroundColor: overdue ? '#fdf0ee' : dueSoon ? '#fdf7ed' : Colors.greenPale },
                           ]}>
-                            {overdue ? 'Overdue' : dueSoon ? 'Due soon' : 'Scheduled'}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={rowStyles.meta}>
-                      Given {new Date(v.dateGiven).toLocaleDateString()}
-                      {nextDue ? ` · Next due ${nextDue.toLocaleDateString()}` : ''}
-                    </Text>
-                    {v.veterinarian && <Text style={rowStyles.meta}>Dr. {v.veterinarian}</Text>}
-                    {v.notes && <Text style={rowStyles.notes}>{v.notes}</Text>}
-                  </Card>
+                            <Text style={[
+                              rowStyles.statusPillText,
+                              { color: overdue ? Colors.error : dueSoon ? '#8b6340' : Colors.greenForest },
+                            ]}>
+                              {overdue ? 'Overdue' : dueSoon ? 'Due soon' : 'Scheduled'}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={rowStyles.meta}>
+                        Given {new Date(v.dateGiven).toLocaleDateString()}
+                        {nextDue ? ` · Next due ${nextDue.toLocaleDateString()}` : ''}
+                      </Text>
+                      {v.veterinarian && <Text style={rowStyles.meta}>Dr. {v.veterinarian}</Text>}
+                      {v.notes && <Text style={rowStyles.notes}>{v.notes}</Text>}
+                    </Card>
+                  </FadeSlideIn>
                 )
               })
             )}
@@ -319,75 +330,81 @@ export function HealthTrackingScreen({ navigation, route }: any) {
             )}
 
             {showNoteForm && (
-              <Card>
-                <Text style={rowStyles.title}>{editingNote ? 'Edit note' : 'New health note'}</Text>
-                {noteError ? <Text style={styles.inlineError}>{noteError}</Text> : null}
-                <Field label="Title" optional>
-                  <TextInput value={noteTitle} onChangeText={setNoteTitle} placeholder="e.g. Limping after play, Skin looks flaky…" />
-                </Field>
-                <Field label="What did you notice?">
-                  <TextInput
-                    value={noteContent}
-                    onChangeText={setNoteContent}
-                    placeholder="Describe what you observed, when it started, anything else worth remembering…"
-                    multiline
-                    numberOfLines={4}
-                    style={{ height: 100, textAlignVertical: 'top', paddingTop: Spacing.md }}
-                  />
-                </Field>
-                <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                  <Button label={noteSaving ? 'Saving…' : 'Save note'} onPress={saveNote} loading={noteSaving} style={{ flex: 1 } as any} />
-                  <Button label="Cancel" onPress={closeNoteForm} variant="secondary" disabled={noteSaving} style={{ flex: 1 } as any} />
-                </View>
-              </Card>
+              <FadeSlideIn distance={12}>
+                <Card>
+                  <Text style={rowStyles.title}>{editingNote ? 'Edit note' : 'New health note'}</Text>
+                  {noteError ? <Text style={styles.inlineError}>{noteError}</Text> : null}
+                  <Field label="Title" optional>
+                    <TextInput value={noteTitle} onChangeText={setNoteTitle} placeholder="e.g. Limping after play, Skin looks flaky…" />
+                  </Field>
+                  <Field label="What did you notice?">
+                    <TextInput
+                      value={noteContent}
+                      onChangeText={setNoteContent}
+                      placeholder="Describe what you observed, when it started, anything else worth remembering…"
+                      multiline
+                      numberOfLines={4}
+                      style={{ height: 100, textAlignVertical: 'top', paddingTop: Spacing.md }}
+                    />
+                  </Field>
+                  <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                    <Button label={noteSaving ? 'Saving…' : 'Save note'} onPress={saveNote} loading={noteSaving} style={{ flex: 1 } as any} />
+                    <Button label="Cancel" onPress={closeNoteForm} variant="secondary" disabled={noteSaving} style={{ flex: 1 } as any} />
+                  </View>
+                </Card>
+              </FadeSlideIn>
             )}
 
             {historyItems.length === 0 && !showNoteForm ? (
-              <View style={styles.emptyWrap}>
-                <Text style={styles.emptyText}>
-                  No medical history yet. Vet diagnoses and your own notes will appear here.
-                </Text>
-              </View>
+              <EmptyState
+                emoji="📋"
+                title="No medical history yet"
+                desc="Vet diagnoses and your own notes will appear here."
+              />
             ) : (
-              historyItems.map(item => {
+              historyItems.map((item, i) => {
                 if (item.kind === 'diagnosis') {
                   const sev = SEV_STYLE[item.severity] ?? SEV_STYLE.MEDIUM
                   return (
-                    <Card key={`d-${item.id}`}>
-                      <View style={rowStyles.top}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.sourceTag}>VET DIAGNOSIS</Text>
-                          <Text style={rowStyles.title}>{item.diseaseName}</Text>
+                    <FadeSlideIn key={`d-${item.id}`} delay={i * 50} distance={12}>
+                      <Card>
+                        <View style={rowStyles.top}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.sourceTag}>VET DIAGNOSIS</Text>
+                            <Text style={rowStyles.title}>{item.diseaseName}</Text>
+                          </View>
+                          <View style={[rowStyles.statusPill, { backgroundColor: sev.bg }]}>
+                            <Text style={[rowStyles.statusPillText, { color: sev.color }]}>{item.severity}</Text>
+                          </View>
                         </View>
-                        <View style={[rowStyles.statusPill, { backgroundColor: sev.bg }]}>
-                          <Text style={[rowStyles.statusPillText, { color: sev.color }]}>{item.severity}</Text>
-                        </View>
-                      </View>
-                      <Text style={rowStyles.meta}>{new Date(item.date).toLocaleDateString()}</Text>
-                      {item.notes && <Text style={rowStyles.notes}>{item.notes}</Text>}
-                    </Card>
+                        <Text style={rowStyles.meta}>{new Date(item.date).toLocaleDateString()}</Text>
+                        {item.notes && <Text style={rowStyles.notes}>{item.notes}</Text>}
+                      </Card>
+                    </FadeSlideIn>
                   )
                 }
                 const note = item.note
                 return (
-                  <Card key={`n-${item.id}`}>
-                    <View style={rowStyles.top}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.sourceTag, { color: Colors.gold }]}>YOUR NOTE</Text>
-                        <Text style={rowStyles.title}>{note.title || 'Health note'}</Text>
+                  <FadeSlideIn key={`n-${item.id}`} delay={i * 50} distance={12}>
+                    <Card>
+                      <View style={rowStyles.top}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.sourceTag, { color: Colors.gold }]}>YOUR NOTE</Text>
+                          <Text style={rowStyles.title}>{note.title || 'Health note'}</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                          <TouchableOpacity onPress={() => openEditNote(note)}>
+                            <Text style={styles.linkText}>Edit</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => handleDeleteNote(note)}>
+                            <Text style={[styles.linkText, { color: Colors.error }]}>Delete</Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
-                      <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                        <TouchableOpacity onPress={() => openEditNote(note)}>
-                          <Text style={styles.linkText}>Edit</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleDeleteNote(note)}>
-                          <Text style={[styles.linkText, { color: Colors.error }]}>Delete</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                    <Text style={rowStyles.meta}>{new Date(item.date).toLocaleDateString()}</Text>
-                    <Text style={rowStyles.notes}>{note.content}</Text>
-                  </Card>
+                      <Text style={rowStyles.meta}>{new Date(item.date).toLocaleDateString()}</Text>
+                      <Text style={rowStyles.notes}>{note.content}</Text>
+                    </Card>
+                  </FadeSlideIn>
                 )
               })
             )}
@@ -396,24 +413,26 @@ export function HealthTrackingScreen({ navigation, route }: any) {
 
         {tab === 'treatments' && (
           cat.catTreatmentRecords.length === 0 ? (
-            <View style={styles.emptyWrap}>
-              <Text style={styles.emptyText}>
-                No treatments logged yet. Your veterinarian will record treatments here after a visit.
-              </Text>
-            </View>
+            <EmptyState
+              emoji="🩹"
+              title="No treatments logged yet"
+              desc="Your veterinarian will record treatments here after a visit."
+            />
           ) : (
-            cat.catTreatmentRecords.map(r => (
-              <Card key={r.id}>
-                <Text style={rowStyles.title}>{r.treatment.name}</Text>
-                <Text style={rowStyles.meta}>
-                  {new Date(r.administeredAt).toLocaleDateString()}
-                  {r.administeredBy?.profile?.fullName ? ` · Dr. ${r.administeredBy.profile.fullName}` : ''}
-                </Text>
-                {r.treatment.estimatedDuration && (
-                  <Text style={rowStyles.meta}>Duration: {r.treatment.estimatedDuration}</Text>
-                )}
-                {r.notes && <Text style={rowStyles.notes}>{r.notes}</Text>}
-              </Card>
+            cat.catTreatmentRecords.map((r, i) => (
+              <FadeSlideIn key={r.id} delay={i * 50} distance={12}>
+                <Card>
+                  <Text style={rowStyles.title}>{r.treatment.name}</Text>
+                  <Text style={rowStyles.meta}>
+                    {new Date(r.administeredAt).toLocaleDateString()}
+                    {r.administeredBy?.profile?.fullName ? ` · Dr. ${r.administeredBy.profile.fullName}` : ''}
+                  </Text>
+                  {r.treatment.estimatedDuration && (
+                    <Text style={rowStyles.meta}>Duration: {r.treatment.estimatedDuration}</Text>
+                  )}
+                  {r.notes && <Text style={rowStyles.notes}>{r.notes}</Text>}
+                </Card>
+              </FadeSlideIn>
             ))
           )
         )}
@@ -462,9 +481,6 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.warmWhite, marginBottom: Spacing.lg,
   },
   reminderBannerText: { fontSize: Typography.sm, color: Colors.textBody, lineHeight: 20 },
-
-  emptyWrap: { alignItems: 'center', paddingVertical: Spacing['3xl'], gap: Spacing.sm },
-  emptyText: { fontSize: Typography.base, color: Colors.textMuted, textAlign: 'center', lineHeight: 22, maxWidth: 280 },
 
   sourceTag: { fontSize: 10, fontWeight: '700', color: Colors.greenForest, letterSpacing: 0.5, marginBottom: 2 },
   linkText: { fontSize: Typography.sm, color: Colors.greenForest, fontWeight: '600' },

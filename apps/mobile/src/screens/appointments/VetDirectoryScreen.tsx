@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, StatusBar, ActivityIndicator, Platform } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, StatusBar, Platform } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import * as Location from 'expo-location'
 import { vetDirectoryAPI, type VetSummary, type Coordinates } from '../../api/vetDirectoryAPI'
 import { Colors, Typography, Spacing, Radius, Shadow } from '../../theme'
+import { SkeletonBlock, FadeSlideIn, EmptyState, PressableScale } from '../../components/Motion'
 
 function DistanceBadge({ distanceKm }: { distanceKm?: number | null }) {
   if (distanceKm == null) return null
@@ -23,7 +24,7 @@ const distStyles = StyleSheet.create({
 function VetCard({ vet, onPress }: { vet: VetSummary; onPress: () => void }) {
   const name = vet.profile?.fullName || vet.email
   return (
-    <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.85}>
+    <PressableScale onPress={onPress} scaleTo={0.98} style={cardStyles.card as any}>
       <View style={cardStyles.avatar}>
         <Text style={cardStyles.avatarText}>{name.charAt(0).toUpperCase()}</Text>
       </View>
@@ -39,7 +40,21 @@ function VetCard({ vet, onPress }: { vet: VetSummary; onPress: () => void }) {
         <DistanceBadge distanceKm={vet.distanceKm} />
       </View>
       <Text style={cardStyles.chevron}>›</Text>
-    </TouchableOpacity>
+    </PressableScale>
+  )
+}
+
+/** Skeleton placeholder matching VetCard's layout, shown while the directory first loads. */
+function VetSkeletonCard() {
+  return (
+    <View style={cardStyles.card}>
+      <SkeletonBlock width={48} height={48} style={{ borderRadius: 24, flexShrink: 0 }} />
+      <View style={{ flex: 1, gap: 6, marginLeft: Spacing.md }}>
+        <SkeletonBlock width="55%" height={16} />
+        <SkeletonBlock width="40%" height={13} />
+        <SkeletonBlock width="70%" height={12} />
+      </View>
+    </View>
   )
 }
 
@@ -130,15 +145,17 @@ export function VetDirectoryScreen({ navigation }: any) {
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.greenDeep} />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Find a Vet</Text>
-        <Text style={styles.headerSubtitle}>
-          {coords ? 'Showing vets sorted by distance from you' : 'Search by name or clinic, then book an open slot'}
-        </Text>
-      </View>
+      <FadeSlideIn distance={-16}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Find a Vet</Text>
+          <Text style={styles.headerSubtitle}>
+            {coords ? 'Showing vets sorted by distance from you' : 'Search by name or clinic, then book an open slot'}
+          </Text>
+        </View>
+      </FadeSlideIn>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Location prompt */}
@@ -149,17 +166,11 @@ export function VetDirectoryScreen({ navigation }: any) {
                 ? 'Location access was denied. Enable it in your device settings to see distances to vets.'
                 : 'Enable location to find veterinarians nearest to you.'}
             </Text>
-            <TouchableOpacity
-              style={styles.locationBtn}
-              onPress={handleEnableLocation}
-              disabled={locationState === 'requesting'}
-            >
-              {locationState === 'requesting' ? (
-                <ActivityIndicator size="small" color={Colors.cream} />
-              ) : (
-                <Text style={styles.locationBtnText}>📍 Use my location</Text>
-              )}
-            </TouchableOpacity>
+            <PressableScale onPress={handleEnableLocation} style={styles.locationBtn as any}>
+              <Text style={styles.locationBtnText}>
+                {locationState === 'requesting' ? 'Locating…' : '📍 Use my location'}
+              </Text>
+            </PressableScale>
           </View>
         )}
 
@@ -197,22 +208,27 @@ export function VetDirectoryScreen({ navigation }: any) {
         </View>
 
         {loading ? (
-          <View style={styles.centred}><ActivityIndicator size="large" color={Colors.greenSage} /></View>
+          <>
+            <VetSkeletonCard />
+            <VetSkeletonCard />
+            <VetSkeletonCard />
+          </>
         ) : error ? (
           <View style={styles.centred}><Text style={styles.stateText}>{error}</Text></View>
         ) : vets.length === 0 ? (
-          <View style={styles.centred}>
-            <Text style={styles.stateText}>
-              {radiusKm ? `No vets found within ${radiusKm} km. Try a wider radius.` : 'No vets found.'}
-            </Text>
-          </View>
+          <EmptyState
+            emoji="🩺"
+            title="No vets found"
+            desc={radiusKm ? `No vets found within ${radiusKm} km. Try a wider radius.` : 'Try a different search term.'}
+          />
         ) : (
-          vets.map(vet => (
-            <VetCard
-              key={vet.id}
-              vet={vet}
-              onPress={() => navigation.navigate('VetAvailability', { vetId: vet.id, vetName: vet.profile?.fullName || vet.email })}
-            />
+          vets.map((vet, i) => (
+            <FadeSlideIn key={vet.id} delay={i * 50} distance={14}>
+              <VetCard
+                vet={vet}
+                onPress={() => navigation.navigate('VetAvailability', { vetId: vet.id, vetName: vet.profile?.fullName || vet.email })}
+              />
+            </FadeSlideIn>
           ))
         )}
         <View style={{ height: Spacing['4xl'] }} />
