@@ -1,5 +1,4 @@
-import { storage } from '../utils/storage'
-import { API_URL } from '../config'
+import { apiFetch } from '../utils/apiFetch'
 
 export interface MedicineDisease {
   id: string
@@ -37,33 +36,25 @@ export interface MedicineListResponse {
   }
 }
 
-async function getHeaders(): Promise<Record<string, string>> {
-  const token = await storage.getItem('auth_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
 export const medicineAPI = {
   async list(skip = 0, take = 20, search?: string, diseaseId?: string): Promise<MedicineListResponse> {
-    const headers = await getHeaders()
     const params = new URLSearchParams({ skip: String(skip), take: String(take) })
     if (search) params.set('search', search)
     if (diseaseId) params.set('diseaseId', diseaseId)
-    const res = await fetch(`${API_URL}/medicines?${params}`, { headers })
+    const res = await apiFetch(`/medicines?${params}`)
     if (!res.ok) throw new Error('Failed to load medicines')
     return res.json()
   },
 
   async getById(id: string): Promise<Medicine> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/medicines/${id}`, { headers })
+    const res = await apiFetch(`/medicines/${id}`)
     if (!res.ok) throw new Error('Medicine not found')
     return res.json()
   },
 
   async search(query: string): Promise<Medicine[]> {
-    const headers = await getHeaders()
     const params = new URLSearchParams({ q: query })
-    const res = await fetch(`${API_URL}/medicines/search?${params}`, { headers })
+    const res = await apiFetch(`/medicines/search?${params}`)
     if (!res.ok) throw new Error('Search failed')
     return res.json()
   },

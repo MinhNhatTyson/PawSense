@@ -1,5 +1,4 @@
-import { storage } from '../utils/storage'
-import { API_URL } from '../config'
+import { apiFetch } from '../utils/apiFetch'
 
 export interface MatchedBreed {
   id: string
@@ -19,11 +18,6 @@ export interface BreedRecognitionResult {
   careInstructions: string[]
   isMixedOrUnclear: boolean
   matchedBreed: MatchedBreed | null
-}
-
-async function getHeaders(): Promise<Record<string, string>> {
-  const token = await storage.getItem('auth_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
 // Same web/native FormData handling pattern used in catProfileAPI.ts
@@ -46,13 +40,11 @@ async function appendImageToFormData(formData: FormData, uri: string): Promise<v
 
 export const breedRecognitionAPI = {
   async analyze(imageUri: string): Promise<BreedRecognitionResult> {
-    const headers = await getHeaders()
     const formData = new FormData()
     await appendImageToFormData(formData, imageUri)
 
-    const res = await fetch(`${API_URL}/breed-recognition/analyze`, {
+    const res = await apiFetch('/breed-recognition/analyze', {
       method: 'POST',
-      headers: { ...headers },
       body: formData,
     })
     const json = await res.json()

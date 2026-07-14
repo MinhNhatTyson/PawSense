@@ -1,5 +1,4 @@
-import { storage } from '../utils/storage'
-import { API_URL } from '../config'
+import { apiFetch } from '../utils/apiFetch'
 
 export type BodyArea = 'SKIN' | 'EYE' | 'EAR'
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
@@ -34,11 +33,6 @@ export interface CatContext {
   ageMonths?: number
 }
 
-async function getHeaders(): Promise<Record<string, string>> {
-  const token = await storage.getItem('auth_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
 // Same web/native FormData handling pattern used in catProfileAPI.ts / breedRecognitionAPI.ts
 async function appendImageToFormData(
   formData: FormData,
@@ -67,7 +61,6 @@ export const imageDiagnosisAPI = {
     imageUris: string[],
     catContext?: CatContext
   ): Promise<ImageDiagnosisResult> {
-    const headers = await getHeaders()
     const formData = new FormData()
 
     formData.append('bodyArea', bodyArea)
@@ -77,9 +70,8 @@ export const imageDiagnosisAPI = {
       await appendImageToFormData(formData, imageUris[i]!, i)
     }
 
-    const res = await fetch(`${API_URL}/image-diagnosis/analyze`, {
+    const res = await apiFetch('/image-diagnosis/analyze', {
       method: 'POST',
-      headers: { ...headers },
       body: formData,
     })
     const json = await res.json()
