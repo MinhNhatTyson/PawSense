@@ -4,6 +4,7 @@ import {
   login,
   changePassword,
   getProfile,
+  logout,
   updateProfile,
 } from '../controllers/auth.controller.js'
 import { authMiddleware } from '../middleware/auth.middleware.js'
@@ -15,3 +16,4 @@ authRouter.post('/login', login)
 authRouter.post('/change-password', authMiddleware, changePassword)
 authRouter.get('/profile', authMiddleware, getProfile)
 authRouter.put('/profile', authMiddleware, updateProfile)
+authRouter.post('/logout', logout)

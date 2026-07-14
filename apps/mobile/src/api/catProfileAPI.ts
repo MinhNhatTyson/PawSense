@@ -1,5 +1,4 @@
-import { storage } from '../utils/storage'
-import { API_URL } from '../config'
+import { apiFetch } from '../utils/apiFetch'
 // On web, expo-image-picker returns blob: URIs. The RN-style { uri, name, type }
 // FormData append is a native-only pattern — on web it serialises to a plain string.
 // This helper fetches the blob and appends a real File/Blob so multer receives actual data.
@@ -96,22 +95,15 @@ export interface CatProfile {
   updatedAt: string
 }
 
-async function getHeaders(): Promise<Record<string, string>> {
-  const token = await storage.getItem('auth_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
 export const catProfileAPI = {
   async list(): Promise<CatProfile[]> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/cat-profiles`, { headers })
+    const res = await apiFetch('/cat-profiles')
     if (!res.ok) throw new Error('Failed to load cat profiles')
     return res.json()
   },
 
   async getById(id: string): Promise<CatProfile> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/cat-profiles/${id}`, { headers })
+    const res = await apiFetch(`/cat-profiles/${id}`)
     if (!res.ok) throw new Error('Cat profile not found')
     return res.json()
   },
@@ -136,7 +128,6 @@ export const catProfileAPI = {
     },
     imageUris?: string[]
   ): Promise<CatProfile> {
-    const headers = await getHeaders()
     const formData = new FormData()
 
     formData.append('name', data.name)
@@ -155,11 +146,7 @@ export const catProfileAPI = {
       }
     }
 
-    const res = await fetch(`${API_URL}/cat-profiles`, {
-      method: 'POST',
-      headers: { ...headers },
-      body: formData,
-    })
+    const res = await apiFetch('/cat-profiles', { method: 'POST', body: formData })
     const json = await res.json()
     if (!res.ok) throw new Error(json.error || 'Failed to create cat profile')
     return json
@@ -187,7 +174,6 @@ export const catProfileAPI = {
     },
     imageUris?: string[]
   ): Promise<CatProfile> {
-    const headers = await getHeaders()
     const formData = new FormData()
 
     if (data.name !== undefined) formData.append('name', data.name)
@@ -209,28 +195,19 @@ export const catProfileAPI = {
       }
     }
 
-    const res = await fetch(`${API_URL}/cat-profiles/${id}`, {
-      method: 'PUT',
-      headers: { ...headers },
-      body: formData,
-    })
+    const res = await apiFetch(`/cat-profiles/${id}`, { method: 'PUT', body: formData })
     const json = await res.json()
     if (!res.ok) throw new Error(json.error || 'Failed to update cat profile')
     return json
   },
 
   async delete(id: string): Promise<void> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/cat-profiles/${id}`, {
-      method: 'DELETE',
-      headers,
-    })
+    const res = await apiFetch(`/cat-profiles/${id}`, { method: 'DELETE' })
     if (!res.ok) throw new Error('Failed to delete cat profile')
   },
 
   async listHealthNotes(catId: string): Promise<HealthNote[]> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/cat-profiles/${catId}/health-notes`, { headers })
+    const res = await apiFetch(`/cat-profiles/${catId}/health-notes`)
     if (!res.ok) throw new Error('Failed to load health notes')
     return res.json()
   },
@@ -239,10 +216,9 @@ export const catProfileAPI = {
     catId: string,
     data: { title?: string; content: string; noteDate?: string }
   ): Promise<HealthNote> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/cat-profiles/${catId}/health-notes`, {
+    const res = await apiFetch(`/cat-profiles/${catId}/health-notes`, {
       method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
     const json = await res.json()
@@ -255,10 +231,9 @@ export const catProfileAPI = {
     noteId: string,
     data: { title?: string; content?: string; noteDate?: string }
   ): Promise<HealthNote> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/cat-profiles/${catId}/health-notes/${noteId}`, {
+    const res = await apiFetch(`/cat-profiles/${catId}/health-notes/${noteId}`, {
       method: 'PUT',
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
     const json = await res.json()
@@ -267,10 +242,8 @@ export const catProfileAPI = {
   },
 
   async deleteHealthNote(catId: string, noteId: string): Promise<void> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/cat-profiles/${catId}/health-notes/${noteId}`, {
+    const res = await apiFetch(`/cat-profiles/${catId}/health-notes/${noteId}`, {
       method: 'DELETE',
-      headers,
     })
     if (!res.ok) throw new Error('Failed to delete health note')
   },

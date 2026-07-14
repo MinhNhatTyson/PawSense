@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { storage } from '../utils/storage'
+import { authEvents } from '../utils/authEvents'
 import { API_URL } from '../config'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -60,16 +61,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const stored = await storage.getItem(TOKEN_KEY)
         if (stored) {
-          setToken(stored)
+          // Validate BEFORE committing to state. Previously token was set
+          // first and validated after, so an expired/invalid stored token
+          // left the app in a half-authenticated state (token set, user
+          // null forever) that RootNavigator still treated as "logged in".
           await fetchProfile(stored)
+          setToken(stored)
         }
       } catch {
-        // token invalid or expired — stay logged out
+        // token invalid or expired — clear it so we don't keep silently
+        // retrying every request with a dead token
+        await storage.removeItem(TOKEN_KEY)
       } finally {
         setIsInitializing(false)
       }
     }
     bootstrap()
+  }, [])
+
+  // Any authenticated API call anywhere in the app (via apiFetch) reports a
+  // 401 here. When that happens mid-session (token expired while the app
+  // was open), force a clean logout instead of leaving the person on
+  // screens that will fail every request from here on.
+  useEffect(() => {
+    return authEvents.onUnauthorized(() => {
+      logout()
+    })
   }, [])
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
