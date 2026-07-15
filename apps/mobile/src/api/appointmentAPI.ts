@@ -1,5 +1,4 @@
-import { storage } from '../utils/storage'
-import { API_URL } from '../config'
+import { apiFetch } from '../utils/apiFetch'
 
 export interface VetAvailabilitySlot {
   id: string
@@ -22,23 +21,18 @@ export interface Appointment {
   catProfile?: { id: string; name: string } | null
 }
 
-async function getHeaders(): Promise<Record<string, string>> {
-  const token = await storage.getItem('auth_token')
-  return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
-}
-
 export const appointmentAPI = {
   async listSlotsForVet(vetId: string): Promise<VetAvailabilitySlot[]> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/vet-availability/vet/${vetId}`, { headers })
+    const res = await apiFetch(`/vet-availability/vet/${vetId}`)
     if (!res.ok) throw new Error('Failed to load availability')
     return res.json()
   },
 
   async book(data: { slotId: string; catProfileId?: string; reason?: string }): Promise<Appointment> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/appointments`, {
-      method: 'POST', headers, body: JSON.stringify(data),
+    const res = await apiFetch('/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
     })
     const json = await res.json()
     if (!res.ok) throw new Error(json.error || 'Failed to book appointment')
@@ -46,16 +40,16 @@ export const appointmentAPI = {
   },
 
   async listMine(): Promise<Appointment[]> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/appointments/mine`, { headers })
+    const res = await apiFetch('/appointments/mine')
     if (!res.ok) throw new Error('Failed to load appointments')
     return res.json()
   },
 
   async cancel(id: string, cancelReason?: string): Promise<Appointment> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/appointments/${id}/cancel`, {
-      method: 'PATCH', headers, body: JSON.stringify({ cancelReason }),
+    const res = await apiFetch(`/appointments/${id}/cancel`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cancelReason }),
     })
     const json = await res.json()
     if (!res.ok) throw new Error(json.error || 'Failed to cancel appointment')

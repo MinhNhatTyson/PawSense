@@ -1,5 +1,4 @@
-import { storage } from '../utils/storage'
-import { API_URL } from '../config'
+import { apiFetch } from '../utils/apiFetch'
 
 export type FoodCategory = 'KITTEN' | 'ADULT' | 'SENIOR' | 'PRESCRIPTION'
 
@@ -45,20 +44,11 @@ export interface FoodRecommendationInput {
   healthConditionNotes?: string
 }
 
-async function getHeaders(): Promise<Record<string, string>> {
-  const token = await storage.getItem('auth_token')
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  }
-}
-
 export const foodRecommendationAPI = {
   async analyze(input: FoodRecommendationInput): Promise<FoodRecommendationResult> {
-    const headers = await getHeaders()
-    const res = await fetch(`${API_URL}/food-recommendation/analyze`, {
+    const res = await apiFetch('/food-recommendation/analyze', {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     })
     const json = await res.json()
