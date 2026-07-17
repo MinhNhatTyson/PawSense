@@ -24,6 +24,8 @@ import { MobileConnectCard } from './components/MobileConnectCard'
 import EmergencyGuidance from './emergencyPages/EmergencyGuidance'
 import AppointmentManagement from './appointmentPages/AppointmentManagement'
 import VetDirectory from './appointmentPages/VetDirectory'
+import { ToastProvider } from './contexts/ToastContext'
+import { ConfirmProvider } from './contexts/ConfirmContext'
 import './index.css'
 
 
@@ -765,9 +767,13 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <ToastProvider>
+        <ConfirmProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </ConfirmProvider>
+      </ToastProvider>
     </AuthProvider>
   )
 }

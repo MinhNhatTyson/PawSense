@@ -2,6 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { PawLogo } from './PawLogo'
 import { NotificationBell } from './NotificationBell'
+import { useState } from 'react'
 
 const NAV_ITEMS = [
   {
@@ -159,6 +160,7 @@ export function Sidebar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   function handleLogout() {
     logout()
@@ -172,7 +174,20 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sidebar">      
+  <>
+    <button
+      className="sidebar-mobile-toggle"
+      onClick={() => setMobileOpen(true)}
+      aria-label="Open menu"
+    >
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+      </svg>
+    </button>
+
+    {mobileOpen && <div className="sidebar-backdrop" onClick={() => setMobileOpen(false)} />}
+
+    <aside className={`sidebar${mobileOpen ? ' sidebar-open' : ''}`}>
       <div className="sidebar-brand" style={{ justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
           <PawLogo size={28} />
@@ -181,10 +196,14 @@ export function Sidebar() {
         <NotificationBell />
       </div>
 
-      <nav className="sidebar-nav">        
-
+      <nav className="sidebar-nav">
         {NAV_ITEMS.filter(item => !item.vetOnly || user?.role === 'VET').map((item) => (
-          <Link key={item.to} to={item.to} className={`nav-item${isActive(item.to) ? ' active' : ''}`}>
+          <Link
+            key={item.to}
+            to={item.to}
+            className={`nav-item${isActive(item.to) ? ' active' : ''}`}
+            onClick={() => setMobileOpen(false)}
+          >
             {item.icon}
             {item.label}
           </Link>
@@ -214,5 +233,6 @@ export function Sidebar() {
         <div className="sidebar-user-email">{user?.email}</div>
       </div>
     </aside>
-  )
+  </>
+)
 }

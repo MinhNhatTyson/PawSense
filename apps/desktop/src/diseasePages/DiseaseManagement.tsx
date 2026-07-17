@@ -9,6 +9,9 @@ import DiseaseDetail from './DiseaseDetail'
 import DiseaseForm from './DiseaseForm'
 import { treatmentAPI, type Treatment } from '../treatmentPages/treatmentAPI'
 import { medicineAPI, type Medicine } from '../medicinePages/medicineAPI'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { useConfirm } from '../contexts/ConfirmContext'
+import { useToast } from '../contexts/ToastContext'
 import { Sidebar } from '../components/Sidebar'
 import './DiseaseManagement.css'
 
@@ -40,8 +43,11 @@ export default function DiseaseManagement() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const itemsPerPage = 12
+  const confirm = useConfirm()
+  const showToast = useToast()
+  const debouncedSearch = useDebouncedValue(search, 350)
 
-  useEffect(() => { loadDiseases() }, [currentPage, search, severity])
+  useEffect(() => { loadDiseases() }, [currentPage, debouncedSearch, severity])
   useEffect(() => { loadAllDiseasesFull() }, [])
   useEffect(() => { loadAllSymptoms() }, [])
   useEffect(() => { loadAllTreatments() }, [])
@@ -62,7 +68,7 @@ export default function DiseaseManagement() {
     try {
       const res = await diseaseAPI.list(
         currentPage * itemsPerPage, itemsPerPage,
-        search || undefined, severity || undefined
+        debouncedSearch || undefined, severity || undefined
       )
       setDiseases(res.data.data)
       setTotalItems(res.data.pagination.total)
@@ -111,6 +117,7 @@ export default function DiseaseManagement() {
     try {
       await diseaseAPI.create(formData, imageFile)
       setViewMode('list'); loadDiseases(); loadAllDiseasesFull()
+      showToast('Disease record created')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create disease')
     } finally { setLoading(false) }
@@ -128,17 +135,24 @@ export default function DiseaseManagement() {
     try {
       await diseaseAPI.update(editingDisease.id, formData, imageFile)
       setViewMode('list'); setEditingDisease(null); loadDiseases(); loadAllDiseasesFull()
+      showToast('Disease record updated')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to update disease')
     } finally { setLoading(false) }
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this disease record? This action cannot be undone.')) return
+    const ok = await confirm({
+      title: 'Delete disease record?',
+      message: 'This action cannot be undone.',
+      danger: true,
+    })
+    if (!ok) return
     setLoading(true); setError(null)
     try {
       await diseaseAPI.delete(id)
       loadDiseases(); setSelectedDisease(null); setViewMode('list')
+      showToast('Disease record deleted')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to delete disease')
     } finally { setLoading(false) }
