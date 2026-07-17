@@ -1,4 +1,5 @@
 import type { CatBreed } from './catBreedAPI'
+import { SkeletonGrid } from '../components/Skeleton'
 
 interface CatBreedListProps {
   breeds: CatBreed[]
@@ -35,12 +36,7 @@ export default function CatBreedList({
   breeds, loading, onViewDetail, onEdit, onDelete,
 }: CatBreedListProps) {
   if (loading && breeds.length === 0) {
-    return (
-      <div className="cb-loading">
-        <span className="spinner spinner-dark" />
-        Loading cat breed records…
-      </div>
-    )
+    return <SkeletonGrid count={6} />
   }
 
   if (breeds.length === 0) {

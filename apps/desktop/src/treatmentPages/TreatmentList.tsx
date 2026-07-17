@@ -1,4 +1,5 @@
 import type { Treatment } from './treatmentAPI'
+import { SkeletonGrid } from '../components/Skeleton'
 
 interface TreatmentListProps {
   treatments: Treatment[]
@@ -35,12 +36,7 @@ export default function TreatmentList({
   treatments, loading, onViewDetail, onEdit, onDelete,
 }: TreatmentListProps) {
   if (loading && treatments.length === 0) {
-    return (
-      <div className="tr-loading">
-        <span className="spinner spinner-dark" />
-        Loading treatment records…
-      </div>
-    )
+    return <SkeletonGrid count={6} />
   }
 
   if (treatments.length === 0) {

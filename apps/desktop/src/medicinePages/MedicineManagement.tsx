@@ -7,6 +7,9 @@ import MedicineList from './MedicineList'
 import MedicineDetail from './MedicineDetail'
 import MedicineForm from './MedicineForm'
 import { Sidebar } from '../components/Sidebar'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { useConfirm } from '../contexts/ConfirmContext'
+import { useToast } from '../contexts/ToastContext'
 import './MedicineManagement.css'
 
 type ViewMode = 'list' | 'detail' | 'create' | 'edit'
@@ -27,10 +30,13 @@ export default function MedicineManagement() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const itemsPerPage = 12
+  const confirm = useConfirm()
+  const showToast = useToast()
+  const debouncedSearch = useDebouncedValue(search, 350)
 
   useEffect(() => {
     loadMedicines()
-  }, [currentPage, search])
+  }, [currentPage, debouncedSearch])
 
   useEffect(() => {
     loadAllDiseases()
@@ -43,7 +49,7 @@ export default function MedicineManagement() {
       const res = await medicineAPI.list(
         currentPage * itemsPerPage,
         itemsPerPage,
-        search || undefined
+        debouncedSearch || undefined
       )
       setMedicines(res.data.data)
       setTotalItems(res.data.pagination.total)
@@ -83,6 +89,7 @@ export default function MedicineManagement() {
       await medicineAPI.create(data, imageFile)
       setViewMode('list')
       loadMedicines()
+      showToast('Medicine record created')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to create medicine')
@@ -112,6 +119,7 @@ export default function MedicineManagement() {
       setViewMode('list')
       setEditingMedicine(null)
       loadMedicines()
+      showToast('Medicine record updated')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to update medicine')
@@ -121,7 +129,12 @@ export default function MedicineManagement() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this medicine record? This action cannot be undone.')) return
+    const ok = await confirm({
+      title: 'Delete medicine record?',
+      message: 'This action cannot be undone.',
+      danger: true,
+    })
+    if (!ok) return
     setLoading(true)
     setError(null)
     try {
@@ -129,6 +142,7 @@ export default function MedicineManagement() {
       loadMedicines()
       setSelectedMedicine(null)
       setViewMode('list')
+      showToast('Medicine record deleted')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to delete medicine')

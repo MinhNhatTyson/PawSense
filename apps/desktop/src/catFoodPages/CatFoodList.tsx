@@ -1,4 +1,5 @@
 import type { CatFood, FoodCategory, FoodType } from './catFoodAPI'
+import { SkeletonGrid } from '../components/Skeleton'
 
 interface CatFoodListProps {
   foods: CatFood[]
@@ -48,12 +49,7 @@ function ImagePlaceholder() {
 
 export default function CatFoodList({ foods, loading, onViewDetail, onEdit, onDelete }: CatFoodListProps) {
   if (loading && foods.length === 0) {
-    return (
-      <div className="cf-loading">
-        <span className="spinner spinner-dark" />
-        Loading cat food records…
-      </div>
-    )
+    return <SkeletonGrid count={6} />
   }
 
   if (foods.length === 0) {

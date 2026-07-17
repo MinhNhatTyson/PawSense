@@ -6,6 +6,9 @@ import { EMERGENCY_CATEGORIES } from './emergencyData'
 import { useAuth } from '../contexts/AuthContext'
 import { Sidebar } from '../components/Sidebar'
 import EmergencyGuideForm from './EmergencyGuideForm'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { useConfirm } from '../contexts/ConfirmContext'
+import { useToast } from '../contexts/ToastContext'
 import './EmergencyGuidance.css'
 
 type ViewMode = 'list' | 'create' | 'edit'
@@ -328,15 +331,18 @@ export default function EmergencyGuidance() {
 
   const [activeGuide, setActiveGuide] = useState<EmergencyGuide | null>(null)
   const [editingGuide, setEditingGuide] = useState<EmergencyGuide | null>(null)
+  const confirm = useConfirm()
+  const showToast = useToast()
+  const debouncedSearch = useDebouncedValue(search, 350)
 
-  useEffect(() => { loadGuides() }, [search, category, urgency])
+  useEffect(() => { loadGuides() }, [debouncedSearch, category, urgency])
 
   const loadGuides = async () => {
     setLoading(true)
     setError(null)
     try {
       const res = await emergencyAPI.list({
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         category: category || undefined,
         urgency: urgency || undefined,
       })
@@ -355,6 +361,7 @@ export default function EmergencyGuidance() {
       await emergencyAPI.create(data, imageFile)
       setViewMode('list')
       loadGuides()
+      showToast('Emergency guide created')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create emergency guide')
     } finally {
@@ -371,6 +378,7 @@ export default function EmergencyGuidance() {
       setViewMode('list')
       setEditingGuide(null)
       loadGuides()
+      showToast('Emergency guide updated')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to update emergency guide')
     } finally {
@@ -379,12 +387,18 @@ export default function EmergencyGuidance() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this emergency guide? This action cannot be undone.')) return
+    const ok = await confirm({
+      title: 'Delete emergency guide?',
+      message: 'This action cannot be undone.',
+      danger: true,
+    })
+    if (!ok) return
     setError(null)
     try {
       await emergencyAPI.delete(id)
       if (activeGuide?.id === id) setActiveGuide(null)
       loadGuides()
+      showToast('Emergency guide deleted')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to delete emergency guide')
     }

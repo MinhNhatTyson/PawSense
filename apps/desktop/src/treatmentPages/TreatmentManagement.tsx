@@ -8,6 +8,9 @@ import TreatmentList from './TreatmentList'
 import TreatmentDetail from './TreatmentDetail'
 import TreatmentForm from './TreatmentForm'
 import { Sidebar } from '../components/Sidebar'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { useConfirm } from '../contexts/ConfirmContext'
+import { useToast } from '../contexts/ToastContext'
 import './TreatmentManagement.css'
 
 type ViewMode = 'list' | 'detail' | 'create' | 'edit'
@@ -27,8 +30,11 @@ export default function TreatmentManagement() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const itemsPerPage = 12
+  const confirm = useConfirm()
+  const showToast = useToast()
+  const debouncedSearch = useDebouncedValue(search, 350)
 
-  useEffect(() => { loadTreatments() }, [currentPage, search])
+  useEffect(() => { loadTreatments() }, [currentPage, debouncedSearch])
   useEffect(() => { loadAllDiseases() }, [])
 
   const loadTreatments = async () => {
@@ -38,7 +44,7 @@ export default function TreatmentManagement() {
       const res = await treatmentAPI.list(
         currentPage * itemsPerPage,
         itemsPerPage,
-        search || undefined
+        debouncedSearch || undefined
       )
       setTreatments(res.data.data)
       setTotalItems(res.data.pagination.total)
@@ -79,6 +85,7 @@ export default function TreatmentManagement() {
       await treatmentAPI.create(data, imageFile)
       setViewMode('list')
       loadTreatments()
+      showToast('Treatment protocol created')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to create treatment')
@@ -109,6 +116,7 @@ export default function TreatmentManagement() {
       setViewMode('list')
       setEditingTreatment(null)
       loadTreatments()
+      showToast('Treatment protocol updated')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to update treatment')
@@ -118,7 +126,12 @@ export default function TreatmentManagement() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this treatment protocol? This action cannot be undone.')) return
+    const ok = await confirm({
+      title: 'Delete treatment protocol?',
+      message: 'This action cannot be undone.',
+      danger: true,
+    })
+    if (!ok) return
     setLoading(true)
     setError(null)
     try {
@@ -126,6 +139,7 @@ export default function TreatmentManagement() {
       loadTreatments()
       setSelectedTreatment(null)
       setViewMode('list')
+      showToast('Treatment protocol deleted')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to delete treatment')

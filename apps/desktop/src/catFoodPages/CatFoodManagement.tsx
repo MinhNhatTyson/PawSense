@@ -6,6 +6,9 @@ import CatFoodList, { CATEGORY_CONFIG, FOOD_TYPE_LABELS } from './CatFoodList'
 import CatFoodDetail from './CatFoodDetail'
 import CatFoodForm from './CatFoodForm'
 import type { CatFoodInput } from './catFoodAPI'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { useConfirm } from '../contexts/ConfirmContext'
+import { useToast } from '../contexts/ToastContext'
 import './CatFoodManagement.css'
 
 type ViewMode = 'list' | 'detail' | 'create' | 'edit'
@@ -31,8 +34,11 @@ export default function CatFoodManagement() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const itemsPerPage = 12
+  const confirm = useConfirm()
+  const showToast = useToast()
+  const debouncedSearch = useDebouncedValue(search, 350)
 
-  useEffect(() => { loadFoods() }, [currentPage, search, categoryFilter, foodTypeFilter])
+  useEffect(() => { loadFoods() }, [currentPage, debouncedSearch, categoryFilter, foodTypeFilter])
   useEffect(() => { loadAllDiseases() }, [])
 
   const loadFoods = async () => {
@@ -42,7 +48,7 @@ export default function CatFoodManagement() {
       const res = await catFoodAPI.list(
         currentPage * itemsPerPage,
         itemsPerPage,
-        search || undefined,
+        debouncedSearch || undefined,
         categoryFilter || undefined,
         foodTypeFilter || undefined,
       )
@@ -70,6 +76,7 @@ export default function CatFoodManagement() {
       await catFoodAPI.create(data, imageFile)
       setViewMode('list')
       loadFoods()
+      showToast('Cat food record created')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to create cat food record')
@@ -87,6 +94,7 @@ export default function CatFoodManagement() {
       setViewMode('list')
       setEditingFood(null)
       loadFoods()
+      showToast('Cat food record updated')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to update cat food record')
@@ -96,7 +104,12 @@ export default function CatFoodManagement() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this cat food record? This action cannot be undone.')) return
+    const ok = await confirm({
+      title: 'Delete cat food record?',
+      message: 'This action cannot be undone.',
+      danger: true,
+    })
+    if (!ok) return
     setLoading(true)
     setError(null)
     try {
@@ -104,6 +117,7 @@ export default function CatFoodManagement() {
       loadFoods()
       setSelectedFood(null)
       setViewMode('list')
+      showToast('Cat food record deleted')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to delete cat food record')

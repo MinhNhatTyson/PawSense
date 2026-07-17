@@ -8,6 +8,9 @@ import SymptomList from './SymptomList'
 import SymptomDetail from './SymptomDetail'
 import SymptomForm from './SymptomForm'
 import { Sidebar } from '../components/Sidebar'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { useConfirm } from '../contexts/ConfirmContext'
+import { useToast } from '../contexts/ToastContext'
 import './SymptomManagement.css'
 
 type ViewMode = 'list' | 'detail' | 'create' | 'edit'
@@ -35,8 +38,11 @@ export default function SymptomManagement() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const itemsPerPage = 12
+  const confirm = useConfirm()
+  const showToast = useToast()
+  const debouncedSearch = useDebouncedValue(search, 350)
 
-  useEffect(() => { loadSymptoms() }, [currentPage, search, commonalityFilter, onsetFilter])
+  useEffect(() => { loadSymptoms() }, [currentPage, debouncedSearch, commonalityFilter, onsetFilter])
   useEffect(() => { loadAllDiseases() }, [])
 
   const loadSymptoms = async () => {
@@ -46,7 +52,7 @@ export default function SymptomManagement() {
       const res = await symptomAPI.list(
         currentPage * itemsPerPage,
         itemsPerPage,
-        search || undefined,
+        debouncedSearch || undefined,
         commonalityFilter || undefined,
         onsetFilter || undefined
       )
@@ -77,6 +83,7 @@ export default function SymptomManagement() {
       await symptomAPI.create(formData)
       setViewMode('list')
       loadSymptoms()
+      showToast('Symptom record created')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create symptom')
     } finally {
@@ -95,6 +102,7 @@ export default function SymptomManagement() {
       setViewMode('list')
       setEditingSymptom(null)
       loadSymptoms()
+      showToast('Symptom record updated')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to update symptom')
     } finally {
@@ -103,7 +111,12 @@ export default function SymptomManagement() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this symptom record? This action cannot be undone.')) return
+    const ok = await confirm({
+      title: 'Delete symptom record?',
+      message: 'This action cannot be undone.',
+      danger: true,
+    })
+    if (!ok) return
     setLoading(true)
     setError(null)
     try {
@@ -111,6 +124,7 @@ export default function SymptomManagement() {
       loadSymptoms()
       setSelectedSymptom(null)
       setViewMode('list')
+      showToast('Symptom record deleted')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to delete symptom')
     } finally {

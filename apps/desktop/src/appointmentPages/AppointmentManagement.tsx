@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { vetAvailabilityAPI, appointmentAPI, type VetAvailabilitySlot, type Appointment } from './appointmentAPI'
+import { useConfirm } from '../contexts/ConfirmContext'
+import { useToast } from '../contexts/ToastContext'
 import { Sidebar } from '../components/Sidebar'
 import './AppointmentManagement.css'
 
@@ -41,6 +43,8 @@ export default function AppointmentManagement() {
   const [statusFilter, setStatusFilter] = useState('')
 
   const [error, setError] = useState<string | null>(null)
+  const confirm = useConfirm()
+  const showToast = useToast()
 
   useEffect(() => { if (tab === 'availability') loadSlots() }, [tab])
   useEffect(() => { if (tab === 'appointments') loadAppointments() }, [tab, statusFilter])
@@ -82,6 +86,7 @@ export default function AppointmentManagement() {
       await vetAvailabilityAPI.createSlot(startTime, endTime)
       setSlotStart(''); setSlotEnd('')
       loadSlots()
+      showToast('Slot added')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to add slot')
     } finally {
@@ -99,6 +104,7 @@ export default function AppointmentManagement() {
         date: bulkDate, dayStart: bulkStart, dayEnd: bulkEnd, durationMinutes: parseInt(bulkDuration),
       })
       loadSlots()
+      showToast('Slots generated')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to generate slots')
     } finally {
@@ -107,10 +113,15 @@ export default function AppointmentManagement() {
   }
 
   const handleDeleteSlot = async (id: string) => {
-    if (!window.confirm('Remove this open slot?')) return
+    const ok = await confirm({
+      title: 'Remove this open slot?',
+      message: 'Pet owners will no longer be able to book this time.',
+    })
+    if (!ok) return
     try {
       await vetAvailabilityAPI.deleteSlot(id)
       loadSlots()
+      showToast('Slot removed')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to remove slot')
     }
@@ -120,6 +131,7 @@ export default function AppointmentManagement() {
     try {
       await vetAvailabilityAPI.blockSlot(id)
       loadSlots()
+      showToast('Slot blocked')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to block slot')
     }
@@ -129,6 +141,7 @@ export default function AppointmentManagement() {
     try {
       await vetAvailabilityAPI.unblockSlot(id)
       loadSlots()
+      showToast('Slot unblocked')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to unblock slot')
     }
@@ -157,6 +170,7 @@ export default function AppointmentManagement() {
       await vetAvailabilityAPI.editSlot(slot.id, newStart.toISOString(), newEnd.toISOString())
       setEditingSlotId(null)
       loadSlots()
+      showToast('Slot updated')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to update slot')
     }
@@ -172,6 +186,7 @@ export default function AppointmentManagement() {
     try {
       await appointmentAPI.cancel(id, reason)
       loadAppointments()
+      showToast('Appointment cancelled')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to cancel appointment')
     }
@@ -181,6 +196,7 @@ export default function AppointmentManagement() {
     try {
       await appointmentAPI.complete(id)
       loadAppointments()
+      showToast('Appointment marked completed')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to update appointment')
     }

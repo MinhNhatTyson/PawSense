@@ -7,6 +7,9 @@ import CatBreedList from './CatBreedList'
 import CatBreedDetail from './CatBreedDetail'
 import CatBreedForm from './CatBreedForm'
 import { Sidebar } from '../components/Sidebar'
+import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { useConfirm } from '../contexts/ConfirmContext'
+import { useToast } from '../contexts/ToastContext'
 import './CatBreedManagement.css'
 
 type ViewMode = 'list' | 'detail' | 'create' | 'edit'
@@ -114,8 +117,11 @@ export default function CatBreedManagement() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalItems, setTotalItems] = useState(0)
   const itemsPerPage = 12
+  const confirm = useConfirm()
+  const showToast = useToast()
+  const debouncedSearch = useDebouncedValue(search, 350)
 
-  useEffect(() => { loadBreeds() }, [currentPage, search])
+  useEffect(() => { loadBreeds() }, [currentPage, debouncedSearch])
 
   const loadBreeds = async () => {
     setLoading(true)
@@ -124,7 +130,7 @@ export default function CatBreedManagement() {
       const res = await catBreedAPI.list(
         currentPage * itemsPerPage,
         itemsPerPage,
-        search || undefined
+        debouncedSearch || undefined
       )
       setBreeds(res.data.data)
       setTotalItems(res.data.pagination.total)
@@ -156,6 +162,7 @@ export default function CatBreedManagement() {
       await catBreedAPI.create(data, imageFiles)
       setViewMode('list')
       loadBreeds()
+      showToast('Cat breed added')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to create cat breed')
@@ -186,6 +193,7 @@ export default function CatBreedManagement() {
       setViewMode('list')
       setEditingBreed(null)
       loadBreeds()
+      showToast('Cat breed updated')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to update cat breed')
@@ -195,7 +203,12 @@ export default function CatBreedManagement() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this cat breed record? This action cannot be undone.')) return
+    const ok = await confirm({
+      title: 'Delete cat breed record?',
+      message: 'This action cannot be undone.',
+      danger: true,
+    })
+    if (!ok) return
     setLoading(true)
     setError(null)
     try {
@@ -203,6 +216,7 @@ export default function CatBreedManagement() {
       loadBreeds()
       setSelectedBreed(null)
       setViewMode('list')
+      showToast('Cat breed deleted')
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } }
       setError(e.response?.data?.error || 'Failed to delete cat breed')

@@ -1,4 +1,5 @@
 import type { Medicine } from './medicineAPI'
+import { SkeletonGrid } from '../components/Skeleton'
 
 interface MedicineListProps {
   medicines: Medicine[]
@@ -25,12 +26,7 @@ export default function MedicineList({
   medicines, loading, onViewDetail, onEdit, onDelete,
 }: MedicineListProps) {
   if (loading && medicines.length === 0) {
-    return (
-      <div className="med-loading">
-        <span className="spinner spinner-dark" />
-        Loading medicine records…
-      </div>
-    )
+    return <SkeletonGrid count={6} />
   }
 
   if (medicines.length === 0) {

@@ -3,6 +3,7 @@ import { verificationAPI, type ContentFlag, type PendingContent } from './verifi
 import { VerificationBadge } from '../components/VerificationBadge'
 import { Sidebar } from '../components/Sidebar'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 
 type TabId = 'pending' | 'flags'
 
@@ -16,6 +17,7 @@ export default function VerificationManagement() {
   const [resolveModal, setResolveModal] = useState<{ flag: ContentFlag; action: 'resolve' | 'dismiss' } | null>(null)
   const [resolverNote, setResolverNote] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+  const showToast = useToast()
 
   useEffect(() => { loadAll() }, [])
 
@@ -41,6 +43,7 @@ export default function VerificationManagement() {
       if (type === 'disease') await verificationAPI.approveDisease(id)
       else await verificationAPI.approveMedicine(id)
       await loadAll()
+      showToast(`${type === 'disease' ? 'Disease' : 'Medicine'} record approved`)
     } catch (err: any) {
       setError(err.response?.data?.error || 'Approval failed')
     }
@@ -48,6 +51,7 @@ export default function VerificationManagement() {
 
   const handleFlagAction = async () => {
     if (!resolveModal) return
+    const actionTaken = resolveModal.action
     setActionLoading(true)
     try {
       if (resolveModal.action === 'resolve') {
@@ -58,6 +62,7 @@ export default function VerificationManagement() {
       setResolveModal(null)
       setResolverNote('')
       await loadAll()
+      showToast(actionTaken === 'resolve' ? 'Flag resolved' : 'Flag dismissed')
     } catch {
       setError('Action failed')
     } finally {

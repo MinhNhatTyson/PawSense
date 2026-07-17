@@ -1,4 +1,5 @@
 import type { Symptom } from './symptomAPI'
+import { SkeletonGrid } from '../components/Skeleton'
 
 interface SymptomListProps {
   symptoms: Symptom[]
@@ -29,12 +30,7 @@ export default function SymptomList({
   symptoms, loading, onViewDetail, onEdit, onDelete,
 }: SymptomListProps) {
   if (loading && symptoms.length === 0) {
-    return (
-      <div className="sym-loading">
-        <span className="spinner spinner-dark" />
-        Loading symptom records…
-      </div>
-    )
+    return <SkeletonGrid count={6} />
   }
 
   if (symptoms.length === 0) {
